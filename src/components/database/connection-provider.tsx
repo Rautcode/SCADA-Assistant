@@ -1,0 +1,88 @@
+
+"use client";
+
+import * as React from 'react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { getUserSettings } from '@/ai/flows/user-settings-flow';
+import { testScadaConnection } from '@/app/actions/scada-actions';
+
+type ConnectionStatus = 'loading' | 'connected' | 'error' | 'unconfigured';
+
+interface ConnectionContextType {
+    status: ConnectionStatus;
+    error: string | null;
+    loading: boolean;
+    refetch: () => void;
+}
+
+const ConnectionContext = React.createContext<ConnectionContextType | undefined>(undefined);
+
+export function ConnectionProvider({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+    const [status, setStatus] = React.useState<ConnectionStatus>('loading');
+    const [error, setError] = React.useState<string | null>(null);
+    const [loading, setLoading] = React.useState(true);
+
+    const testConnection = React.useCallback(async () => {
+        if (!user) return;
+
+        setLoading(true);
+        setStatus('loading');
+        setError(null);
+
+        try {
+            const settings = await getUserSettings({ userId: user.uid });
+            const dbCreds = settings?.database;
+
+            if (!dbCreds?.server || !dbCreds?.dbName) {
+                setStatus('unconfigured');
+                setError("Database server or name not configured.");
+                return;
+            }
+            
+            const result = await testScadaConnection({ dbCreds });
+
+            if (result.success) {
+                setStatus('connected');
+                setError(null);
+            } else {
+                setStatus('error');
+                setError(result.error || 'An unknown error occurred.');
+            }
+        } catch (err: any) {
+            setStatus('error');
+            setError(err.message || 'Failed to fetch settings and test connection.');
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    React.useEffect(() => {
+        if (user) {
+            testConnection();
+        }
+    }, [user, testConnection]);
+
+    const value = {
+        status,
+        error,
+        loading,
+        refetch: testConnection,
+    };
+
+    return (
+        <ConnectionContext.Provider value={value}>
+            {children}
+        </ConnectionContext.Provider>
+    );
+}
+
+export function useConnection() {
+    const context = React.useContext(ConnectionContext);
+    if (context === undefined) {
+        throw new Error('useConnection must be used within a ConnectionProvider');
+    }
+    return context;
+}
+
+    

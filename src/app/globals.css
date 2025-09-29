@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 29% 97%; /* #F5F7FA */
+    --foreground: 0 0% 13%; /* #212121 */
+
+    --muted: 210 25% 93%;
+    --muted-foreground: 210 10% 40%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --border: 210 20% 88%;
+    --input: 210 20% 92%;
+
+    --primary: 207 79% 51%; /* #1E88E5 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --secondary: 123 40% 45%; /* #43A047 */
+    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --accent: 45 100% 51%; /* #FFC107 */
+    --accent-foreground: 0 0% 13%; /* Dark text for readability on yellow */
+
+    --destructive: 4 90% 58%; /* #F44336 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --ring: 207 79% 51%; /* Primary color */
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 210 29% 98%; /* Almost white, very light gray */
+    --sidebar-foreground: 210 10% 23%; /* Dark gray text */
+    --sidebar-primary: 207 79% 51%;   /* Primary color for active items */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text on active items */
+    --sidebar-accent: 210 25% 94%;   /* Light gray for hover bg */
+    --sidebar-accent-foreground: 210 10% 13%; /* Darker text on hover */
+    --sidebar-border: 210 20% 88%;   /* Same as main border color */
+    --sidebar-ring: 207 79% 51%;     /* Primary color for focus rings */
+
+    --chart-1: 207 79% 51%; /* primary */
+    --chart-2: 123 40% 45%; /* secondary */
+    --chart-3: 45 100% 51%; /* accent */
+    --chart-4: 4 90% 58%;   /* destructive */
+    --chart-5: 210 10% 40%; /* muted-foreground */
+  }
+
+  .dark {
+    /* For dark theme, we can invert or use a different dark palette.
+       For now, let's define a basic dark theme based on the sidebar's dark slate.
+       A full dark theme would require more specific color choices.
+    */
+    --background: 200 15% 12%; /* Darker version of sidebar */
+    --foreground: 210 20% 95%; /* Off-white text */
+
+    --muted: 200 15% 20%;
+    --muted-foreground: 210 15% 60%;
+
+    --popover: 200 15% 18%;
+    --popover-foreground: 210 20% 95%;
+
+    --card: 200 15% 18%;
+    --card-foreground: 210 20% 95%;
+
+    --border: 200 15% 25%;
+    --input: 200 15% 22%;
+
+    --primary: 207 79% 51%; /* Keep primary vibrant */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 123 40% 45%; /* Keep secondary vibrant */
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 45 100% 51%; /* Keep accent vibrant */
+    --accent-foreground: 0 0% 13%;
+
+    --destructive: 4 90% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 207 79% 61%; /* Lighter primary for ring */
+
+    /* Sidebar specific colors for dark theme (could be same as light if sidebar is always dark) */
+    --sidebar-background: 200 15% 18%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 45 100% 51%;
+    --sidebar-primary-foreground: 0 0% 13%;
+    --sidebar-accent: 200 15% 25%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 200 15% 15%;
+    --sidebar-ring: 45 100% 51%;
+
+    --chart-1: 207 79% 61%;
+    --chart-2: 123 40% 55%;
+    --chart-3: 45 100% 61%;
+    --chart-4: 4 90% 68%;
+    --chart-5: 210 15% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.5;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background) / 0.5);
+  border-radius: 0.5rem;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 0.5rem;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}

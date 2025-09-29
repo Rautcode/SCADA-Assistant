@@ -1,0 +1,28 @@
+
+{
+  "dashboard": {
+    "banner": {
+      "src": "https://picsum.photos/seed/dashboard/200/100",
+      "width": 200,
+      "height": 100,
+      "alt": "Dashboard banner",
+      "hint": "industrial technology"
+    }
+  },
+  "avatars": {
+    "user": {
+      "src": "https://picsum.photos/100/100?grayscale",
+      "width": 100,
+      "height": 100,
+      "alt": "User Avatar",
+      "hint": "person face"
+    }
+  },
+  "templates": [
+    { "id": "tpl1", "name": "Daily Production Overview", "category": "Production", "src": "https://picsum.photos/seed/tpl1/300/200", "description": "Summary of daily production metrics and KPIs.", "hint": "report document" },
+    { "id": "tpl2", "name": "Weekly Maintenance Log", "category": "Maintenance", "src": "https://picsum.photos/seed/tpl2/300/200", "description": "Detailed log of maintenance activities for the week.", "hint": "report document" },
+    { "id": "tpl3", "name": "Monthly Quality Report", "category": "Quality", "src": "https://picsum.photos/seed/tpl3/300/200", "description": "Comprehensive quality analysis for the month.", "hint": "report document" },
+    { "id": "tpl4", "name": "Shift Handover Notes", "category": "Operations", "src": "https://picsum.photos/seed/tpl4/300/200", "description": "Standardized notes for shift handover procedures.", "hint": "report document" },
+    { "id": "tpl5", "name": "Equipment Downtime Analysis", "category": "Maintenance", "src": "https://picsum.photos/seed/tpl5/300/200", "description": "Analysis of equipment downtime and root causes.", "hint": "report document" }
+  ]
+}
