@@ -135,10 +135,6 @@ export default function SettingsPage() {
                 title: t('settings_saved_title'),
                 description: t('settings_saved_description'),
             });
-            // Update theme immediately after saving
-            if (values.theme) {
-                applyTheme(values.theme);
-            }
             // Update language
             if (values.language) {
                 setLanguage(values.language);
@@ -308,7 +304,13 @@ export default function SettingsPage() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>{t('theme')}</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select 
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+                                            applyTheme(value);
+                                        }} 
+                                        value={field.value}
+                                    >
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder={t('select_theme')} />
