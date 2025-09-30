@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/database-service';
+import { onDashboardStats, onRecentActivities, onSystemComponentStatuses, createNewTemplateInDb, scheduleNewTaskInDb } from '@/services/database-service';
 import type { DashboardStats, RecentActivity, SystemComponentStatus } from '@/lib/types/database';
 import { Message, Part } from 'genkit';
 
@@ -93,17 +93,52 @@ const getRecentActivitiesTool = ai.defineTool(
     }
 );
 
+const createNewTemplateTool = ai.defineTool(
+    {
+        name: 'createNewTemplate',
+        description: 'Creates a new report template.',
+        inputSchema: z.object({
+            name: z.string().describe("The name of the new template."),
+            description: z.string().describe("A brief description of the template."),
+            category: z.string().describe("The category for the template (e.g., 'Production', 'Maintenance')."),
+        }),
+        outputSchema: z.string(),
+    },
+    async ({ name, description, category }) => {
+        await createNewTemplateInDb({ name, description, category, thumbnailUrl: `https://picsum.photos/seed/${name.replace(/\s/g, '')}/300/200` });
+        return `Successfully created the "${name}" template in the ${category} category.`;
+    }
+);
+
+const scheduleNewTaskTool = ai.defineTool(
+    {
+        name: 'scheduleNewTask',
+        description: 'Schedules a new task, like generating a report.',
+        inputSchema: z.object({
+            name: z.string().describe("The name of the task to be scheduled."),
+            templateId: z.string().describe("The ID of the report template to use for the task."),
+            scheduledTime: z.string().describe("The ISO 8601 string for when the task should run."),
+        }),
+        outputSchema: z.string(),
+    },
+    async ({ name, templateId, scheduledTime }) => {
+        await scheduleNewTaskInDb({ name, templateId, scheduledTime: new Date(scheduledTime) });
+        return `Successfully scheduled the task "${name}".`;
+    }
+);
+
 
 // Main prompt for the assistant
 const assistantPrompt = ai.definePrompt({
   name: 'assistantPrompt',
-  tools: [navigationTool, getSystemStatusTool, getDashboardStatsTool, getRecentActivitiesTool],
+  tools: [navigationTool, getSystemStatusTool, getDashboardStatsTool, getRecentActivitiesTool, createNewTemplateTool, scheduleNewTaskTool],
   system: `You are a helpful and knowledgeable AI assistant for a SCADA (Supervisory Control and Data Acquisition) application. 
-  Your primary role is to provide excellent support by guiding users, answering questions about the system, and helping them troubleshoot issues.
+  Your primary role is to provide excellent support by guiding users, answering questions about the system, and helping them perform actions.
   
   **Your Core Capabilities:**
   - **Navigation:** Help users find their way around the application.
   - **Data Retrieval:** Fetch real-time data about system status, dashboard statistics, and recent activities using your tools.
+  - **Taking Action:** Create new report templates or schedule tasks on behalf of the user.
   - **Guidance & Troubleshooting:** Provide clear, step-by-step instructions and help users solve problems.
 
   **Application Pages & Their Functions:**
@@ -118,12 +153,14 @@ const assistantPrompt = ai.definePrompt({
   - **/help**: General documentation and support information.
 
   **How to Interact:**
-  - **Be Conversational & Proactive:** Don't just wait for commands. If a user asks for data, offer to take them to the relevant page for a more detailed view.
+  - **Be Conversational & Proactive:** Don't just wait for commands. If a user asks for data, offer to take them to the relevant page for a more detailed view. If a user asks to create something, confirm the details with them before using the tool.
   - **Use Your Tools:** When a user's query matches a tool's description, use it. For instance:
     - "What's the system status?" -> Use \`getSystemStatus\`.
     - "Show me dashboard stats." -> Use \`getDashboardStats\`.
     - "What just happened?" -> Use \`getRecentActivities\`.
     - "Go to settings." -> Use \`navigateTo\`.
+    - "Create a new template for daily downtime in the 'Maintenance' category" -> Use \`createNewTemplate\`.
+    - "Schedule a new task..." -> Use \`scheduleNewTask\`. You may need to ask for the template ID and a specific time if not provided.
   - **Summarize Tool Output:** When a tool returns data, present it in a clear, human-readable summary. Don't just dump the raw data.
   - **Error Handling & Troubleshooting:** If a user mentions an error or a problem:
     1.  Acknowledge their frustration (e.g., "I'm sorry to hear you're running into an issue.").
