@@ -23,7 +23,10 @@ const navigationTool = ai.defineTool(
     }),
     outputSchema: z.string(),
   },
-  async ({ page }) => `Navigating to ${page}...`
+  async ({ page }) => {
+    // This return statement is for the AI; the actual navigation is handled on the client
+    return `Navigating to ${page}...`;
+  }
 );
 
 const getSystemStatusTool = ai.defineTool(
