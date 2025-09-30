@@ -1,6 +1,4 @@
 
-'use client';
-
 import './globals.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
@@ -15,13 +13,15 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useEffect } from 'react';
 import { getUserSettings } from './actions/scada-actions';
 
-// Metadata can still be exported from a client component
+// Metadata can now be correctly exported from the RootLayout Server Component.
 export const metadata: Metadata = {
   title: 'SCADA Assistant',
   description: 'An AI-powered assistant for SCADA systems.',
 };
 
+// This is a new client component to handle client-side effects like fetching settings.
 function AppInitializer({ children }: { children: ReactNode }) {
+  'use client';
   const { user } = useAuth();
   const { setLanguage } = useLocalization();
 
