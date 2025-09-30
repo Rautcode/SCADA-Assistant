@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer } from 'lucide-react';
+import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings } from 'lucide-react';
 import { onScheduledTasks, onReportTemplates } from '@/services/database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NewTaskDialog } from '@/components/scheduler/new-task-dialog';
 import Image from 'next/image';
+import { useConnection } from '@/components/database/connection-provider';
+import Link from 'next/link';
 
 const statusConfig = {
     scheduled: { icon: Timer, color: "bg-blue-500", label: "Scheduled" },
@@ -83,6 +85,7 @@ export default function SchedulerPage() {
     const [tasksLoading, setTasksLoading] = React.useState(true);
     const [templatesLoading, setTemplatesLoading] = React.useState(true);
     const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = React.useState(false);
+    const { status: dbStatus } = useConnection();
     
     React.useEffect(() => {
         const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
@@ -106,6 +109,7 @@ export default function SchedulerPage() {
     [templates]);
     
     const loading = tasksLoading || templatesLoading;
+    const showConnectionMessage = !loading && tasks.length === 0 && dbStatus !== 'connected';
 
     return (
         <div className="container mx-auto py-8">
@@ -129,6 +133,19 @@ export default function SchedulerPage() {
                     {loading ? (
                         <div className="space-y-4">
                             {Array.from({ length: 3 }).map((_, i) => <TaskItem key={i} loading />)}
+                        </div>
+                    ) : showConnectionMessage ? (
+                         <div className="mt-6 p-8 border-2 border-dashed border-border rounded-lg text-center">
+                            <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-semibold text-foreground">Database Not Connected</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                Please connect to the database to view and schedule tasks.
+                            </p>
+                             <Button asChild variant="secondary">
+                                <Link href="/settings">
+                                    <Settings className="mr-2 h-4 w-4" /> Go to Settings
+                                </Link>
+                            </Button>
                         </div>
                     ) : tasks.length === 0 ? (
                         <div className="mt-6 p-8 border-2 border-dashed border-border rounded-lg text-center">

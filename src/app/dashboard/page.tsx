@@ -216,6 +216,8 @@ export default function DashboardPage() {
 
   const isDataLoading = (loading && dbStatus === 'connected') || dbStatus === 'loading';
 
+  const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
+
   return (
     <div className="animate-fade-in">
       <Card className="mb-6 shadow-lg bg-card">
@@ -267,17 +269,21 @@ export default function DashboardPage() {
             <CardDescription>Track the latest system and user activities.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="divide-y divide-border -mx-6 px-6">
-              {isDataLoading && activities.length === 0 ? (
+            {showEmptyState ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Connect to the database to see recent activity.</p>
+                </div>
+             ) : isDataLoading && activities.length === 0 ? (
                 Array.from({length: 5}).map((_, i) => <ActivityItem key={i} activity={{} as any} loading />)
               ) : activities.length > 0 ? (
-                activities.map((activity) => <ActivityItem key={activity.id} activity={activity} />)
+                <ul className="divide-y divide-border -mx-6 px-6">
+                  {activities.map((activity) => <ActivityItem key={activity.id} activity={activity} />)}
+                </ul>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>No recent activity found.</p>
                 </div>
               )}
-            </ul>
           </CardContent>
         </Card>
 
@@ -287,7 +293,11 @@ export default function DashboardPage() {
              <CardDescription>Health overview of critical components.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             {isDataLoading && systemStatus.length === 0 ? (
+            {showEmptyState ? (
+                <div className="text-center py-8 text-muted-foreground">
+                    <p>Connect to the database to see system status.</p>
+                </div>
+             ) :isDataLoading && systemStatus.length === 0 ? (
                 Array.from({length: 4}).map((_, i) => <SystemStatusItem key={i} loading />)
              ) : systemStatus.length > 0 ? (
                 systemStatus.map((item) => <SystemStatusItem key={item.name} item={item} />)

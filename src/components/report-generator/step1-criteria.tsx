@@ -96,8 +96,15 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   
   React.useEffect(() => {
     async function fetchTags() {
-      if (!user || !selectedMachineIds || selectedMachineIds.length === 0 || connectionStatus !== 'connected') {
+      if (!user || !selectedMachineIds || selectedMachineIds.length === 0) {
         setAvailableParameters([]);
+        return;
+      }
+
+      if (connectionStatus !== 'connected') {
+        setAvailableParameters([]);
+        setParameterError("Database is not connected. Please configure it in Settings.");
+        setLoadingParameters(false);
         return;
       }
       
@@ -106,7 +113,6 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       
       try {
         const settings = await getUserSettings({ userId: user.uid });
-        // Settings should be present if connectionStatus is 'connected'
         const creds = settings?.database;
         if (creds) {
           const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds });
@@ -351,8 +357,9 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
                           </div>
                         ) : parameterError ? (
                            <ConnectionError 
-                            title="Parameter Fetch Failed"
+                            title="Could Not Load Parameters"
                             message={parameterError}
+                            isSubtle
                            />
                         ) : filteredParameters.length > 0 ? filteredParameters.map((param) => (
                           <FormField
