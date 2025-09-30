@@ -27,13 +27,14 @@ function AuthenticatedLayout({
   const router = useRouter();
   const pathname = usePathname();
 
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isAuthPage) {
       router.push('/login');
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router, pathname, isAuthPage]);
 
-  const isAuthPage = pathname === '/login' || pathname === '/register';
 
   if (isAuthPage) {
     return <>{children}</>;
