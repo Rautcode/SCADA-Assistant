@@ -30,7 +30,6 @@ const getSystemStatusTool = ai.defineTool(
   {
     name: 'getSystemStatus',
     description: 'Retrieves the current status of all system components.',
-    inputSchema: z.object({}),
     outputSchema: z.array(z.object({
       name: z.string(),
       status: z.string(),
@@ -50,7 +49,6 @@ const getDashboardStatsTool = ai.defineTool(
     {
         name: 'getDashboardStats',
         description: 'Retrieves the main overview statistics from the dashboard.',
-        inputSchema: z.object({}),
         outputSchema: z.object({
             reports: z.number(),
             tasks: z.number(),
@@ -75,7 +73,6 @@ const getRecentActivitiesTool = ai.defineTool(
     {
         name: 'getRecentActivities',
         description: 'Retrieves the most recent activities that have occurred in the system.',
-        inputSchema: z.object({}),
         outputSchema: z.array(z.object({
             title: z.string(),
             description: z.string(),
