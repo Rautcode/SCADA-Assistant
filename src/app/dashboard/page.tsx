@@ -168,8 +168,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const now = new Date();
-    setCurrentDate(now.toLocaleDateString(undefined, {
+    // This will only run on the client, after hydration
+    setCurrentDate(new Date().toLocaleDateString(undefined, {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     }));
 
