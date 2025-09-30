@@ -21,9 +21,10 @@ type ChatMessage = {
 };
 
 const suggestedPrompts = [
+    { label: "What's the system status?", prompt: "What is the current system status?" },
+    { label: "Create a new report", prompt: "How do I create a new report?" },
+    { label: "Show dashboard stats", prompt: "Can you show me the dashboard stats?" },
     { label: "Go to settings", prompt: "Take me to the settings page" },
-    { label: "Create a report", prompt: "How do I create a new report?" },
-    { label: "What is this app?", prompt: "What can this application do?" },
 ]
 
 export function Assistant() {
@@ -117,12 +118,12 @@ export function Assistant() {
               <CardContent className="flex-1 overflow-hidden p-0">
                 <ScrollArea className="h-full">
                     <div className="p-6 space-y-4">
-                        {messages.length === 0 && (
+                        {messages.length === 0 && !isLoading && (
                             <div className='text-center p-4'>
                                 <p className='text-sm text-muted-foreground mb-4'>What can I help you with?</p>
                                 <div className='grid grid-cols-2 gap-2'>
                                     {suggestedPrompts.map(p => (
-                                        <Button key={p.label} variant='outline' size='sm' className='h-auto justify-between' onClick={() => handleSend(p.prompt)}>
+                                        <Button key={p.label} variant='outline' size='sm' className='h-auto justify-between text-left' onClick={() => handleSend(p.prompt)}>
                                             <span>{p.label}</span>
                                             <ArrowRight className='h-4 w-4'/>
                                         </Button>

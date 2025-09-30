@@ -9,6 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/database-service';
+import type { DashboardStats, RecentActivity, SystemComponentStatus } from '@/lib/types/database';
 
 // Define tools for the assistant to use
 const navigationTool = ai.defineTool(
@@ -23,12 +25,79 @@ const navigationTool = ai.defineTool(
   async ({ page }) => `Navigating to ${page}...`
 );
 
+const getSystemStatusTool = ai.defineTool(
+  {
+    name: 'getSystemStatus',
+    description: 'Retrieves the current status of all system components.',
+    inputSchema: z.object({}),
+    outputSchema: z.array(z.object({
+      name: z.string(),
+      status: z.string(),
+    })),
+  },
+  async () => {
+    return new Promise((resolve) => {
+        const unsubscribe = onSystemComponentStatuses((statuses: SystemComponentStatus[]) => {
+            unsubscribe();
+            resolve(statuses);
+        });
+    });
+  }
+);
+
+const getDashboardStatsTool = ai.defineTool(
+    {
+        name: 'getDashboardStats',
+        description: 'Retrieves the main overview statistics from the dashboard.',
+        inputSchema: z.object({}),
+        outputSchema: z.object({
+            reports: z.number(),
+            tasks: z.number(),
+            users: z.number(),
+            systemStatus: z.string(),
+        }),
+    },
+    async () => {
+        return new Promise((resolve) => {
+            const unsubscribe = onDashboardStats((stats: DashboardStats | null) => {
+                if (stats) {
+                    unsubscribe();
+                    const { lastUpdated, ...rest } = stats;
+                    resolve(rest);
+                }
+            });
+        });
+    }
+);
+
+const getRecentActivitiesTool = ai.defineTool(
+    {
+        name: 'getRecentActivities',
+        description: 'Retrieves the most recent activities that have occurred in the system.',
+        inputSchema: z.object({}),
+        outputSchema: z.array(z.object({
+            title: z.string(),
+            description: z.string(),
+            timestamp: z.date(),
+        }))
+    },
+    async () => {
+        return new Promise((resolve) => {
+            const unsubscribe = onRecentActivities((activities: RecentActivity[]) => {
+                unsubscribe();
+                resolve(activities.map(({id, icon, iconColor, ...rest}) => rest));
+            }, 5); // get top 5
+        });
+    }
+);
+
+
 // Main prompt for the assistant
 const assistantPrompt = ai.definePrompt({
   name: 'assistantPrompt',
-  tools: [navigationTool],
+  tools: [navigationTool, getSystemStatusTool, getDashboardStatsTool, getRecentActivitiesTool],
   system: `You are a helpful AI assistant for a SCADA (Supervisory Control and Data Acquisition) application.
-  Your role is to help users understand the application's features and navigate through it.
+  Your role is to help users understand the application's features, navigate through it, and get real-time information about the system's status and data.
   
   Available pages:
   - /dashboard: The main overview page.
@@ -40,7 +109,10 @@ const assistantPrompt = ai.definePrompt({
   - /help: Documentation and support.
   
   When a user asks to go to a page, use the navigateTo tool.
-  Keep your answers concise and helpful.`,
+  When a user asks about system status, dashboard stats, or recent activity, use the provided tools to get live data.
+  Summarize the data from tools in a clear, human-readable way. For example, when reporting system status, list each component and its status.
+  
+  Keep your answers concise and helpful. Be friendly and conversational.`,
 });
 
 export async function askAssistant(history: z.infer<typeof assistantPrompt.historySchema>) {
