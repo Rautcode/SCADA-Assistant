@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, X, CornerDownLeft, Loader2, ArrowRight } from 'lucide-react';
+import { Bot, Send, X, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,18 +11,17 @@ import { askAssistant } from '@/ai/flows/assistant-flow';
 import { useRouter } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import type { MessageData } from 'genkit';
+import type { Part } from 'genkit';
 import { useAssistant } from './assistant-provider';
 
 type ChatMessage = {
   role: 'user' | 'model';
-  content: string;
-  isTool?: boolean;
+  content: Part[];
 };
 
 const suggestedPrompts = [
     { label: "What's the system status?", prompt: "What is the current system status?" },
-    { label: "Create a new report", prompt: "How do I create a new report?" },
+    { label: "How do I create a new report?", prompt: "How do I create a new report?" },
     { label: "Show dashboard stats", prompt: "Can you show me the dashboard stats?" },
     { label: "Go to settings", prompt: "Take me to the settings page" },
 ]
@@ -38,13 +37,13 @@ export function Assistant() {
     const userMessage = prompt || input;
     if (!userMessage) return;
 
-    const newMessages: ChatMessage[] = [...messages, { role: 'user', content: userMessage }];
+    const newMessages: ChatMessage[] = [...messages, { role: 'user', content: [{ text: userMessage }] }];
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
 
     try {
-      const history = newMessages.map(msg => ({ role: msg.role, content: [{ text: msg.content }] }));
+      const history = newMessages.map(msg => ({ role: msg.role, content: msg.content }));
       const { output: assistantResponse } = await askAssistant(history);
 
       if (!assistantResponse) {
@@ -54,16 +53,11 @@ export function Assistant() {
       let finalMessages: ChatMessage[] = [...newMessages];
 
       if (assistantResponse.content) {
-          const modelMessage: ChatMessage = { role: 'model', content: '' };
+          finalMessages.push({ role: 'model', content: assistantResponse.content });
+          
           assistantResponse.content.forEach(part => {
-              if (part.text) {
-                  modelMessage.content += part.text;
-              }
               if (part.toolRequest) {
-                  modelMessage.isTool = true;
-                  modelMessage.content += `Using tool: ${part.toolRequest.name}...`;
-
-                  // Handle navigation tool
+                  // Handle navigation tool specifically on the client
                   if (part.toolRequest.name === 'navigateTo' && part.toolRequest.input.page) {
                       setTimeout(() => {
                         router.push(part.toolRequest.input.page);
@@ -72,14 +66,13 @@ export function Assistant() {
                   }
               }
           });
-          finalMessages.push(modelMessage);
       }
       
       setMessages(finalMessages);
 
     } catch (error) {
       console.error("Assistant error:", error);
-      setMessages([...newMessages, { role: 'model', content: 'Sorry, I encountered an error. Please try again.' }]);
+      setMessages([...newMessages, { role: 'model', content: [{ text: 'Sorry, I encountered an error. Please try again.' }] }]);
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +83,18 @@ export function Assistant() {
       handleSend();
     }
   };
+
+  const renderContent = (content: Part[]) => {
+    let textContent = '';
+    content.forEach(part => {
+        if (part.text) {
+            textContent += part.text;
+        } else if (part.toolRequest) {
+            textContent += `Using tool: ${part.toolRequest.name}...`;
+        }
+    });
+    return textContent;
+  }
 
   return (
     <>
@@ -151,7 +156,7 @@ export function Assistant() {
                                 : 'bg-muted'
                             )}
                             >
-                            <p>{message.content}</p>
+                            <p>{renderContent(message.content)}</p>
                             </div>
                         </div>
                         ))}
