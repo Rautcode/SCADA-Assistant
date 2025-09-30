@@ -1,4 +1,4 @@
-
+import './globals.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '@/components/auth/auth-provider';
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head />
       <body
         className={cn(
@@ -28,7 +28,6 @@ export default function RootLayout({
           GeistSans.variable,
           GeistMono.variable
         )}
-        suppressHydrationWarning
       >
         <AuthProvider>
           <LocalizationProvider>
