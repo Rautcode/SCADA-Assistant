@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
 import { useAssistant } from "@/components/assistant/assistant-provider";
 import { ToastAction } from "@/components/ui/toast";
+import { useLocalization } from "@/components/localization/localization-provider";
 
 type ConnectionStatus = 'unknown' | 'testing' | 'success' | 'error';
 
@@ -35,6 +36,7 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = React.useState(false);
     const [isFetching, setIsFetching] = React.useState(true);
     const { setOpen: setAssistantOpen } = useAssistant();
+    const { t, setLanguage } = useLocalization();
     
     const [dbConnectionStatus, setDbConnectionStatus] = React.useState<ConnectionStatus>('unknown');
     const [isTestingDbConnection, setIsTestingDbConnection] = React.useState(false);
@@ -77,6 +79,9 @@ export default function SettingsPage() {
             .then(settings => {
                 if (settings) {
                     form.reset(settings);
+                    if (settings.language) {
+                        setLanguage(settings.language);
+                    }
                 } else {
                     // Apply default if no settings found
                     form.reset(form.formState.defaultValues);
@@ -93,7 +98,7 @@ export default function SettingsPage() {
             })
             .finally(() => setIsFetching(false));
 
-    }, [user, form, toast, setAssistantOpen]);
+    }, [user, form, toast, setAssistantOpen, setLanguage]);
 
     async function onSubmit(values: SettingsFormValues) {
         if (!user) {
@@ -105,8 +110,8 @@ export default function SettingsPage() {
         try {
             await saveUserSettings({ userId: user.uid, settings: values });
             toast({
-                title: "Settings Saved",
-                description: "Your new settings have been applied.",
+                title: t('settings_saved_title'),
+                description: t('settings_saved_description'),
             });
             // Update theme immediately after saving
             if (values.theme) {
@@ -119,6 +124,10 @@ export default function SettingsPage() {
                 } else {
                     root.classList.add(values.theme);
                 }
+            }
+            // Update language
+            if (values.language) {
+                setLanguage(values.language);
             }
             // Refetch global DB status after saving new credentials
             refetchDbStatus();
@@ -218,13 +227,13 @@ export default function SettingsPage() {
     const ConnectionStatusBadge = ({ status }: { status: ConnectionStatus}) => {
         switch(status) {
             case 'success':
-                return <Badge variant="default" className="bg-green-500 text-white"><Wifi className="mr-1 h-4 w-4" />Connected</Badge>;
+                return <Badge variant="default" className="bg-green-500 text-white"><Wifi className="mr-1 h-4 w-4" />{t('connected')}</Badge>;
             case 'error':
-                return <Badge variant="destructive"><WifiOff className="mr-1 h-4 w-4" />Connection Failed</Badge>;
+                return <Badge variant="destructive"><WifiOff className="mr-1 h-4 w-4" />{t('connection_failed')}</Badge>;
             case 'testing':
-                return <Badge variant="secondary"><Loader2 className="mr-1 h-4 w-4 animate-spin" />Testing...</Badge>;
+                return <Badge variant="secondary"><Loader2 className="mr-1 h-4 w-4 animate-spin" />{t('testing')}</Badge>;
             default:
-                return <Badge variant="outline">Untested</Badge>;
+                return <Badge variant="outline">{t('untested')}</Badge>;
         }
     };
 
@@ -251,11 +260,11 @@ export default function SettingsPage() {
         return (
             <Tabs defaultValue="appearance" className="w-full">
                 <TabsList className="w-full flex-wrap sm:flex-nowrap sm:overflow-x-auto justify-start h-auto">
-                    <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />Appearance</TabsTrigger>
-                    <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />Notifications</TabsTrigger>
-                    <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />Data & Integrations</TabsTrigger>
-                    <TabsTrigger value="database"><Server className="mr-2 h-4 w-4" />Database</TabsTrigger>
-                    <TabsTrigger value="email"><Mail className="mr-2 h-4 w-4" />Email</TabsTrigger>
+                    <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
+                    <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
+                    <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />{t('data_integrations')}</TabsTrigger>
+                    <TabsTrigger value="database"><Server className="mr-2 h-4 w-4" />{t('database')}</TabsTrigger>
+                    <TabsTrigger value="email"><Mail className="mr-2 h-4 w-4" />{t('email')}</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="appearance" className="mt-6">
@@ -265,20 +274,20 @@ export default function SettingsPage() {
                             name="theme"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Theme</FormLabel>
+                                    <FormLabel>{t('theme')}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select a theme" />
+                                            <SelectValue placeholder={t('select_theme')} />
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="light">Light</SelectItem>
-                                            <SelectItem value="dark">Dark</SelectItem>
-                                            <SelectItem value="system">System Default</SelectItem>
+                                            <SelectItem value="light">{t('light')}</SelectItem>
+                                            <SelectItem value="dark">{t('dark')}</SelectItem>
+                                            <SelectItem value="system">{t('system_default')}</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <FormDescription>Choose how the application looks.</FormDescription>
+                                    <FormDescription>{t('theme_description')}</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -288,11 +297,11 @@ export default function SettingsPage() {
                             name="language"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> Language</FormLabel>
+                                    <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select a language" />
+                                            <SelectValue placeholder={t('select_language')} />
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -302,7 +311,7 @@ export default function SettingsPage() {
                                             <SelectItem value="es">Español</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <FormDescription>Set your preferred language for the UI.</FormDescription>
+                                    <FormDescription>{t('language_description')}</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -313,13 +322,13 @@ export default function SettingsPage() {
                 <TabsContent value="notifications" className="mt-6">
                      <div className="space-y-8">
                         <div className="space-y-4 rounded-lg border p-4">
-                            <h3 className="text-lg font-medium">Notification Channels</h3>
+                            <h3 className="text-lg font-medium">{t('notification_channels')}</h3>
                             <FormField
                                 control={form.control}
                                 name="notifications.inApp"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>In-App Notifications</FormLabel>
+                                        <FormLabel>{t('in_app_notifications')}</FormLabel>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -329,20 +338,20 @@ export default function SettingsPage() {
                                 name="notifications.email"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>Email Notifications</FormLabel>
+                                        <FormLabel>{t('email_notifications')}</FormLabel>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
                             />
                         </div>
                          <div className="space-y-4 rounded-lg border p-4">
-                            <h3 className="text-lg font-medium">Event-based Notifications</h3>
+                            <h3 className="text-lg font-medium">{t('event_based_notifications')}</h3>
                             <FormField
                                 control={form.control}
                                 name="notifications.systemAlerts"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>Critical System Alerts</FormLabel>
+                                        <FormLabel>{t('critical_system_alerts')}</FormLabel>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -352,7 +361,7 @@ export default function SettingsPage() {
                                 name="notifications.reportCompletion"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>Report Generation Complete</FormLabel>
+                                        <FormLabel>{t('report_generation_complete')}</FormLabel>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -368,21 +377,21 @@ export default function SettingsPage() {
                             name="syncFrequency"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Data Sync Frequency</FormLabel>
+                                    <FormLabel>{t('data_sync_frequency')}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select sync frequency" />
+                                            <SelectValue placeholder={t('select_sync_frequency')} />
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="1">Every minute</SelectItem>
-                                            <SelectItem value="5">Every 5 minutes</SelectItem>
-                                            <SelectItem value="15">Every 15 minutes</SelectItem>
-                                            <SelectItem value="manual">Manual only</SelectItem>
+                                            <SelectItem value="1">{t('every_minute')}</SelectItem>
+                                            <SelectItem value="5">{t('every_5_minutes')}</SelectItem>
+                                            <SelectItem value="15">{t('every_15_minutes')}</SelectItem>
+                                            <SelectItem value="manual">{t('manual_only')}</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <FormDescription>How often to sync data from external sources.</FormDescription>
+                                    <FormDescription>{t('data_sync_description')}</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -394,10 +403,10 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>API Key</FormLabel>
                                     <FormControl>
-                                        <Input type="password" placeholder="Enter your API key" {...field} value={field.value || ''} />
+                                        <Input type="password" placeholder={t('api_key_placeholder')} {...field} value={field.value || ''} />
                                     </FormControl>
                                     <FormDescription>
-                                        API key for third-party integrations.
+                                        {t('api_key_description')}
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -410,8 +419,8 @@ export default function SettingsPage() {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle>SCADA Database Connection</CardTitle>
-                                    <CardDescription>Enter the credentials for your live SCADA SQL database.</CardDescription>
+                                    <CardTitle>{t('scada_db_connection')}</CardTitle>
+                                    <CardDescription>{t('scada_db_description')}</CardDescription>
                                 </div>
                                 <ConnectionStatusBadge status={dbConnectionStatus} />
                             </div>
@@ -422,7 +431,7 @@ export default function SettingsPage() {
                                 name="database.server"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Server Address</FormLabel>
+                                        <FormLabel>{t('server_address')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., 192.168.1.100 or scada.myserver.com" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -435,7 +444,7 @@ export default function SettingsPage() {
                                 name="database.dbName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Database Name</FormLabel>
+                                        <FormLabel>{t('database_name')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., WinCC_Tag_Logging" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -448,7 +457,7 @@ export default function SettingsPage() {
                                 name="database.user"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Database User</FormLabel>
+                                        <FormLabel>{t('database_user')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., report_user" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -461,7 +470,7 @@ export default function SettingsPage() {
                                 name="database.password"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Password</FormLabel>
+                                        <FormLabel>{t('password')}</FormLabel>
                                         <FormControl>
                                             <Input type="password" {...field} value={field.value || ''}/>
                                         </FormControl>
@@ -473,7 +482,7 @@ export default function SettingsPage() {
                         <CardFooter>
                              <Button type="button" variant="outline" onClick={handleTestDbConnection} disabled={isTestingDbConnection}>
                                 {isTestingDbConnection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wifi className="mr-2 h-4 w-4" />}
-                                Test Connection
+                                {t('test_connection')}
                             </Button>
                         </CardFooter>
                     </Card>
@@ -483,8 +492,8 @@ export default function SettingsPage() {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle>SMTP Email Settings</CardTitle>
-                                    <CardDescription>Configure the server for sending outgoing emails.</CardDescription>
+                                    <CardTitle>{t('smtp_settings')}</CardTitle>
+                                    <CardDescription>{t('smtp_description')}</CardDescription>
                                 </div>
                                 <ConnectionStatusBadge status={smtpConnectionStatus} />
                             </div>
@@ -542,7 +551,7 @@ export default function SettingsPage() {
                         <CardFooter>
                              <Button type="button" variant="outline" onClick={handleTestSmtpConnection} disabled={isTestingSmtpConnection}>
                                 {isTestingSmtpConnection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                                Test Connection
+                                {t('test_connection')}
                             </Button>
                         </CardFooter>
                     </Card>
@@ -560,13 +569,13 @@ export default function SettingsPage() {
                              <div>
                                 <CardTitle className="flex items-center text-2xl font-bold">
                                     <Settings className="mr-3 h-7 w-7 text-primary" />
-                                    Application Settings
+                                    {t('app_settings')}
                                 </CardTitle>
-                                <CardDescription>Manage your application preferences and configurations.</CardDescription>
+                                <CardDescription>{t('settings_description')}</CardDescription>
                             </div>
                             <Button type="submit" disabled={isLoading || isFetching}>
                                 <Save className="mr-2 h-4 w-4" />
-                                {isLoading ? "Saving..." : "Save All"}
+                                {isLoading ? t('saving') : t('save_all')}
                             </Button>
                         </CardHeader>
                         <CardContent>

@@ -17,6 +17,22 @@ import { GeistSans, GeistMono } from 'geist/font';
 import { cn } from '@/lib/utils';
 import './globals.css';
 import { getUserSettings } from './actions/scada-actions';
+import { LocalizationProvider } from '@/components/localization/localization-provider';
+
+function applyTheme(theme: string) {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        root.classList.add(systemTheme);
+        return;
+    }
+
+    root.classList.add(theme);
+}
 
 
 function AuthenticatedLayout({
@@ -40,19 +56,7 @@ function AuthenticatedLayout({
     if (user) {
       getUserSettings({ userId: user.uid }).then((settings) => {
         if (settings?.theme) {
-          const root = window.document.documentElement;
-          root.classList.remove("light", "dark");
-
-          if (settings.theme === "system") {
-            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-              .matches
-              ? "dark"
-              : "light";
-            root.classList.add(systemTheme);
-            return;
-          }
-
-          root.classList.add(settings.theme);
+            applyTheme(settings.theme);
         }
       });
     }
@@ -114,10 +118,14 @@ export default function RootLayout({
         )}
       >
         <AuthProvider>
-          <AuthenticatedLayout>{children}</AuthenticatedLayout>
-          <Toaster />
+            <LocalizationProvider>
+                <AuthenticatedLayout>{children}</AuthenticatedLayout>
+                <Toaster />
+            </LocalizationProvider>
         </AuthProvider>
       </body>
     </html>
   );
 }
+
+    
