@@ -20,7 +20,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head />
       <body
         className={cn(
@@ -28,6 +28,7 @@ export default function RootLayout({
           GeistSans.variable,
           GeistMono.variable
         )}
+        suppressHydrationWarning
       >
         <AuthProvider>
           <LocalizationProvider>
