@@ -4,7 +4,7 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail } from 'lucide-react';
+import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail, Map, Workflow } from 'lucide-react';
 import type { SettingsFormValues } from "@/lib/types/database";
 import { settingsSchema } from "@/lib/types/database";
 
@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, testSmtpConnection, getUserSettings, saveUserSettings } from "@/app/actions/scada-actions";
+import { testScadaConnection, testSmtpConnection, getUserSettings, saveUserSettings, getDbSchema } from "@/app/actions/scada-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
@@ -44,6 +44,9 @@ export default function SettingsPage() {
     const [smtpConnectionStatus, setSmtpConnectionStatus] = React.useState<ConnectionStatus>('unknown');
     const [isTestingSmtpConnection, setIsTestingSmtpConnection] = React.useState(false);
 
+    const [dbSchema, setDbSchema] = React.useState<{ tables: string[], columns: { [key: string]: string[] } } | null>(null);
+    const [isFetchingSchema, setIsFetchingSchema] = React.useState(false);
+    
     const form = useForm<SettingsFormValues>({
         resolver: zodResolver(settingsSchema),
         defaultValues: {
@@ -63,6 +66,13 @@ export default function SettingsPage() {
                 user: "",
                 password: "",
             },
+            dataMapping: {
+                table: "",
+                timestampColumn: "",
+                machineColumn: "",
+                parameterColumn: "",
+                valueColumn: "",
+            },
             email: {
                 smtpHost: "",
                 smtpPort: 587,
@@ -71,6 +81,8 @@ export default function SettingsPage() {
             }
         },
     });
+
+    const selectedTable = form.watch("dataMapping.table");
 
     React.useEffect(() => {
         if (!user) return;
@@ -184,6 +196,24 @@ export default function SettingsPage() {
         }
     }
     
+    async function handleFetchSchema() {
+        const dbCreds = form.getValues('database');
+        if (!dbCreds?.server || !dbCreds?.dbName) {
+            toast({ title: "Missing Credentials", description: "Please enter and save database credentials first.", variant: "destructive" });
+            return;
+        }
+        setIsFetchingSchema(true);
+        try {
+            const schema = await getDbSchema({ dbCreds });
+            setDbSchema(schema);
+            toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
+        } catch (error: any) {
+            toast({ title: "Schema Fetch Failed", description: error.message, variant: "destructive" });
+        } finally {
+            setIsFetchingSchema(false);
+        }
+    }
+
     async function handleTestSmtpConnection() {
         const emailCreds = form.getValues('email');
         if (!emailCreds?.smtpHost || !emailCreds?.smtpPort || !emailCreds?.smtpUser) {
@@ -262,11 +292,12 @@ export default function SettingsPage() {
         }
         return (
             <Tabs defaultValue="appearance" className="w-full">
-                <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
+                <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto">
                     <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
                     <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
-                    <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />{t('data_integrations')}</TabsTrigger>
+                    <TabsTrigger value="integrations"><Workflow className="mr-2 h-4 w-4" />{t('data_integrations')}</TabsTrigger>
                     <TabsTrigger value="database"><Server className="mr-2 h-4 w-4" />{t('database')}</TabsTrigger>
+                    <TabsTrigger value="mapping"><Map className="mr-2 h-4 w-4" />Data Mapping</TabsTrigger>
                     <TabsTrigger value="email"><Mail className="mr-2 h-4 w-4" />{t('email')}</TabsTrigger>
                 </TabsList>
                 
@@ -373,7 +404,7 @@ export default function SettingsPage() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="data" className="mt-6">
+                <TabsContent value="integrations" className="mt-6">
                     <div className="space-y-8">
                         <FormField
                             control={form.control}
@@ -490,6 +521,94 @@ export default function SettingsPage() {
                         </CardFooter>
                     </Card>
                 </TabsContent>
+                <TabsContent value="mapping" className="mt-6">
+                    <Card>
+                         <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Data Column Mapping</CardTitle>
+                                    <CardDescription>Map your database columns to the fields required by the application.</CardDescription>
+                                </div>
+                                <Button type="button" onClick={handleFetchSchema} disabled={isFetchingSchema}>
+                                    {isFetchingSchema ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4"/>}
+                                    Fetch Schema
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {isFetchingSchema ? <Skeleton className="h-24 w-full" /> : !dbSchema ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">Click "Fetch Schema" to load your database tables and columns.</p>
+                            ) : (
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="dataMapping.table"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Table</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a table" /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {dbSchema.tables.map(table => <SelectItem key={table} value={table}>{table}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>Select the table containing your tag data.</FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {selectedTable && dbSchema.columns[selectedTable] && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                                            <FormField
+                                                control={form.control} name="dataMapping.timestampColumn"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Timestamp Column</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control} name="dataMapping.machineColumn"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Machine/Server Column</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control} name="dataMapping.parameterColumn"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Parameter/Tag Name Column</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control} name="dataMapping.valueColumn"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Value Column</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
                 <TabsContent value="email" className="mt-6">
                     <Card>
                         <CardHeader>
@@ -592,5 +711,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    

@@ -74,9 +74,10 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         try {
             const settings = await getUserSettings({ userId: user.uid });
             const creds = settings?.database;
+            const mapping = settings?.dataMapping;
 
-            if (creds) {
-                const scadaData = await getScadaData({ criteria, dbCreds: creds });
+            if (creds && mapping) {
+                const scadaData = await getScadaData({ criteria, dbCreds: creds, mapping });
                 const enrichedData = scadaData.map(d => ({...d, included: initialData?.scadaData.find(initial => initial.id === d.id)?.included ?? true }));
                 setData(enrichedData);
                  if (scadaData.length === 0) {
@@ -85,7 +86,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
 
             } else {
                 // This case should be handled by the connection provider, but as a fallback:
-                setError("Database credentials are not configured. Please set them in your user settings.");
+                setError("Database credentials or data mappings are not configured. Please set them in your user settings.");
             }
         } catch (e: any) {
             console.error("Failed to fetch SCADA data:", e);

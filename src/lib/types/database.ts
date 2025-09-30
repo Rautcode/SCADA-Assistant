@@ -8,6 +8,14 @@ export const emailSettingsSchema = z.object({
   smtpPass: z.string().optional(),
 });
 
+export const dataMappingSchema = z.object({
+    table: z.string().optional(),
+    timestampColumn: z.string().optional(),
+    machineColumn: z.string().optional(),
+    parameterColumn: z.string().optional(),
+    valueColumn: z.string().optional(),
+});
+
 export const settingsSchema = z.object({
   // Appearance
   theme: z.enum(["light", "dark", "system"]),
@@ -33,6 +41,9 @@ export const settingsSchema = z.object({
     password: z.string().optional(),
   }).optional(),
   
+  // Data Mapping
+  dataMapping: dataMappingSchema.optional(),
+
   // Email Settings
   email: emailSettingsSchema.optional(),
 });

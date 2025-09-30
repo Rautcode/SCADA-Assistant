@@ -99,6 +99,7 @@ export async function getUserSettingsFromDb(userId: string): Promise<UserSetting
         // Ensure nested objects exist
         if (!data.database) data.database = {};
         if (!data.email) data.email = {};
+        if (!data.dataMapping) data.dataMapping = {};
         return { userId, ...data } as UserSettings;
     }
     return null;

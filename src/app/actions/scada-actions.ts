@@ -6,7 +6,7 @@ import sql from 'mssql';
 import nodemailer from 'nodemailer';
 import { reportCriteriaSchema } from "@/components/report-generator/step1-criteria";
 import { z } from "zod";
-import { emailSettingsSchema, settingsSchema } from "@/lib/types/database";
+import { dataMappingSchema, emailSettingsSchema, settingsSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
 
 
@@ -18,16 +18,24 @@ export type ScadaDbCredentials = {
     password?: string | null;
 }
 export type SmtpCredentials = z.infer<typeof emailSettingsSchema>;
-
+export type ScadaDataMapping = z.infer<typeof dataMappingSchema>;
 
 // Server Action to get SCADA data
 type GetScadaDataInput = {
     criteria: z.infer<typeof reportCriteriaSchema>;
     dbCreds: ScadaDbCredentials;
+    mapping: ScadaDataMapping;
 }
-export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Promise<ScadaDataPoint[]> {
+export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataInput): Promise<ScadaDataPoint[]> {
     console.log("Fetching SCADA data with criteria:", criteria);
     
+    if (!dbCreds.server || !dbCreds.database) {
+         throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
+    }
+    if (!mapping.table || !mapping.timestampColumn || !mapping.machineColumn || !mapping.parameterColumn || !mapping.valueColumn) {
+        throw new Error("Database table and column mappings are not fully configured in Settings > Data Mapping.");
+    }
+
     try {
         const dbConfig = {
             user: dbCreds.user || '',
@@ -40,10 +48,6 @@ export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Pr
             }
         };
 
-        if (!dbConfig.server || !dbConfig.database) {
-             throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
-        }
-
         await sql.connect(dbConfig);
 
         const { dateRange, machineIds, parameterIds } = criteria;
@@ -52,19 +56,22 @@ export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Pr
         let parameterFilter = '';
         if (parameterIds && parameterIds.length > 0) {
             const parameterIdList = parameterIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
-            parameterFilter = `AND TagName IN (${parameterIdList})`;
+            parameterFilter = `AND ${mapping.parameterColumn} IN (${parameterIdList})`;
         }
-
-        // IMPORTANT: You MUST replace 'YourTagLoggingTableName' and the column names
-        // (TagName, TimeStamp, TagValue, etc.) with the actual names from your SCADA database schema.
+        
         const queryString = `
-            SELECT TagName, TimeStamp, TagValue, ServerName FROM YourTagLoggingTableName
+            SELECT 
+                ${mapping.parameterColumn} as TagName, 
+                ${mapping.timestampColumn} as TimeStamp, 
+                ${mapping.valueColumn} as TagValue, 
+                ${mapping.machineColumn} as ServerName 
+            FROM ${mapping.table}
             WHERE 
-                TimeStamp BETWEEN '${dateRange.from.toISOString()}' AND '${dateRange.to.toISOString()}'
-                AND ServerName IN (${machineIdList})
+                ${mapping.timestampColumn} BETWEEN '${dateRange.from.toISOString()}' AND '${dateRange.to.toISOString()}'
+                AND ${mapping.machineColumn} IN (${machineIdList})
                 ${parameterFilter}
             ORDER BY 
-                TimeStamp DESC;
+                ${mapping.timestampColumn} DESC;
         `;
         const result = await sql.query(queryString);
         
@@ -97,10 +104,18 @@ export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Pr
 type GetScadaTagsInput = {
     machineIds: string[];
     dbCreds: ScadaDbCredentials;
+    mapping: ScadaDataMapping;
 }
-export async function getScadaTags({ machineIds, dbCreds }: GetScadaTagsInput): Promise<string[]> {
+export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTagsInput): Promise<string[]> {
     console.log("Fetching SCADA tags for machines:", machineIds);
     if (!machineIds || machineIds.length === 0) return [];
+    
+    if (!dbCreds.server || !dbCreds.database) {
+         throw new Error("SCADA Database Server or Database Name is not configured.");
+    }
+     if (!mapping.table || !mapping.machineColumn || !mapping.parameterColumn) {
+        throw new Error("Database table and column mappings are not fully configured in Settings > Data Mapping.");
+    }
     
     try {
         const dbConfig = {
@@ -111,19 +126,13 @@ export async function getScadaTags({ machineIds, dbCreds }: GetScadaTagsInput): 
             options: { encrypt: true, trustServerCertificate: true }
         };
 
-        if (!dbConfig.server || !dbConfig.database) {
-             throw new Error("SCADA Database Server or Database Name is not configured.");
-        }
-
         await sql.connect(dbConfig);
 
         const machineIdList = machineIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
         
-        // IMPORTANT: You MUST replace 'YourTagLoggingTableName' and 'ServerName' / 'TagName'
-        // with the actual names from your SCADA database schema.
         const queryString = `
-            SELECT DISTINCT TagName FROM YourTagLoggingTableName
-            WHERE ServerName IN (${machineIdList})
+            SELECT DISTINCT ${mapping.parameterColumn} as TagName FROM ${mapping.table}
+            WHERE ${mapping.machineColumn} IN (${machineIdList})
             ORDER BY TagName ASC;
         `;
         const result = await sql.query(queryString);
@@ -141,6 +150,51 @@ export async function getScadaTags({ machineIds, dbCreds }: GetScadaTagsInput): 
             await sql.close();
         }
         throw new Error(`Database query for tags failed: ${error.message}. Please check your connection details in Settings.`);
+    }
+}
+
+// Server Action to get DB schema
+type GetDbSchemaInput = {
+    dbCreds: ScadaDbCredentials;
+};
+
+export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
+    console.log("Fetching DB schema...");
+    
+    if (!dbCreds.server || !dbCreds.database) {
+         throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
+    }
+
+    try {
+        const dbConfig = {
+            user: dbCreds.user || '',
+            password: dbCreds.password || '',
+            server: dbCreds.server || '',
+            database: dbCreds.database || '',
+            options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
+        };
+
+        await sql.connect(dbConfig);
+
+        const tablesResult = await sql.query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
+        const tables: string[] = tablesResult.recordset.map(row => row.TABLE_NAME);
+
+        const columns: { [key: string]: string[] } = {};
+        for (const table of tables) {
+            const columnsResult = await sql.query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${table.replace(/'/g, "''")}' ORDER BY ORDINAL_POSITION`);
+            columns[table] = columnsResult.recordset.map(row => row.COLUMN_NAME);
+        }
+        
+        await sql.close();
+        console.log(`Found ${tables.length} tables.`);
+        return { tables, columns };
+
+    } catch (error: any) {
+        console.error("Failed to fetch DB schema from SQL Server:", error.message);
+        if (sql.connected) {
+            await sql.close();
+        }
+        throw new Error(`Database schema query failed: ${error.message}.`);
     }
 }
 
