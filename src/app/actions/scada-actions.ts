@@ -53,7 +53,7 @@ export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Pr
         // IMPORTANT: You MUST replace 'YourTagLoggingTableName' and the column names
         // (TagName, TimeStamp, TagValue, etc.) with the actual names from your SCADA database schema.
         const queryString = `
-            SELECT TagName, TimeStamp, TagValue FROM YourTagLoggingTableName
+            SELECT TagName, TimeStamp, TagValue, ServerName FROM YourTagLoggingTableName
             WHERE 
                 TimeStamp BETWEEN '${dateRange.from.toISOString()}' AND '${dateRange.to.toISOString()}'
                 AND ServerName IN (${machineIdList})
