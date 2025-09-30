@@ -14,7 +14,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { cn } from '@/lib/utils';
-import './globals.css';
 import { getUserSettings } from './actions/scada-actions';
 import { LocalizationProvider } from '@/components/localization/localization-provider';
 
@@ -53,11 +52,17 @@ function AuthenticatedLayout({
 
   useEffect(() => {
     if (user) {
-      getUserSettings({ userId: user.uid }).then((settings) => {
-        if (settings?.theme) {
+      const fetchSettings = async () => {
+        try {
+          const settings = await getUserSettings({ userId: user.uid });
+          if (settings?.theme) {
             applyTheme(settings.theme);
+          }
+        } catch (error) {
+          console.warn("Could not fetch user settings, possibly offline:", error);
         }
-      });
+      };
+      fetchSettings();
     }
   }, [user]);
 
