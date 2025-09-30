@@ -1,0 +1,63 @@
+
+'use client';
+
+import type { ReactNode } from 'react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { AppSidebar } from '@/components/layout/app-sidebar';
+import { TopBar } from '@/components/layout/top-bar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { useEffect } from 'react';
+import { ConnectionProvider } from '@/components/database/connection-provider';
+import { getUserSettings } from '@/app/actions/scada-actions';
+
+function applyTheme(theme: string) {
+  const root = window.document.documentElement;
+  root.classList.remove('light', 'dark');
+
+  if (theme === 'system') {
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+      .matches
+      ? 'dark'
+      : 'light';
+    root.classList.add(systemTheme);
+    return;
+  }
+
+  root.classList.add(theme);
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const fetchSettings = async () => {
+        try {
+          const settings = await getUserSettings({ userId: user.uid });
+          if (settings?.theme) {
+            applyTheme(settings.theme);
+          }
+        } catch (error) {
+          console.warn('Could not fetch user settings, possibly offline:', error);
+        }
+      };
+      fetchSettings();
+    }
+  }, [user]);
+
+  return (
+    <ConnectionProvider>
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex min-h-screen bg-background">
+          <AppSidebar />
+          <div className="flex flex-1 flex-col min-w-0">
+            <TopBar />
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+              {children}
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    </ConnectionProvider>
+  );
+}
