@@ -297,6 +297,7 @@ export default function SettingsPage() {
                                         </FormControl>
                                         <SelectContent>
                                             <SelectItem value="en">English (US)</SelectItem>
+                                            <SelectItem value="hi">Hindi (हिन्दी)</SelectItem>
                                             <SelectItem value="de">Deutsch</SelectItem>
                                             <SelectItem value="es">Español</SelectItem>
                                         </SelectContent>
@@ -577,3 +578,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
