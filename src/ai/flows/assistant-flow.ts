@@ -36,7 +36,7 @@ const getSystemStatusTool = ai.defineTool(
     })),
   },
   async () => {
-    return new Promise((resolve) => {
+    return new Promise<SystemComponentStatus[]>((resolve) => {
         const unsubscribe = onSystemComponentStatuses((statuses: SystemComponentStatus[]) => {
             unsubscribe();
             resolve(statuses);
@@ -58,7 +58,7 @@ const getDashboardStatsTool = ai.defineTool(
         }),
     },
     async () => {
-        return new Promise((resolve) => {
+        return new Promise<Omit<DashboardStats, 'lastUpdated'>>((resolve) => {
             const unsubscribe = onDashboardStats((stats: DashboardStats | null) => {
                 if (stats) {
                     unsubscribe();
@@ -82,9 +82,10 @@ const getRecentActivitiesTool = ai.defineTool(
         }))
     },
     async () => {
-        return new Promise((resolve) => {
+        return new Promise<Omit<RecentActivity, 'id'|'icon'|'iconColor'>[]>((resolve) => {
             const unsubscribe = onRecentActivities((activities: RecentActivity[]) => {
                 unsubscribe();
+                // Sanitize the data to only what the LLM needs, removing UI-specific fields
                 resolve(activities.map(({id, icon, iconColor, ...rest}) => rest));
             }, 5); // get top 5
         });
