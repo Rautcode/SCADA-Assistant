@@ -9,7 +9,7 @@ import type { SettingsFormValues } from "@/lib/types/database";
 import { settingsSchema } from "@/lib/types/database";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -100,6 +100,17 @@ export default function SettingsPage() {
 
     }, [user, form, toast, setAssistantOpen, setLanguage]);
 
+    function applyTheme(theme: string) {
+        const root = window.document.documentElement;
+        root.classList.remove("light", "dark");
+        if (theme === "system") {
+            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            root.classList.add(systemTheme);
+        } else {
+            root.classList.add(theme);
+        }
+    }
+
     async function onSubmit(values: SettingsFormValues) {
         if (!user) {
             toast({ title: "Not Authenticated", description: "You must be logged in to save settings.", variant: "destructive" });
@@ -115,15 +126,7 @@ export default function SettingsPage() {
             });
             // Update theme immediately after saving
             if (values.theme) {
-                 const root = window.document.documentElement;
-                root.classList.remove("light", "dark");
-
-                if (values.theme === "system") {
-                    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-                    root.classList.add(systemTheme);
-                } else {
-                    root.classList.add(values.theme);
-                }
+                applyTheme(values.theme);
             }
             // Update language
             if (values.language) {
@@ -259,7 +262,7 @@ export default function SettingsPage() {
         }
         return (
             <Tabs defaultValue="appearance" className="w-full">
-                <TabsList className="w-full flex-wrap sm:flex-nowrap sm:overflow-x-auto justify-start h-auto">
+                <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
                     <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
                     <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
                     <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />{t('data_integrations')}</TabsTrigger>
@@ -565,18 +568,20 @@ export default function SettingsPage() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <Card className="shadow-lg">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                             <div>
-                                <CardTitle className="flex items-center text-2xl font-bold">
-                                    <Settings className="mr-3 h-7 w-7 text-primary" />
-                                    {t('app_settings')}
-                                </CardTitle>
-                                <CardDescription>{t('settings_description')}</CardDescription>
+                        <CardHeader>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div>
+                                    <CardTitle className="flex items-center text-2xl font-bold">
+                                        <Settings className="mr-3 h-7 w-7 text-primary" />
+                                        {t('app_settings')}
+                                    </CardTitle>
+                                    <CardDescription>{t('settings_description')}</CardDescription>
+                                </div>
+                                <Button type="submit" disabled={isLoading || isFetching}>
+                                    <Save className="mr-2 h-4 w-4" />
+                                    {isLoading ? t('saving') : t('save_all')}
+                                </Button>
                             </div>
-                            <Button type="submit" disabled={isLoading || isFetching}>
-                                <Save className="mr-2 h-4 w-4" />
-                                {isLoading ? t('saving') : t('save_all')}
-                            </Button>
                         </CardHeader>
                         <CardContent>
                            {renderFormContent()}

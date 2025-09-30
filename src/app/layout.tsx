@@ -7,13 +7,14 @@ import { AuthProvider, useAuth } from '@/components/auth/auth-provider';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { TopBar } from '@/components/layout/top-bar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConnectionProvider } from '@/components/database/connection-provider';
 import { Assistant } from '@/components/assistant/assistant';
 import { AssistantProvider } from '@/components/assistant/assistant-provider';
 import { Toaster } from '@/components/ui/toaster';
-import { GeistSans, GeistMono } from 'geist/font';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { cn } from '@/lib/utils';
 import './globals.css';
 import { getUserSettings } from './actions/scada-actions';
@@ -71,11 +72,12 @@ function AuthenticatedLayout({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+            <div className='flex items-center gap-2 mb-4'>
+                <Skeleton className="h-10 w-10" />
+                <Skeleton className="h-6 w-40" />
             </div>
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
         </div>
       </div>
     );
@@ -107,10 +109,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head />
       <body
-        suppressHydrationWarning={true}
         className={cn(
           'h-full bg-background font-sans antialiased',
           GeistSans.variable,
