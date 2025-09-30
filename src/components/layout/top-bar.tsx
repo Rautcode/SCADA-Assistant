@@ -30,7 +30,7 @@ import { iconMap } from '@/lib/icon-map';
 import { ScrollArea } from '../ui/scroll-area';
 
 export function TopBar() {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>(undefined);
   const { toggleSidebar, isMobile } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
@@ -40,6 +40,9 @@ export function TopBar() {
   const [lastSeen, setLastSeen] = React.useState<Date | null>(null);
 
   React.useEffect(() => {
+    // This will only run on the client, after hydration, avoiding mismatch
+    setDate(new Date());
+
     const unsubscribe: Unsubscribe = onLogs((logs) => {
       const errors = logs.filter(log => log.level === 'error');
       setErrorLogs(errors);
@@ -250,5 +253,3 @@ export function TopBar() {
     </header>
   );
 }
-
-    
