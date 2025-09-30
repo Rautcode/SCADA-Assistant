@@ -10,8 +10,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConnectionProvider } from '@/components/database/connection-provider';
-import { Assistant } from '@/components/assistant/assistant';
-import { AssistantProvider } from '@/components/assistant/assistant-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
@@ -86,7 +84,6 @@ function AuthenticatedLayout({
   return (
     <ConnectionProvider>
       <SidebarProvider defaultOpen={true}>
-        <AssistantProvider>
           <div className="flex min-h-screen bg-background">
             <AppSidebar />
             <div className="flex flex-1 flex-col min-w-0">
@@ -96,8 +93,6 @@ function AuthenticatedLayout({
               </main>
             </div>
           </div>
-          <Assistant />
-        </AssistantProvider>
       </SidebarProvider>
     </ConnectionProvider>
   );

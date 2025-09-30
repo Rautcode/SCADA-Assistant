@@ -6,4 +6,4 @@ import './flows/scheduler-flow';
 import './flows/template-flow';
 import './flows/send-email-flow';
 import './flows/chart-stylist-flow';
-import './flows/assistant-flow';
+

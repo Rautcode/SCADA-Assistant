@@ -22,7 +22,6 @@ import { testScadaConnection, testSmtpConnection, getUserSettings, saveUserSetti
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
-import { useAssistant } from "@/components/assistant/assistant-provider";
 import { ToastAction } from "@/components/ui/toast";
 import { useLocalization } from "@/components/localization/localization-provider";
 
@@ -35,7 +34,6 @@ export default function SettingsPage() {
     const { refetch: refetchDbStatus } = useConnection();
     const [isLoading, setIsLoading] = React.useState(false);
     const [isFetching, setIsFetching] = React.useState(true);
-    const { setOpen: setAssistantOpen } = useAssistant();
     const { t, setLanguage } = useLocalization();
     
     const [dbConnectionStatus, setDbConnectionStatus] = React.useState<ConnectionStatus>('unknown');
@@ -105,12 +103,12 @@ export default function SettingsPage() {
                     title: "Error: Could not fetch your settings.", 
                     description: "The application could not retrieve your saved settings. The AI can help you troubleshoot.", 
                     variant: "destructive",
-                    action: <ToastAction altText="Ask AI for help" onClick={() => setAssistantOpen(true)}>Ask AI</ToastAction>
+                    action: <ToastAction altText="Ask AI for help">Ask AI</ToastAction>
                 });
             })
             .finally(() => setIsFetching(false));
 
-    }, [user, form, toast, setAssistantOpen, setLanguage]);
+    }, [user, form, toast, setLanguage]);
 
     function applyTheme(theme: string) {
         const root = window.document.documentElement;
