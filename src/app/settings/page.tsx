@@ -333,7 +333,13 @@ export default function SettingsPage() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select 
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+                                            setLanguage(value);
+                                        }}
+                                        value={field.value}
+                                    >
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder={t('select_language')} />
@@ -712,3 +718,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
