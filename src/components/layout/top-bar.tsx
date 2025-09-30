@@ -64,9 +64,9 @@ export function TopBar() {
     setLastSeen(now);
   }
 
-  const unreadCount = errorLogs.filter(
-    (log) => lastSeen && log.timestamp > lastSeen
-  ).length;
+  const unreadCount = lastSeen ? errorLogs.filter(
+    (log) => log.timestamp > lastSeen
+  ).length : errorLogs.length;
 
 
   const handleLogout = async () => {
@@ -185,7 +185,7 @@ export function TopBar() {
                 <ul>
                   {errorLogs.map((log) => {
                     const Icon = AlertTriangle;
-                    const timeAgo = formatDistanceToNow(log.timestamp, { addSuffix: true });
+                    const timeAgo = lastSeen ? formatDistanceToNow(log.timestamp, { addSuffix: true }) : '';
                     const isUnread = lastSeen && log.timestamp > lastSeen;
 
                     return (
