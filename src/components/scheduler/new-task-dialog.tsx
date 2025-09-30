@@ -36,6 +36,11 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
     const { toast } = useToast();
     const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [isClient, setIsClient] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const form = useForm<z.infer<typeof NewTaskSchema>>({
         resolver: zodResolver(NewTaskSchema),
@@ -154,7 +159,7 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                                             mode="single"
                                             selected={field.value}
                                             onSelect={field.onChange}
-                                            disabled={(date) => date < new Date()}
+                                            disabled={isClient ? (date) => date < new Date() : undefined}
                                             initialFocus
                                         />
                                         </PopoverContent>
@@ -175,5 +180,3 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         </Dialog>
     )
 }
-
-    
