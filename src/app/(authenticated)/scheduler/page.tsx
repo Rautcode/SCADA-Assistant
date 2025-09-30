@@ -135,7 +135,7 @@ export default function SchedulerPage() {
                             <CalendarClock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                             <h3 className="text-lg font-semibold text-foreground">No Scheduled Tasks</h3>
                             <p className="text-sm text-muted-foreground">
-                                Click "New Task" to automate a report or process.
+                                Click &quot;New Task&quot; to automate a report or process.
                             </p>
                         </div>
                     ) : (

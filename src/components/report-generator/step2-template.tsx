@@ -36,14 +36,16 @@ export function ReportStep2Template({ onValidated, initialData }: ReportStep2Tem
     const unsubscribe: Unsubscribe = onReportTemplates(templatesData => {
       setTemplates(templatesData);
       setLoading(false);
-      // Auto-select first template if none is selected
-      if (!selectedTemplateId && templatesData.length > 0) {
-        setSelectedTemplateId(templatesData[0].id);
-      }
     });
-
     return () => unsubscribe();
-  }, []); // selectedTemplateId is intentionally omitted
+  }, []);
+
+  React.useEffect(() => {
+    // Auto-select first template if none is selected and templates are available
+    if (!selectedTemplateId && templates.length > 0) {
+      setSelectedTemplateId(templates[0].id);
+    }
+  }, [selectedTemplateId, templates]);
 
   const filteredTemplates = templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
