@@ -11,6 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/database-service';
 import type { DashboardStats, RecentActivity, SystemComponentStatus } from '@/lib/types/database';
+import { Message, Part } from 'genkit';
 
 // Define tools for the assistant to use
 const navigationTool = ai.defineTool(
@@ -116,7 +117,17 @@ const assistantPrompt = ai.definePrompt({
   Keep your answers concise and helpful. Be friendly and conversational.`,
 });
 
-export async function askAssistant(history: z.infer<typeof assistantPrompt.historySchema>) {
-  const result = await assistantPrompt.run({ history });
-  return result;
+export async function askAssistant(history: {role: 'user' | 'model', content: Part[]}[]) {
+    const response = await ai.generate({
+        model: 'googleai/gemini-pro',
+        prompt: {
+            messages: history.map(h => new Message(h.role, h.content))
+        },
+        tools: [navigationTool, getSystemStatusTool, getDashboardStatsTool, getRecentActivitiesTool],
+        config: {
+            multiTurn: true,
+        },
+    });
+
+    return response;
 }

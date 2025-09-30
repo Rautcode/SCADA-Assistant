@@ -45,9 +45,8 @@ export function Assistant() {
 
     try {
       const history = newMessages.map(msg => ({ role: msg.role, content: [{ text: msg.content }] }));
-      const result = await askAssistant(history);
+      const { output: assistantResponse } = await askAssistant(history);
 
-      const assistantResponse = result.output();
       if (!assistantResponse) {
         throw new Error("No response from assistant.");
       }
