@@ -11,6 +11,7 @@ import { ConnectionProvider } from '@/components/database/connection-provider';
 import { getUserSettings } from '@/app/actions/scada-actions';
 
 function applyTheme(theme: string) {
+  if (typeof window === 'undefined') return;
   const root = window.document.documentElement;
   root.classList.remove('light', 'dark');
 

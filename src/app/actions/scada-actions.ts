@@ -275,5 +275,12 @@ export async function saveUserSettings(input: { userId: string, settings: z.infe
 }
 
 export async function getUserSettings(input: { userId: string }) {
-  return await getUserSettingsFromDb(input.userId);
+  try {
+    return await getUserSettingsFromDb(input.userId);
+  } catch (error) {
+    console.error('Failed to get user settings from DB:', error);
+    // Return null or re-throw, but don't let it be an unhandled rejection.
+    // For the purpose of the client-side call, returning null is safer.
+    return null;
+  }
 }

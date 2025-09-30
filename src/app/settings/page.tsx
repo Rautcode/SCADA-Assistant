@@ -27,6 +27,16 @@ import { useLocalization } from "@/components/localization/localization-provider
 
 type ConnectionStatus = 'unknown' | 'testing' | 'success' | 'error';
 
+function applyTheme(theme: string) {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        root.classList.add(systemTheme);
+    } else {
+        root.classList.add(theme);
+    }
+}
 
 export default function SettingsPage() {
     const { user } = useAuth();
@@ -92,6 +102,9 @@ export default function SettingsPage() {
                     if (settings.language) {
                         setLanguage(settings.language);
                     }
+                    if (settings.theme) {
+                        applyTheme(settings.theme);
+                    }
                 } else {
                     // Apply default if no settings found
                     form.reset(form.formState.defaultValues);
@@ -101,25 +114,13 @@ export default function SettingsPage() {
                  console.error("Failed to fetch settings:", err);
                  toast({ 
                     title: "Error: Could not fetch your settings.", 
-                    description: "The application could not retrieve your saved settings. The AI can help you troubleshoot.", 
+                    description: "The application could not retrieve your saved settings. Please check your network connection.", 
                     variant: "destructive",
-                    action: <ToastAction altText="Ask AI for help">Ask AI</ToastAction>
                 });
             })
             .finally(() => setIsFetching(false));
 
     }, [user, form, toast, setLanguage]);
-
-    function applyTheme(theme: string) {
-        const root = window.document.documentElement;
-        root.classList.remove("light", "dark");
-        if (theme === "system") {
-            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-            root.classList.add(systemTheme);
-        } else {
-            root.classList.add(theme);
-        }
-    }
 
     async function onSubmit(values: SettingsFormValues) {
         if (!user) {
@@ -293,7 +294,7 @@ export default function SettingsPage() {
                 <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto">
                     <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
                     <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
-                    <TabsTrigger value="integrations"><Workflow className="mr-2 h-4 w-4" />{t('data_integrations')}</TabsTrigger>
+                    <TabsTrigger value="integrations"><Workflow className="mr-2 h-4 w-4" />{t('integrations')}</TabsTrigger>
                     <TabsTrigger value="database"><Server className="mr-2 h-4 w-4" />{t('database')}</TabsTrigger>
                     <TabsTrigger value="mapping"><Map className="mr-2 h-4 w-4" />Data Mapping</TabsTrigger>
                     <TabsTrigger value="email"><Mail className="mr-2 h-4 w-4" />{t('email')}</TabsTrigger>
@@ -307,7 +308,7 @@ export default function SettingsPage() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>{t('theme')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder={t('select_theme')} />
@@ -330,7 +331,7 @@ export default function SettingsPage() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder={t('select_language')} />
@@ -410,7 +411,7 @@ export default function SettingsPage() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>{t('data_sync_frequency')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder={t('select_sync_frequency')} />
