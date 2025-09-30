@@ -16,10 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { getUserSettings, saveUserSettings } from "@/ai/flows/user-settings-flow";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, testSmtpConnection } from "@/app/actions/scada-actions";
+import { testScadaConnection, testSmtpConnection, getUserSettings, saveUserSettings } from "@/app/actions/scada-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
@@ -109,6 +108,18 @@ export default function SettingsPage() {
                 title: "Settings Saved",
                 description: "Your new settings have been applied.",
             });
+            // Update theme immediately after saving
+            if (values.theme) {
+                 const root = window.document.documentElement;
+                root.classList.remove("light", "dark");
+
+                if (values.theme === "system") {
+                    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                    root.classList.add(systemTheme);
+                } else {
+                    root.classList.add(values.theme);
+                }
+            }
             // Refetch global DB status after saving new credentials
             refetchDbStatus();
         } catch (error) {
@@ -566,5 +577,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    

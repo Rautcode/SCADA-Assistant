@@ -17,12 +17,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown, Search, AlertCircle, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScadaDataPoint } from "@/lib/types/database";
-import { getScadaData } from "@/app/actions/scada-actions";
+import { getScadaData, getUserSettings } from "@/app/actions/scada-actions";
 import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
 import { useAuth } from "../auth/auth-provider";
-import { getUserSettings } from "@/ai/flows/user-settings-flow";
 import { useConnection } from "../database/connection-provider";
 
 type SortKey = keyof Omit<ScadaDataPoint, 'included' | 'id'>;
@@ -306,5 +305,3 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     </div>
   );
 }
-
-    

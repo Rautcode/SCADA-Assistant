@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { getUserSettings } from '@/ai/flows/user-settings-flow';
+import { getUserSettings } from '@/app/actions/scada-actions';
 import { testScadaConnection } from '@/app/actions/scada-actions';
 
 type ConnectionStatus = 'loading' | 'connected' | 'error' | 'unconfigured';
@@ -88,5 +88,3 @@ export function useConnection() {
     }
     return context;
 }
-
-    

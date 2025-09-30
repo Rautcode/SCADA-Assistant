@@ -7,15 +7,15 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import * as nodemailer from 'nodemailer';
-import { addEmailLogToDb } from '@/services/database-service';
+import { addEmailLogToDb, getUserSettingsFromDb } from '@/services/database-service';
 import { emailSettingsSchema } from '@/lib/types/database';
 
 export const SendEmailInputSchema = z.object({
+  userId: z.string(), // To fetch user-specific SMTP settings
   to: z.string().email(),
   subject: z.string(),
   text: z.string(),
   html: z.string(),
-  smtpSettings: emailSettingsSchema,
 });
 type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
 
@@ -29,9 +29,20 @@ const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
   },
-  async ({ to, subject, text, html, smtpSettings }) => {
+  async ({ userId, to, subject, text, html }) => {
     
-    if (!smtpSettings.smtpHost || !smtpSettings.smtpPort) {
+    const userSettings = await getUserSettingsFromDb(userId);
+    const smtpSettings = userSettings?.email;
+    const notificationSettings = userSettings?.notifications;
+
+    if (!notificationSettings?.email) {
+        const errorMsg = "Email notifications are disabled by the user.";
+        console.log(errorMsg);
+        // Do not log this as a failure, it's an intended behavior.
+        return { success: true, error: "Skipped: Email notifications are disabled." };
+    }
+    
+    if (!smtpSettings?.smtpHost || !smtpSettings?.smtpPort) {
       const errorMsg = "SMTP settings are not configured.";
       console.error(errorMsg);
       await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });

@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from '@/components/auth/auth-provider';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { TopBar } from '@/components/layout/top-bar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConnectionProvider } from '@/components/database/connection-provider';
 import { Assistant } from '@/components/assistant/assistant';
@@ -16,6 +16,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { GeistSans, GeistMono } from 'geist/font';
 import { cn } from '@/lib/utils';
 import './globals.css';
+import { getUserSettings } from './actions/scada-actions';
 
 
 function AuthenticatedLayout({
@@ -34,6 +35,28 @@ function AuthenticatedLayout({
       router.push('/login');
     }
   }, [user, loading, router, pathname, isAuthPage]);
+
+  useEffect(() => {
+    if (user) {
+      getUserSettings({ userId: user.uid }).then((settings) => {
+        if (settings?.theme) {
+          const root = window.document.documentElement;
+          root.classList.remove("light", "dark");
+
+          if (settings.theme === "system") {
+            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+              .matches
+              ? "dark"
+              : "light";
+            root.classList.add(systemTheme);
+            return;
+          }
+
+          root.classList.add(settings.theme);
+        }
+      });
+    }
+  }, [user]);
 
 
   if (isAuthPage) {

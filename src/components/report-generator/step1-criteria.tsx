@@ -21,9 +21,8 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Machine, onMachines } from "@/services/database-service";
 import { Skeleton } from "../ui/skeleton";
 import { Unsubscribe } from "firebase/firestore";
-import { getScadaTags } from "@/app/actions/scada-actions";
+import { getScadaTags, getUserSettings } from "@/app/actions/scada-actions";
 import { useAuth } from "../auth/auth-provider";
-import { getUserSettings } from "@/ai/flows/user-settings-flow";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -413,5 +412,3 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </Form>
   );
 }
-
-    

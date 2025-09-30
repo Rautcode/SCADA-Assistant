@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "../ui/textarea";
+import { useAuth } from "../auth/auth-provider";
 
 export const outputOptionsSchema = z.object({
   format: z.enum(["pdf", "csv"], {
@@ -41,13 +42,14 @@ interface ReportStep5OutputProps {
 }
 
 export function ReportStep5Output({ onValidated, initialData }: ReportStep5OutputProps) {
+  const { user } = useAuth();
   const form = useForm<OutputOptionsValues>({
     resolver: zodResolver(outputOptionsSchema),
     defaultValues: initialData || {
       format: "pdf",
       fileName: `SCADA_Report_${new Date().toISOString().split('T')[0]}`,
       emailImmediately: false,
-      recipients: "",
+      recipients: user?.email || "",
       emailMessage: "Please find the attached SCADA report.",
     },
   });
@@ -61,6 +63,8 @@ export function ReportStep5Output({ onValidated, initialData }: ReportStep5Outpu
     // Trigger validation on mount
     if(initialData) {
         onValidated(initialData);
+    } else {
+        onValidated(form.getValues());
     }
     return () => subscription.unsubscribe();
   }, [form, onValidated, initialData]);

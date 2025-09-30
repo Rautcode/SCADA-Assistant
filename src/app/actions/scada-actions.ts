@@ -6,20 +6,25 @@ import sql from 'mssql';
 import nodemailer from 'nodemailer';
 import { reportCriteriaSchema } from "@/components/report-generator/step1-criteria";
 import { z } from "zod";
-import { emailSettingsSchema } from "@/lib/types/database";
+import { emailSettingsSchema, settingsSchema } from "@/lib/types/database";
+import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
 
+
+// Types for credentials to be passed around
 export type ScadaDbCredentials = {
     server?: string | null;
     database?: string | null;
     user?: string | null;
     password?: string | null;
 }
+export type SmtpCredentials = z.infer<typeof emailSettingsSchema>;
 
+
+// Server Action to get SCADA data
 type GetScadaDataInput = {
     criteria: z.infer<typeof reportCriteriaSchema>;
     dbCreds: ScadaDbCredentials;
 }
-
 export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Promise<ScadaDataPoint[]> {
     console.log("Fetching SCADA data with criteria:", criteria);
     
@@ -87,11 +92,12 @@ export async function getScadaData({ criteria, dbCreds }: GetScadaDataInput): Pr
     }
 }
 
+
+// Server Action to get SCADA tags
 type GetScadaTagsInput = {
     machineIds: string[];
     dbCreds: ScadaDbCredentials;
 }
-
 export async function getScadaTags({ machineIds, dbCreds }: GetScadaTagsInput): Promise<string[]> {
     console.log("Fetching SCADA tags for machines:", machineIds);
     if (!machineIds || machineIds.length === 0) return [];
@@ -138,6 +144,8 @@ export async function getScadaTags({ machineIds, dbCreds }: GetScadaTagsInput): 
     }
 }
 
+
+// Server Action to test SCADA connection
 export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredentials }): Promise<{ success: boolean, error?: string }> {
     console.log("Testing SCADA DB connection...");
     try {
@@ -172,7 +180,9 @@ export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredent
     }
 }
 
-export async function testSmtpConnection({ emailCreds }: { emailCreds: z.infer<typeof emailSettingsSchema> }): Promise<{ success: boolean, error?: string }> {
+
+// Server Action to test SMTP connection
+export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCredentials }): Promise<{ success: boolean, error?: string }> {
     console.log("Testing SMTP connection...");
     if (!emailCreds?.smtpHost || !emailCreds?.smtpPort) {
         return { success: false, error: "SMTP Host and Port are required." };
@@ -202,4 +212,14 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: z.infer<t
         console.error("SMTP connection test failed:", error.message);
         return { success: false, error: error.message };
     }
+}
+
+
+// Server Actions for User Settings
+export async function saveUserSettings(input: { userId: string, settings: z.infer<typeof settingsSchema> }) {
+  await saveUserSettingsToDb(input.userId, input.settings);
+}
+
+export async function getUserSettings(input: { userId: string }) {
+  return await getUserSettingsFromDb(input.userId);
 }
