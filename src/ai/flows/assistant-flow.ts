@@ -115,18 +115,14 @@ const assistantPrompt = ai.definePrompt({
   Summarize the data from tools in a clear, human-readable way. For example, when reporting system status, list each component and its status.
   
   Keep your answers concise and helpful. Be friendly and conversational.`,
+  config: {
+    multiTurn: true,
+  },
 });
 
 export async function askAssistant(history: {role: 'user' | 'model', content: Part[]}[]) {
-    const response = await ai.generate({
-        model: 'googleai/gemini-pro',
-        prompt: {
-            messages: history.map(h => new Message(h.role, h.content))
-        },
-        tools: [navigationTool, getSystemStatusTool, getDashboardStatsTool, getRecentActivitiesTool],
-        config: {
-            multiTurn: true,
-        },
+    const response = await assistantPrompt({
+        messages: history.map(h => new Message(h.role, h.content))
     });
 
     return response;
