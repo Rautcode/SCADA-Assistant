@@ -20,7 +20,19 @@ import './globals.css';
 import { getUserSettings } from './actions/scada-actions';
 import { LocalizationProvider } from '@/components/localization/localization-provider';
 
-function applyTheme(theme: string) {
+
+function AuthenticatedLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+
+  function applyTheme(theme: string) {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
 
@@ -33,19 +45,7 @@ function applyTheme(theme: string) {
     }
 
     root.classList.add(theme);
-}
-
-
-function AuthenticatedLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  }
 
   useEffect(() => {
     if (!loading && !user && !isAuthPage) {
@@ -128,5 +128,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
