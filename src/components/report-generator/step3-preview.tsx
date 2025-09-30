@@ -17,12 +17,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown, Search, AlertCircle, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScadaDataPoint } from "@/lib/types/database";
-import { getScadaData, ScadaDbCredentials } from "@/app/actions/scada-actions";
+import { getScadaData } from "@/app/actions/scada-actions";
 import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
 import { useAuth } from "../auth/auth-provider";
 import { getUserSettings } from "@/ai/flows/user-settings-flow";
+import { useConnection } from "../database/connection-provider";
 
 type SortKey = keyof Omit<ScadaDataPoint, 'included' | 'id'>;
 
@@ -34,14 +35,14 @@ interface ReportStep3PreviewProps {
 
 export function ReportStep3Preview({ onValidated, initialData, criteria }: ReportStep3PreviewProps) {
   const [data, setData] = React.useState<ScadaDataPoint[]>(initialData?.scadaData || []);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [dbCredentials, setDbCredentials] = React.useState<ScadaDbCredentials | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
+  const { status: connectionStatus } = useConnection();
 
 
   React.useEffect(() => {
@@ -54,6 +55,18 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
             setLoading(false);
             return;
         };
+        
+        if (connectionStatus === 'unconfigured') {
+            setError("Database credentials are not configured. Please set them in your user settings.");
+            setLoading(false);
+            return;
+        }
+
+        if (connectionStatus !== 'connected') {
+            // Don't fetch data if we know we're not connected
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         setError(null);
@@ -61,15 +74,9 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
 
         try {
             const settings = await getUserSettings({ userId: user.uid });
-            if (settings?.database?.server && settings?.database?.dbName) {
-                const creds = {
-                    server: settings.database.server,
-                    database: settings.database.dbName,
-                    user: settings.database.user || '',
-                    password: settings.database.password || '',
-                };
-                setDbCredentials(creds);
+            const creds = settings?.database;
 
+            if (creds) {
                 const scadaData = await getScadaData({ criteria, dbCreds: creds });
                 const enrichedData = scadaData.map(d => ({...d, included: initialData?.scadaData.find(initial => initial.id === d.id)?.included ?? true }));
                 setData(enrichedData);
@@ -78,6 +85,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
                 }
 
             } else {
+                // This case should be handled by the connection provider, but as a fallback:
                 setError("Database credentials are not configured. Please set them in your user settings.");
             }
         } catch (e: any) {
@@ -88,7 +96,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         }
     }
     fetchSettingsAndData();
-  }, [criteria, user, initialData]);
+  }, [criteria, user, initialData, connectionStatus]);
 
   const handleIncludeToggle = (id: string) => {
     setData(prevData =>
@@ -180,7 +188,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
                 <AlertCircle className="mx-auto h-12 w-12 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Data Fetching Failed</h3>
                 <p className="text-sm mb-4">{error}</p>
-                {error.includes("credentials") && (
+                {error.includes("configure") && (
                      <Button asChild>
                         <Link href="/settings">
                             <Settings className="mr-2 h-4 w-4" /> Go to Settings

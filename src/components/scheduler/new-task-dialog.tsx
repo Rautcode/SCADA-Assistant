@@ -141,9 +141,9 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                                             )}
                                             >
                                             {field.value ? (
-                                                format(field.value, "PPP")
+                                                format(field.value, "PPpp")
                                             ) : (
-                                                <span>Pick a date</span>
+                                                <span>Pick a date and time</span>
                                             )}
                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                             </Button>
@@ -175,3 +175,5 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         </Dialog>
     )
 }
+
+    

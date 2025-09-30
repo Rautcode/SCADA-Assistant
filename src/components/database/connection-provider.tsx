@@ -24,7 +24,13 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
     const [loading, setLoading] = React.useState(true);
 
     const testConnection = React.useCallback(async () => {
-        if (!user) return;
+        if (!user) {
+            // If there's no user, we are not strictly unconfigured, but we can't connect.
+            // 'loading' is a safe state until user status is resolved.
+            setStatus('loading');
+            setLoading(true);
+            return;
+        }
 
         setLoading(true);
         setStatus('loading');
@@ -58,9 +64,7 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
     }, [user]);
 
     React.useEffect(() => {
-        if (user) {
-            testConnection();
-        }
+        testConnection();
     }, [user, testConnection]);
 
     const value = {

@@ -27,6 +27,7 @@ import { getUserSettings } from "@/ai/flows/user-settings-flow";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useConnection } from "../database/connection-provider";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -56,6 +57,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   const [parameterError, setParameterError] = React.useState<string | null>(null);
   
   const { user } = useAuth();
+  const { status: connectionStatus } = useConnection();
+
 
   const form = useForm<ReportCriteriaFormValues>({
     resolver: zodResolver(reportCriteriaSchema),
@@ -93,7 +96,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   
   React.useEffect(() => {
     async function fetchTags() {
-      if (!user || !selectedMachineIds || selectedMachineIds.length === 0) {
+      if (!user || !selectedMachineIds || selectedMachineIds.length === 0 || connectionStatus !== 'connected') {
         setAvailableParameters([]);
         return;
       }
@@ -103,20 +106,16 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       
       try {
         const settings = await getUserSettings({ userId: user.uid });
-        if (settings?.database?.server && settings?.database?.dbName) {
-            const creds = {
-                server: settings.database.server,
-                database: settings.database.dbName,
-                user: settings.database.user || '',
-                password: settings.database.password || '',
-            };
-            const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds });
-            setAvailableParameters(tags);
-            if (tags.length === 0) {
-              setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
-            }
+        // Settings should be present if connectionStatus is 'connected'
+        const creds = settings?.database;
+        if (creds) {
+          const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds });
+          setAvailableParameters(tags);
+          if (tags.length === 0) {
+            setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
+          }
         } else {
-            setParameterError("Database credentials not set. Please configure them in Settings.");
+           setParameterError("Database credentials not set. Please configure them in Settings.");
         }
       } catch (e: any) {
         setParameterError(e.message || "An unexpected error occurred while fetching parameters.");
@@ -126,7 +125,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     }
 
     fetchTags();
-  }, [selectedMachineIds, user]);
+  }, [selectedMachineIds, user, connectionStatus]);
 
 
   const filteredMachines = allMachines.filter(machine => 
@@ -310,11 +309,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
                             }}
                           />
                         )) : (
-                          <ConnectionError 
-                            title="Machine Data Unavailable"
-                            message="No machines found. Ensure the database connection is correctly configured in Settings or that machine data exists." 
-                            isSubtle
-                          />
+                          <p className="text-sm text-muted-foreground text-center py-4">No machines found in the database.</p>
                         )}
                       </ScrollArea>
                       <FormMessage />
@@ -411,3 +406,5 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </Form>
   );
 }
+
+    
