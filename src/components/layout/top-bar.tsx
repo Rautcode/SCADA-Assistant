@@ -22,10 +22,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { onLogs } from '@/services/database-service';
-import type { SystemLog } from '@/lib/types/database';
+import { onRecentActivities } from '@/services/database-service';
+import type { RecentActivity } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { ScrollArea } from '../ui/scroll-area';
+import { iconMap } from '@/lib/icon-map';
 
 export function TopBar() {
   const [date, setDate] = React.useState<Date | undefined>(undefined);
@@ -34,19 +35,22 @@ export function TopBar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const [errorLogs, setErrorLogs] = React.useState<SystemLog[]>([]);
+  const [notifications, setNotifications] = React.useState<RecentActivity[]>([]);
   const [lastSeen, setLastSeen] = React.useState<Date | null>(null);
 
   React.useEffect(() => {
     // This will only run on the client, after hydration, avoiding mismatch
     setDate(new Date());
 
-    const unsubscribe: Unsubscribe = onLogs((logs) => {
-      const errors = logs.filter(log => log.level === 'error');
-      setErrorLogs(errors);
-    });
+    const unsubscribe: Unsubscribe = onRecentActivities((activities) => {
+      // Filter for activities that should appear as notifications (e.g., alerts, warnings)
+      const notificationActivities = activities.filter(
+        (act) => act.icon.includes('Alert') || act.icon.includes('Warning')
+      );
+      setNotifications(notificationActivities);
+    }, 30); // Fetch a reasonable number of recent items for notifications
 
-    const storedLastSeen = localStorage.getItem('lastErrorSeen');
+    const storedLastSeen = localStorage.getItem('lastNotificationSeen');
     if (storedLastSeen) {
       setLastSeen(new Date(storedLastSeen));
     } else {
@@ -58,13 +62,13 @@ export function TopBar() {
 
   const handleNotificationsOpen = () => {
     const now = new Date();
-    localStorage.setItem('lastErrorSeen', now.toISOString());
+    localStorage.setItem('lastNotificationSeen', now.toISOString());
     setLastSeen(now);
   }
 
-  const unreadCount = lastSeen ? errorLogs.filter(
+  const unreadCount = lastSeen ? notifications.filter(
     (log) => log.timestamp > lastSeen
-  ).length : errorLogs.length;
+  ).length : notifications.length;
 
 
   const handleLogout = async () => {
@@ -184,40 +188,40 @@ export function TopBar() {
           </PopoverTrigger>
           <PopoverContent align="end" className="w-80 p-0">
             <div className='p-4 border-b'>
-              <h3 className="text-lg font-medium">Errors & Alerts</h3>
-              <p className="text-sm text-muted-foreground">You have {unreadCount} new errors.</p>
+              <h3 className="text-lg font-medium">Notifications</h3>
+              <p className="text-sm text-muted-foreground">You have {unreadCount} new notifications.</p>
             </div>
              <ScrollArea className="h-80">
-              {errorLogs.length > 0 ? (
+              {notifications.length > 0 ? (
                 <ul>
-                  {errorLogs.map((log) => {
-                    const Icon = AlertTriangle;
-                    const timeAgo = lastSeen ? formatDistanceToNow(log.timestamp, { addSuffix: true }) : '';
-                    const isUnread = lastSeen && log.timestamp > lastSeen;
+                  {notifications.map((notification) => {
+                    const Icon = iconMap[notification.icon] || AlertTriangle;
+                    const timeAgo = lastSeen ? formatDistanceToNow(notification.timestamp, { addSuffix: true }) : '';
+                    const isUnread = lastSeen && notification.timestamp > lastSeen;
 
                     return (
-                       <li key={log.id} className={`flex items-start gap-3 p-4 border-b ${isUnread ? 'bg-red-50 dark:bg-destructive/10' : ''}`}>
-                          <div className='p-1.5 rounded-full mt-1 bg-destructive/20'>
-                            <Icon className='h-5 w-5 text-destructive' />
+                       <li key={notification.id} className={`flex items-start gap-3 p-4 border-b ${isUnread ? 'bg-blue-50 dark:bg-primary/10' : ''}`}>
+                          <div className={`p-1.5 rounded-full mt-1 ${notification.iconColor ? `${notification.iconColor}/20` : 'bg-muted'}`}>
+                            <Icon className={`h-5 w-5 ${notification.iconColor || 'text-muted-foreground'}`} />
                           </div>
                           <div className='flex-1'>
-                            <p className="text-sm font-medium">{log.message}</p>
-                            <p className="text-xs text-muted-foreground">{log.source}</p>
+                            <p className="text-sm font-medium">{notification.title}</p>
+                            <p className="text-xs text-muted-foreground">{notification.description}</p>
                             <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
                           </div>
-                          {isUnread && <div className="h-2.5 w-2.5 rounded-full bg-destructive mt-1" />}
+                          {isUnread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
                        </li>
                     )
                   })}
                 </ul>
               ) : (
                 <div className='p-8 text-center text-muted-foreground'>
-                  <p>No errors reported.</p>
+                  <p>No new notifications.</p>
                 </div>
               )}
              </ScrollArea>
              <div className="p-2 border-t text-center">
-                <Link href="/logs-errors" className='text-sm text-primary hover:underline'>View all logs</Link>
+                <Link href="/wincc-activity-logger" className='text-sm text-primary hover:underline'>View all activity</Link>
              </div>
           </PopoverContent>
         </Popover>
