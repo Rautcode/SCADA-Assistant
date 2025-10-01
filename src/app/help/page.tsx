@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { HelpCircle, Search, Mail, BookOpen } from "lucide-react";
+import Link from "next/link";
 
 const faqData = [
   {
@@ -176,9 +177,9 @@ export default function HelpPage() {
             <p className="text-sm text-muted-foreground">
                Explore our full documentation for detailed information on setup, features, and advanced configurations.
             </p>
-             <a href="#" className="text-sm font-semibold text-primary mt-2 inline-block">
+             <Link href="/docs" className="text-sm font-semibold text-primary mt-2 inline-block">
                 View Documentation
-            </a>
+            </Link>
           </CardContent>
         </Card>
       </div>

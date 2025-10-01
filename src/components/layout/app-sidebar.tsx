@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  BarChart3, FileText, Settings, Activity, FileWarning, Mail, CalendarClock, HelpCircle, User, LogOut, ChevronsLeft, ChevronsRight, UserCircle2
+  BarChart3, FileText, Settings, Activity, FileWarning, Mail, CalendarClock, HelpCircle, User, LogOut, ChevronsLeft, ChevronsRight, UserCircle2, BookOpen
 } from 'lucide-react';
 
 import {
@@ -41,6 +41,7 @@ const secondaryNavItems = [
 ];
 
 const helpAndSettingsItems = [
+    { href: '/docs', label: 'Documentation', icon: BookOpen },
     { href: '/help', label: 'Help', icon: HelpCircle },
     { href: '/settings', label: 'Settings', icon: Settings },
 ]
