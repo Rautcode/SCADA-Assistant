@@ -8,6 +8,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
 import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction } from '@/lib/types/auth';
@@ -27,7 +30,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => unsubscribe();
   }, []);
 
-  const login: LoginFunction = (email, password) => {
+  const login: LoginFunction = async (email, password, rememberMe) => {
+    if (!auth) {
+        throw new Error("Firebase Auth is not initialized.");
+    }
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
     return signInWithEmailAndPassword(auth, email, password);
   };
 

@@ -21,10 +21,13 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/components/auth/auth-provider';
 import { cn } from "@/lib/utils";
+import { Checkbox } from "../ui/checkbox";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
+  rememberMe: z.boolean().default(true),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -38,14 +41,14 @@ export function LoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: true },
     mode: "onChange",
   });
 
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
     try {
-      await login(values.email, values.password);
+      await login(values.email, values.password, values.rememberMe);
       toast({
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
@@ -113,6 +116,31 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+        <div className="flex items-center justify-between">
+            <FormField
+            control={form.control}
+            name="rememberMe"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                    <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                    <FormLabel className="cursor-pointer">
+                    Remember me
+                    </FormLabel>
+                </div>
+                </FormItem>
+            )}
+            />
+             <Link href="#" className="text-sm text-primary hover:underline">
+                Forgot password?
+            </Link>
+        </div>
+
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Processing..." : "Login"}
         </Button>

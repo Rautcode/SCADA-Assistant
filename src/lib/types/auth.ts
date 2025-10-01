@@ -2,7 +2,7 @@
 import { User, UserCredential } from "firebase/auth";
 import { ReactNode } from "react";
 
-export type LoginFunction = (email: string, password: string) => Promise<UserCredential>;
+export type LoginFunction = (email: string, password: string, rememberMe: boolean) => Promise<UserCredential>;
 export type RegisterFunction = (email: string, password: string) => Promise<UserCredential>;
 export type LogoutFunction = () => Promise<void>;
 
