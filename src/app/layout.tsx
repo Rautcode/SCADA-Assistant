@@ -34,7 +34,6 @@ export default function RootLayout({
         <Providers>
           <AppInitializer>
             <AuthenticatedLayout>{children}</AuthenticatedLayout>
-            <Toaster />
           </AppInitializer>
         </Providers>
       </body>

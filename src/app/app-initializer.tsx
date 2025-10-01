@@ -4,6 +4,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useLocalization } from '@/components/localization/localization-provider';
 import { useEffect, type ReactNode } from 'react';
 import { getUserSettings } from './actions/scada-actions';
+import { Toaster } from '@/components/ui/toaster';
 
 // This is a new client component to handle client-side effects like fetching settings.
 export function AppInitializer({ children }: { children: ReactNode }) {
@@ -24,5 +25,8 @@ export function AppInitializer({ children }: { children: ReactNode }) {
     }
   }, [user, setLanguage]);
 
-  return <>{children}</>;
+  return <>
+    {children}
+    <Toaster />
+  </>;
 }
