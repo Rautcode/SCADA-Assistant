@@ -32,6 +32,12 @@ const faqData = [
     category: "Database",
   },
   {
+    question: "Where do I find my server credentials (address, user, password)?",
+    answer:
+      "Your database server credentials (server address, database name, username, and password) are typically managed by your company's IT department or the database administrator (DBA). These are the same credentials you would use to connect to the database with tools like SQL Server Management Studio. Please contact your IT support if you do not have this information.",
+    category: "Database",
+  },
+  {
     question: "What is Data Mapping and why is it important?",
     answer:
       "Data Mapping, found in Settings > Data Mapping, tells the application which columns in your database table correspond to essential data points like 'Timestamp', 'Machine Name', 'Parameter Name', and 'Value'. Correct mapping is crucial for the application to read and analyze your SCADA data accurately.",
