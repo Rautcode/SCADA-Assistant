@@ -2,14 +2,13 @@
 "use client";
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { StepIndicator } from '@/components/report-generator/step-indicator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ReportStep1Criteria, reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
-import { ReportStep2Template } from '@/components/report-generator/step2-template';
-import { ReportStep3Preview } from '@/components/report-generator/step3-preview';
-import { ReportStep4Charts, chartConfigSchema } from '@/components/report-generator/step4-charts';
-import { ReportStep5Output, outputOptionsSchema } from '@/components/report-generator/step5-output';
+import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
+import { chartConfigSchema } from '@/components/report-generator/step4-charts';
+import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { useToast } from '@/hooks/use-toast';
 import { ScadaDataPoint } from '@/lib/types/database';
 import { ReportTemplate } from "@/lib/types/database";
@@ -17,6 +16,24 @@ import { generateReport } from '@/ai/flows/generate-report-flow';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { z } from 'zod';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Dynamically import step components
+const ReportStep1Criteria = dynamic(() => import('@/components/report-generator/step1-criteria').then(mod => mod.ReportStep1Criteria), {
+  loading: () => <Skeleton className="h-[400px] w-full" />,
+});
+const ReportStep2Template = dynamic(() => import('@/components/report-generator/step2-template').then(mod => mod.ReportStep2Template), {
+  loading: () => <Skeleton className="h-[400px] w-full" />,
+});
+const ReportStep3Preview = dynamic(() => import('@/components/report-generator/step3-preview').then(mod => mod.ReportStep3Preview), {
+  loading: () => <Skeleton className="h-[400px] w-full" />,
+});
+const ReportStep4Charts = dynamic(() => import('@/components/report-generator/step4-charts').then(mod => mod.ReportStep4Charts), {
+  loading: () => <Skeleton className="h-[400px] w-full" />,
+});
+const ReportStep5Output = dynamic(() => import('@/components/report-generator/step5-output').then(mod => mod.ReportStep5Output), {
+  loading: () => <Skeleton className="h-[400px] w-full" />,
+});
 
 
 // ScadaDataPoint and ReportTemplate are already defined in types/database.ts
