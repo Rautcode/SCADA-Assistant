@@ -15,10 +15,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Unsubscribe } from "firebase/firestore";
 
 const NewTemplateDialog = dynamic(() =>
-  import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog)
+  import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
+  { ssr: false, loading: () => <p>Loading...</p> }
 );
 
-const TemplateCard = ({ template, loading }: { template?: ReportTemplate, loading?: boolean }) => {
+const TemplateCard = React.memo(function TemplateCard({ template, loading }: { template?: ReportTemplate, loading?: boolean }) {
   if (loading || !template) {
     return (
       <Card className="shadow-md">
@@ -51,9 +52,9 @@ const TemplateCard = ({ template, loading }: { template?: ReportTemplate, loadin
       </CardContent>
     </Card>
   )
-};
+});
 
-const TemplateListItem = ({ template, loading }: { template?: ReportTemplate, loading?: boolean }) => {
+const TemplateListItem = React.memo(function TemplateListItem({ template, loading }: { template?: ReportTemplate, loading?: boolean }) {
   if (loading || !template) {
     return (
       <Card className="flex items-center p-4 shadow-sm">
@@ -82,7 +83,7 @@ const TemplateListItem = ({ template, loading }: { template?: ReportTemplate, lo
       </div>
     </Card>
   )
-}
+});
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
@@ -102,12 +103,12 @@ export default function TemplatesPage() {
     return () => unsubscribe();
   }, []);
 
-  const filteredTemplates = templates.filter(template =>
+  const filteredTemplates = React.useMemo(() => templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (filterCategory === "all" || template.category === filterCategory)
-  );
+  ), [templates, searchTerm, filterCategory]);
 
-  const categories = ["all", ...Array.from(new Set(templates.map(t => t.category)))];
+  const categories = React.useMemo(() => ["all", ...Array.from(new Set(templates.map(t => t.category)))], [templates]);
 
   const renderContent = () => {
      if (loading) {

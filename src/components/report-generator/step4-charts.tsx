@@ -2,10 +2,10 @@
 "use client";
 
 import * as React from "react";
+import dynamic from 'next/dynamic';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { BarChart, LineChart, PieChart as RechartsPieChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie, Cell, Line } from 'recharts';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScadaDataPoint } from "@/lib/types/database";
 import { get, set } from "react-hook-form";
 import { AiChartStylist } from "./ai-chart-stylist";
+import { Skeleton } from "../ui/skeleton";
+
+const RechartsBarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
+const RechartsLineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false });
+const RechartsPieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false });
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
+const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false });
+const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
+const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
+const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false });
+
 
 export const chartConfigSchema = z.object({
   includeCharts: z.boolean().default(false),
@@ -56,79 +72,87 @@ const ChartPreview = React.memo(function ChartPreview({
     return <p className="text-center text-muted-foreground">No data available for preview.</p>;
   }
 
-  switch (chartType) {
-    case 'bar':
-      return (
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={xAxisKey} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                borderColor: "hsl(var(--border))",
-              }}
-            />
-            <Legend />
-            <Bar dataKey={yAxisKey} name={yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1)}>
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    case 'line':
-      return (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={xAxisKey} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                borderColor: "hsl(var(--border))",
-              }}
-            />
-            <Legend />
-            <Line type="monotone" dataKey={yAxisKey} stroke={chartColors[0]} activeDot={{ r: 8 }} name={yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1)} />
-          </LineChart>
-        </ResponsiveContainer>
-      );
-    case 'pie':
-      return (
-        <ResponsiveContainer width="100%" height={300}>
-          <RechartsPieChart>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                borderColor: "hsl(var(--border))",
-              }}
-            />
-            <Legend />
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              outerRadius={100}
-              fill={chartColors[0]}
-              dataKey={yAxisKey}
-              nameKey={xAxisKey}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-              ))}
-            </Pie>
-          </RechartsPieChart>
-        </ResponsiveContainer>
-      );
-    default:
-      return <p className="text-center text-muted-foreground">Select a chart type to see a preview.</p>;
-  }
+  const ChartComponent = React.useMemo(() => {
+    switch (chartType) {
+        case 'bar':
+        return (
+            <ResponsiveContainer width="100%" height={300}>
+            <RechartsBarChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey={xAxisKey} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Tooltip
+                contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    borderColor: "hsl(var(--border))",
+                }}
+                />
+                <Legend />
+                <Bar dataKey={yAxisKey} name={yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1)}>
+                {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                ))}
+                </Bar>
+            </RechartsBarChart>
+            </ResponsiveContainer>
+        );
+        case 'line':
+        return (
+            <ResponsiveContainer width="100%" height={300}>
+            <RechartsLineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey={xAxisKey} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Tooltip
+                contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    borderColor: "hsl(var(--border))",
+                }}
+                />
+                <Legend />
+                <Line type="monotone" dataKey={yAxisKey} stroke={chartColors[0]} activeDot={{ r: 8 }} name={yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1)} />
+            </RechartsLineChart>
+            </ResponsiveContainer>
+        );
+        case 'pie':
+        return (
+            <ResponsiveContainer width="100%" height={300}>
+            <RechartsPieChart>
+                <Tooltip
+                contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    borderColor: "hsl(var(--border))",
+                }}
+                />
+                <Legend />
+                <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={100}
+                fill={chartColors[0]}
+                dataKey={yAxisKey}
+                nameKey={xAxisKey}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                ))}
+                </Pie>
+            </RechartsPieChart>
+            </ResponsiveContainer>
+        );
+        default:
+        return <p className="text-center text-muted-foreground">Select a chart type to see a preview.</p>;
+    }
+  }, [chartType, xAxisKey, yAxisKey, data, chartColors]);
+
+  return (
+    <React.Suspense fallback={<Skeleton className="w-full h-[300px]" />}>
+        {ChartComponent}
+    </React.Suspense>
+  );
 });
 
 

@@ -18,7 +18,8 @@ import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
 
 const NewTaskDialog = dynamic(() =>
-  import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog)
+  import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
+  { ssr: false, loading: () => <p>Loading...</p> }
 );
 
 const statusConfig = {
@@ -28,7 +29,7 @@ const statusConfig = {
     overdue: { icon: AlertTriangle, color: "bg-yellow-500", label: "Overdue" },
 };
 
-const TaskItem = ({ task, template, loading }: { task?: ScheduledTask, template?: ReportTemplate, loading?: boolean }) => {
+const TaskItem = React.memo(function TaskItem({ task, template, loading }: { task?: ScheduledTask, template?: ReportTemplate, loading?: boolean }) {
     if (loading || !task) {
         return (
             <Card className="shadow-sm">
@@ -81,7 +82,7 @@ const TaskItem = ({ task, template, loading }: { task?: ScheduledTask, template?
             </CardContent>
         </Card>
     );
-};
+});
 
 export default function SchedulerPage() {
     const [tasks, setTasks] = React.useState<ScheduledTask[]>([]);
