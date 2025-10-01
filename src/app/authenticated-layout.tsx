@@ -22,14 +22,14 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
 
   if (loading || (!user && !isAuthPage)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="flex items-center gap-2 mb-4">
-            <Skeleton className="h-10 w-10" />
+            <Skeleton className="h-10 w-10 rounded-full" />
             <Skeleton className="h-6 w-40" />
           </div>
-          <Skeleton className="h-4 w-[250px]" />
-          <Skeleton className="h-4 w-[200px]" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-4 w-52" />
         </div>
       </div>
     );
