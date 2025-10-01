@@ -17,6 +17,7 @@ import { iconMap } from '@/lib/icon-map';
 import { useConnection } from '@/components/database/connection-provider';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { ApiKeyNotification } from '@/components/layout/api-key-notification';
 
 interface StatCardProps {
   title: string;
@@ -245,6 +246,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
       
+      <ApiKeyNotification />
       <DatabaseConnectionNotification />
 
       <section className="mb-8">
@@ -316,5 +318,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
