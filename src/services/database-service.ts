@@ -1,7 +1,59 @@
 
 import { db } from '@/lib/firebase/firebase';
 import { DashboardStats, RecentActivity, ScadaDataPoint, SystemComponentStatus, Machine, ReportTemplate, ScheduledTask, SystemLog, UserSettings, EmailLog } from '@/lib/types/database';
-import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, onSnapshot, Unsubscribe, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, onSnapshot, Unsubscribe, Timestamp, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+
+
+// --- Seeding Function for Default Templates ---
+const defaultTemplates: Omit<ReportTemplate, 'id' | 'lastModified'>[] = [
+    {
+        name: 'Daily Production Summary',
+        description: 'Tracks key production metrics like output, uptime, and efficiency over a 24-hour period.',
+        category: 'Production',
+        thumbnailUrl: 'https://picsum.photos/seed/prod_summary/300/200',
+    },
+    {
+        name: 'Weekly Downtime Analysis',
+        description: 'Analyzes all machine downtime events over the past week to identify recurring issues.',
+        category: 'Maintenance',
+        thumbnailUrl: 'https://picsum.photos/seed/downtime/300/200',
+    },
+    {
+        name: 'Monthly Quality Control Report',
+        description: 'A comprehensive review of quality metrics, including defect rates and specification adherence for the month.',
+        category: 'Quality',
+        thumbnailUrl: 'https://picsum.photos/seed/quality/300/200',
+    },
+    {
+        name: 'Energy Consumption Overview',
+        description: 'Monitors and reports on the energy usage of selected machines to optimize consumption.',
+        category: 'Energy',
+        thumbnailUrl: 'https://picsum.photos/seed/energy/300/200',
+    },
+    {
+        name: 'Operator Shift Handover',
+        description: 'A summary of key events, alarms, and production notes for a smooth shift transition.',
+        category: 'Operations',
+        thumbnailUrl: 'https://picsum.photos/seed/shift_handover/300/200',
+    }
+];
+
+async function seedReportTemplates() {
+    if (!db) return;
+    const templatesRef = collection(db, 'reportTemplates');
+    const snapshot = await getDocs(query(templatesRef, limit(1)));
+    
+    if (snapshot.empty) {
+        console.log("No report templates found. Seeding default templates...");
+        const batch = writeBatch(db);
+        defaultTemplates.forEach(template => {
+            const docRef = doc(templatesRef);
+            batch.set(docRef, { ...template, lastModified: serverTimestamp() });
+        });
+        await batch.commit();
+        console.log("Default templates seeded successfully.");
+    }
+}
 
 
 function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string): Unsubscribe {
@@ -70,6 +122,8 @@ export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe
 }
 
 export function onReportTemplates(callback: (templates: ReportTemplate[]) => void): Unsubscribe {
+    // Seed templates on initial listener setup if collection is empty
+    seedReportTemplates();
     return createListener<ReportTemplate>('reportTemplates', callback, 'lastModified');
 }
 
