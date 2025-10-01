@@ -18,7 +18,7 @@ export function applyTheme(theme: string) {
   }
 }
 
-// This is a new client component to handle client-side effects like fetching settings.
+// This is a client component to handle client-side effects like fetching settings.
 export function AppInitializer({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { setLanguage } = useLocalization();
@@ -27,11 +27,13 @@ export function AppInitializer({ children }: { children: ReactNode }) {
     if (user) {
       getUserSettings({ userId: user.uid })
         .then(settings => {
-          if (settings?.language) {
-            setLanguage(settings.language);
-          }
-          if (settings?.theme) {
-            applyTheme(settings.theme);
+          if (settings) {
+            if (settings.language) {
+              setLanguage(settings.language);
+            }
+            if (settings.theme) {
+              applyTheme(settings.theme);
+            }
           }
         })
         .catch(error => {

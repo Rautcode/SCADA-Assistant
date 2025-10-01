@@ -113,17 +113,16 @@ export default function SettingsPage() {
         setIsLoading(true);
         try {
             await saveUserSettings({ userId: user.uid, settings: values });
+            
+            // Apply language and theme immediately after saving
+            setLanguage(values.language);
+            applyTheme(values.theme);
+
             toast({
                 title: t('settings_saved_title'),
                 description: t('settings_saved_description'),
             });
-            // Apply language and theme immediately
-            if (values.language) {
-                setLanguage(values.language);
-            }
-            if (values.theme) {
-                applyTheme(values.theme);
-            }
+            
             refetchDbStatus();
         } catch (error) {
              console.error("Failed to save settings:", error);
