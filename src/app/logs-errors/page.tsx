@@ -28,7 +28,7 @@ const logConfig = {
     success: { icon: CheckCircle, variant: 'default', className: 'bg-green-500 text-white' },
 };
 
-const LogBadge = ({ level }: { level: SystemLog['level'] }) => {
+const LogBadge = React.memo(function LogBadge({ level }: { level: SystemLog['level'] }) {
     const config = logConfig[level] || { icon: Info, variant: 'outline', className: '' };
     const { icon: Icon, variant, className } = config;
 
@@ -38,7 +38,7 @@ const LogBadge = ({ level }: { level: SystemLog['level'] }) => {
             {level}
         </Badge>
     );
-}
+});
 
 export default function LogsErrorsPage() {
     const [logs, setLogs] = React.useState<SystemLog[]>([]);

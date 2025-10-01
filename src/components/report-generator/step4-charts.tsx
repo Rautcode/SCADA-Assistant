@@ -16,9 +16,9 @@ import { get, set } from "react-hook-form";
 import { AiChartStylist } from "./ai-chart-stylist";
 import { Skeleton } from "../ui/skeleton";
 
-const RechartsBarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
-const RechartsLineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false });
-const RechartsPieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false });
+const RechartsBarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false, loading: () => <Skeleton className="w-full h-[300px]" /> });
+const RechartsLineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false, loading: () => <Skeleton className="w-full h-[300px]" /> });
+const RechartsPieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false, loading: () => <Skeleton className="w-full h-[300px]" /> });
 const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
 const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false });
 const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false });

@@ -17,7 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
 
-const ActivityItem: React.FC<{activity: RecentActivity, loading?: boolean}> = ({ activity, loading }) => {
+const ActivityItem: React.FC<{activity: RecentActivity, loading?: boolean}> = React.memo(function ActivityItem({ activity, loading }) {
     if (loading) {
         return (
             <li className="flex items-start space-x-4 py-4 border-b">
@@ -47,7 +47,7 @@ const ActivityItem: React.FC<{activity: RecentActivity, loading?: boolean}> = ({
             <p className="text-sm text-muted-foreground whitespace-nowrap">{timeAgo}</p>
         </li>
     );
-};
+});
 
 
 export default function WinccActivityLoggerPage() {

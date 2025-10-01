@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const EmailStatusBadge = ({ status }: { status: EmailLog['status'] }) => {
+const EmailStatusBadge = React.memo(function EmailStatusBadge({ status }: { status: EmailLog['status'] }) {
     const isSent = status === 'sent';
     const Icon = isSent ? CheckCircle : AlertTriangle;
     const variant = isSent ? 'default' : 'destructive';
@@ -27,7 +27,7 @@ const EmailStatusBadge = ({ status }: { status: EmailLog['status'] }) => {
             {status}
         </Badge>
     );
-};
+});
 
 export default function EmailSenderPage() {
     const [logs, setLogs] = React.useState<EmailLog[]>([]);

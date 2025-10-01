@@ -252,7 +252,7 @@ export default function SettingsPage() {
     }
 
 
-    const ConnectionStatusBadge = ({ status }: { status: ConnectionStatus}) => {
+    const ConnectionStatusBadge = React.memo(function ConnectionStatusBadge({ status }: { status: ConnectionStatus}) {
         switch(status) {
             case 'success':
                 return <Badge variant="default" className="bg-green-500 text-white"><Wifi className="mr-1 h-4 w-4" />{t('connected')}</Badge>;
@@ -263,7 +263,7 @@ export default function SettingsPage() {
             default:
                 return <Badge variant="outline">{t('untested')}</Badge>;
         }
-    };
+    });
 
 
     const renderFormContent = () => {

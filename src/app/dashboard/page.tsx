@@ -27,27 +27,29 @@ interface StatCardProps {
   loading?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, description, trendDirection, loading }) => (
-  <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <Icon className="h-5 w-5 text-muted-foreground" />
-    </CardHeader>
-    <CardContent>
-      {loading ? (
+const StatCard: React.FC<StatCardProps> = React.memo(function StatCard({ title, value, icon: Icon, description, trendDirection, loading }) {
+  return (
+    <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-5 w-5 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <>
+            <Skeleton className="h-8 w-3/4 mb-1" />
+            <Skeleton className="h-4 w-1/2" />
+          </>
+        ) : (
         <>
-          <Skeleton className="h-8 w-3/4 mb-1" />
-          <Skeleton className="h-4 w-1/2" />
+          <div className="text-3xl font-bold">{value}</div>
+          {description && <p className="text-xs text-muted-foreground pt-1">{description}</p>}
         </>
-      ) : (
-      <>
-        <div className="text-3xl font-bold">{value}</div>
-        {description && <p className="text-xs text-muted-foreground pt-1">{description}</p>}
-      </>
-      )}
-    </CardContent>
-  </Card>
-);
+        )}
+      </CardContent>
+    </Card>
+  );
+});
 
 interface QuickActionProps {
   title: string;
@@ -56,19 +58,21 @@ interface QuickActionProps {
   description: string;
 }
 
-const QuickAction: React.FC<QuickActionProps> = ({ title, icon: Icon, href, description }) => (
-  <Link href={href} passHref>
-    <Card className="p-4 flex flex-col items-start justify-start h-auto text-left shadow-sm hover:shadow-md transition-shadow duration-300 w-full hover:bg-muted/50 cursor-pointer">
-      <div className="flex items-center mb-2">
-        <Icon className="h-6 w-6 mr-3 text-primary" />
-        <span className="text-lg font-semibold text-foreground">{title}</span>
-      </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </Card>
-  </Link>
-);
+const QuickAction: React.FC<QuickActionProps> = React.memo(function QuickAction({ title, icon: Icon, href, description }) {
+  return (
+    <Link href={href} passHref>
+      <Card className="p-4 flex flex-col items-start justify-start h-auto text-left shadow-sm hover:shadow-md transition-shadow duration-300 w-full hover:bg-muted/50 cursor-pointer">
+        <div className="flex items-center mb-2">
+          <Icon className="h-6 w-6 mr-3 text-primary" />
+          <span className="text-lg font-semibold text-foreground">{title}</span>
+        </div>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </Card>
+    </Link>
+  );
+});
 
-const ActivityItem: React.FC<{activity: RecentActivity, loading?: boolean}> = ({ activity, loading }) => {
+const ActivityItem: React.FC<{activity: RecentActivity, loading?: boolean}> = React.memo(function ActivityItem({ activity, loading }) {
     if (loading) {
         return (
             <li className="flex items-start space-x-3 py-3">
@@ -97,9 +101,9 @@ const ActivityItem: React.FC<{activity: RecentActivity, loading?: boolean}> = ({
             <p className="text-xs text-muted-foreground whitespace-nowrap">{timeAgo}</p>
         </li>
     );
-};
+});
 
-const SystemStatusItem: React.FC<{ item?: SystemComponentStatus; loading?: boolean }> = ({ item, loading }) => {
+const SystemStatusItem: React.FC<{ item?: SystemComponentStatus; loading?: boolean }> = React.memo(function SystemStatusItem({ item, loading }) {
   if (loading || !item) {
     return (
       <div className="flex items-center justify-between">
@@ -131,7 +135,7 @@ const SystemStatusItem: React.FC<{ item?: SystemComponentStatus; loading?: boole
       </div>
     </div>
   );
-};
+});
 
 
 const DatabaseConnectionNotification = () => {
