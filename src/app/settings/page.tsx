@@ -22,7 +22,6 @@ import { testScadaConnection, testSmtpConnection, getUserSettings, saveUserSetti
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
-import { ToastAction } from "@/components/ui/toast";
 import { useLocalization } from "@/components/localization/localization-provider";
 
 type ConnectionStatus = 'unknown' | 'testing' | 'success' | 'error';
@@ -99,12 +98,7 @@ export default function SettingsPage() {
             .then(settings => {
                 if (settings) {
                     form.reset(settings);
-                    // Language is now set globally by AppInitializer
-                    if (settings.theme) {
-                        applyTheme(settings.theme);
-                    }
                 } else {
-                    // Apply default if no settings found
                     form.reset(form.formState.defaultValues);
                 }
             })
@@ -133,11 +127,12 @@ export default function SettingsPage() {
                 title: t('settings_saved_title'),
                 description: t('settings_saved_description'),
             });
-            // Update language globally via context
             if (values.language) {
                 setLanguage(values.language);
             }
-            // Refetch global DB status after saving new credentials
+            if (values.theme) {
+                applyTheme(values.theme);
+            }
             refetchDbStatus();
         } catch (error) {
              console.error("Failed to save settings:", error);
@@ -303,10 +298,7 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>{t('theme')}</FormLabel>
                                     <Select 
-                                        onValueChange={(value) => {
-                                            field.onChange(value);
-                                            applyTheme(value);
-                                        }} 
+                                        onValueChange={field.onChange} 
                                         value={field.value}
                                     >
                                         <FormControl>
@@ -332,10 +324,7 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel>
                                     <Select 
-                                        onValueChange={(value) => {
-                                            field.onChange(value);
-                                            setLanguage(value);
-                                        }}
+                                        onValueChange={field.onChange}
                                         value={field.value}
                                     >
                                         <FormControl>

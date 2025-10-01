@@ -2,7 +2,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { type ReactNode } from 'react';
-import { Toaster } from '@/components/ui/toaster';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { cn } from '@/lib/utils';
