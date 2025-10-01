@@ -72,7 +72,6 @@ export function AppSidebar() {
                 <UserCircle2 className="h-7 w-7" />
               </AvatarFallback>
             )}
-            <AvatarFallback>{user?.email?.charAt(0).toUpperCase() ?? 'U'}</AvatarFallback>
         </Avatar>
         {state === 'expanded' && (
             <div className="flex flex-col truncate">
