@@ -5,7 +5,6 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useLocalization } from '@/components/localization/localization-provider';
 import { useEffect, type ReactNode } from 'react';
 import { getUserSettings } from './actions/scada-actions';
-import { Toaster } from '@/components/ui/toaster';
 
 export function applyTheme(theme: string) {
   const root = window.document.documentElement;
@@ -42,8 +41,5 @@ export function AppInitializer({ children }: { children: ReactNode }) {
     }
   }, [user, setLanguage]);
 
-  return <>
-    {children}
-    <Toaster />
-  </>;
+  return <>{children}</>;
 }

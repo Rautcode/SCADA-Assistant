@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { AuthenticatedLayout } from './authenticated-layout';
 import { AppInitializer } from './app-initializer';
 import { Providers } from './providers';
+import { Toaster } from '@/components/ui/toaster';
 
 
 export const metadata: Metadata = {
@@ -32,9 +33,12 @@ export default function RootLayout({
         )}
       >
         <Providers>
-          <AppInitializer>
-            <AuthenticatedLayout>{children}</AuthenticatedLayout>
-          </AppInitializer>
+          <AuthenticatedLayout>
+            <AppInitializer>
+              {children}
+            </AppInitializer>
+          </AuthenticatedLayout>
+          <Toaster />
         </Providers>
       </body>
     </html>
