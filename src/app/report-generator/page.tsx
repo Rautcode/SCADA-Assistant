@@ -17,6 +17,8 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { z } from 'zod';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/components/auth/auth-provider';
+import { getUserSettings } from '../actions/scada-actions';
 
 // Dynamically import step components
 const ReportStep1Criteria = dynamic(() => import('@/components/report-generator/step1-criteria').then(mod => mod.ReportStep1Criteria), {
@@ -63,6 +65,7 @@ export const GenerateReportInputSchema = z.object({
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
+  apiKey: z.string().optional(),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -88,6 +91,7 @@ export default function ReportGeneratorPage() {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [generatedReport, setGeneratedReport] = React.useState<string | null>(null);
+  const { user } = useAuth();
 
   // State to hold data across steps
   const [step1Data, setStep1Data] = React.useState<z.infer<typeof reportCriteriaSchema> | null>(null);
@@ -117,6 +121,10 @@ export default function ReportGeneratorPage() {
         });
         return;
     }
+    if (!user) {
+        toast({ title: "Not Authenticated", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     
     setIsGenerating(true);
     toast({
@@ -125,12 +133,20 @@ export default function ReportGeneratorPage() {
     });
 
     try {
+        const settings = await getUserSettings({ userId: user.uid });
+        if (!settings?.apiKey) {
+            toast({ title: "API Key Missing", description: "Please set your Gemini API key in the settings.", variant: "destructive" });
+            setIsGenerating(false);
+            return;
+        }
+        
         const reportInput: GenerateReportInput = {
             criteria: step1Data,
             template: step2Data.selectedTemplate,
             scadaData: step3Data.scadaData.filter(d => d.included),
             chartOptions: step4Data,
             outputOptions: step5Data,
+            apiKey: settings.apiKey,
         };
         const result = await generateReport(reportInput);
         setGeneratedReport(result.reportContent);

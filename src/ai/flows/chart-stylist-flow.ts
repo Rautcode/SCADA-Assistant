@@ -18,8 +18,15 @@ const ChartStyleSuggestionSchema = z.object({
 
 export type ChartStyleSuggestion = z.infer<typeof ChartStyleSuggestionSchema>;
 
-export async function suggestChartStyle(promptText: string): Promise<ChartStyleSuggestion> {
-  return suggestChartStyleFlow(promptText);
+const SuggestChartStyleInputSchema = z.object({
+    promptText: z.string(),
+    apiKey: z.string().optional(),
+});
+type SuggestChartStyleInput = z.infer<typeof SuggestChartStyleInputSchema>;
+
+
+export async function suggestChartStyle(input: SuggestChartStyleInput): Promise<ChartStyleSuggestion> {
+  return suggestChartStyleFlow(input);
 }
 
 const stylingPrompt = ai.definePrompt({
@@ -41,11 +48,21 @@ Return your suggestions in the specified output format.`,
 const suggestChartStyleFlow = ai.defineFlow(
   {
     name: 'suggestChartStyleFlow',
-    inputSchema: z.string(),
+    inputSchema: SuggestChartStyleInputSchema,
     outputSchema: ChartStyleSuggestionSchema,
   },
-  async (promptText) => {
-    const { output } = await stylingPrompt(promptText);
+  async ({ promptText, apiKey }) => {
+    
+    const model = apiKey ? ai.model('googleai/gemini-pro', { clientOptions: { apiKey } }) : ai.model('googleai/gemini-pro');
+
+    const { output } = await ai.generate({
+        prompt: stylingPrompt.prompt,
+        model: model,
+        input: promptText,
+        output: {
+            schema: ChartStyleSuggestionSchema,
+        },
+    });
     
     if (!output) {
       throw new Error("AI failed to suggest a chart style.");

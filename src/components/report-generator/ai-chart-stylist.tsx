@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { suggestChartStyle, ChartStyleSuggestion } from "@/ai/flows/chart-stylist-flow";
+import { useAuth } from "../auth/auth-provider";
+import { getUserSettings } from "@/app/actions/scada-actions";
 
 interface AiChartStylistProps {
     onStyleApply: (style: ChartStyleSuggestion) => void;
@@ -16,6 +18,7 @@ export function AiChartStylist({ onStyleApply }: AiChartStylistProps) {
     const [prompt, setPrompt] = React.useState("");
     const [isLoading, setIsLoading] = React.useState(false);
     const { toast } = useToast();
+    const { user } = useAuth();
 
     const handleGenerateStyle = async () => {
         if (!prompt) {
@@ -26,10 +29,19 @@ export function AiChartStylist({ onStyleApply }: AiChartStylistProps) {
             });
             return;
         }
+        if (!user) {
+            toast({ title: "Not Authenticated", description: "You must be logged in.", variant: "destructive" });
+            return;
+        }
 
         setIsLoading(true);
         try {
-            const suggestion = await suggestChartStyle(prompt);
+            const settings = await getUserSettings({ userId: user.uid });
+            if (!settings?.apiKey) {
+                toast({ title: "API Key Missing", description: "Please set your Gemini API key in the settings.", variant: "destructive" });
+                return;
+            }
+            const suggestion = await suggestChartStyle({ promptText: prompt, apiKey: settings.apiKey });
             onStyleApply(suggestion);
             toast({
                 title: "Style Applied",

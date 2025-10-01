@@ -40,6 +40,7 @@ const GenerateReportInputSchema = z.object({
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
+  apiKey: z.string().optional(),
 });
 type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -101,8 +102,16 @@ const generateReportFlow = ai.defineFlow(
   },
   async (input) => {
     console.log('Backend flow started with input:', input);
+    const { apiKey, ...promptInput } = input;
     
-    const { output } = await reportGenerationPrompt(input);
+    const model = apiKey ? ai.model('googleai/gemini-pro', { clientOptions: { apiKey } }) : ai.model('googleai/gemini-pro');
+
+    const { output } = await ai.generate({
+      prompt: reportGenerationPrompt.prompt,
+      model: model,
+      input: promptInput,
+      output: { schema: GenerateReportOutputSchema },
+    });
     
     if (!output) {
         throw new Error("AI model failed to generate a report.");
