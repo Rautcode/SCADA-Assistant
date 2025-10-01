@@ -251,7 +251,7 @@ export default function DashboardPage() {
 
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4 text-foreground">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <QuickAction title="New Report" icon={FilePlus} href="/report-generator" description="Generate a new SCADA report." />
           <QuickAction title="View Templates" icon={BarChart3} href="/templates" description="Manage and edit report templates." />
           <QuickAction title="Check Schedule" icon={CalendarClock} href="/scheduler" description="View and manage scheduled tasks." />
@@ -260,7 +260,7 @@ export default function DashboardPage() {
 
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4 text-foreground">System Overview</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Reports Generated (Month)" value={stats?.reports?.toLocaleString() ?? '...'} icon={FilePlus} description="Monthly total from live data" loading={isDataLoading} />
           <StatCard title="Scheduled Tasks" value={stats?.tasks?.toString() ?? '...'} icon={CalendarClock} description="Pending automated tasks" loading={isDataLoading} />
           <StatCard title="Active Users" value={stats?.users?.toString() ?? '...'} icon={Users} description="Users currently online" loading={isDataLoading} />

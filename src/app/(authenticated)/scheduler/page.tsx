@@ -117,7 +117,7 @@ export default function SchedulerPage() {
     const showConnectionMessage = !loading && tasks.length === 0 && dbStatus !== 'connected';
 
     return (
-        <div className="container mx-auto py-8 animate-fade-in">
+        <div className="animate-fade-in">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
