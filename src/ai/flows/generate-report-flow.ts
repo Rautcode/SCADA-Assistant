@@ -7,7 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
@@ -65,7 +65,8 @@ const reportGenerationPrompt = ai.definePrompt({
 
     **Report Details:**
     - **Report Name:** {{outputOptions.fileName}}
-    - **Template Used:** "{{template.name}}" ({{template.description}})
+    - **Template Used:** "{{template.name}}" (Category: {{template.category}})
+    - **Template Purpose:** {{template.description}}
     - **Date Range:** {{criteria.dateRange.from}} to {{criteria.dateRange.to}}
     - **Machines:** {{#each criteria.machineIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
     - **Parameters/Tags:** {{#if criteria.parameterIds}}{{#each criteria.parameterIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}All available{{/if}}
@@ -75,12 +76,12 @@ const reportGenerationPrompt = ai.definePrompt({
 
     **Instructions:**
     1.  **Analyze the Data**: Review the provided SCADA data points.
-    2.  **Summarize Key Findings**: Create a high-level summary of the data. Identify trends, anomalies, or important metrics based on the report type '{{criteria.reportType}}'. For 'production_summary', focus on output. For 'downtime_analysis', focus on errors or stoppages. For 'quality_metrics', focus on deviations.
+    2.  **Summarize Key Findings**: Create a high-level summary of the data. Your analysis should be guided by the **Template Purpose**. Identify trends, anomalies, or important metrics. For 'production' or 'summary' report types, focus on output. For 'downtime' or 'maintenance' reports, focus on errors or stoppages. For 'quality' reports, focus on deviations and standards.
     3.  **Format the Output**: 
         - If the requested format is 'csv', generate ONLY a valid CSV string of the provided SCADA data. The first line must be the header row: "Timestamp,Machine,Parameter,Value,Unit".
         - If the requested format is 'pdf', generate a comprehensive report in Markdown format. The report should include:
             - A main title.
-            - The summary of key findings.
+            - The summary of key findings, which MUST be aligned with the **Template Purpose**.
             - A section for charts (if requested): Mention the chart type ({{chartOptions.chartType}}) and what it represents.
             - A data table of the raw data.
     4.  **Populate Output Schema**: Fill the 'reportContent', 'fileName', and 'format' fields in the output object.
