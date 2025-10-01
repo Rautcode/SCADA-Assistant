@@ -32,9 +32,27 @@ const faqData = [
     category: "Database",
   },
   {
+    question: "What is Data Mapping and why is it important?",
+    answer:
+      "Data Mapping, found in Settings > Data Mapping, tells the application which columns in your database table correspond to essential data points like 'Timestamp', 'Machine Name', 'Parameter Name', and 'Value'. Correct mapping is crucial for the application to read and analyze your SCADA data accurately.",
+    category: "Database",
+  },
+   {
+    question: "Why are my SCADA tags or parameters not showing up?",
+    answer:
+      "This usually happens for one of two reasons: 1) No machines are selected in the Report Generator, or 2) The Data Mapping settings are incorrect or incomplete. First, ensure you have selected at least one machine. Second, go to Settings > Data Mapping, fetch the schema for your database, and ensure all mapping fields are correctly assigned to the right columns in your data table.",
+    category: "Database",
+  },
+  {
     question: "Where can I find the reports I generate?",
     answer:
       "Currently, the generated report content is displayed in a pop-up dialog after the AI finishes processing. From there, you can copy the content. Future updates will include options to download files directly.",
+    category: "Reports",
+  },
+  {
+    question: "How does the AI Chart Stylist work?",
+    answer:
+      "In Step 4 of the Report Generator, you can use the AI Chart Stylist by describing the visual style you want (e.g., 'a professional look with dark blue colors'). The AI will then automatically select a chart type, generate a title, and create a color scheme for you, which is applied instantly to the chart preview.",
     category: "Reports",
   },
   {
