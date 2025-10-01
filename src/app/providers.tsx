@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AuthProvider } from "@/components/auth/auth-provider";

@@ -99,9 +99,7 @@ export default function SettingsPage() {
             .then(settings => {
                 if (settings) {
                     form.reset(settings);
-                    if (settings.language) {
-                        setLanguage(settings.language);
-                    }
+                    // Language is now set globally by AppInitializer
                     if (settings.theme) {
                         applyTheme(settings.theme);
                     }
@@ -120,7 +118,7 @@ export default function SettingsPage() {
             })
             .finally(() => setIsFetching(false));
 
-    }, [user, form, toast, setLanguage]);
+    }, [user, form, toast]);
 
     async function onSubmit(values: SettingsFormValues) {
         if (!user) {
@@ -135,7 +133,7 @@ export default function SettingsPage() {
                 title: t('settings_saved_title'),
                 description: t('settings_saved_description'),
             });
-            // Update language
+            // Update language globally via context
             if (values.language) {
                 setLanguage(values.language);
             }
@@ -718,5 +716,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
