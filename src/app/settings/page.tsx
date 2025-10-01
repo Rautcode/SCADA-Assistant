@@ -127,6 +127,7 @@ export default function SettingsPage() {
                 title: t('settings_saved_title'),
                 description: t('settings_saved_description'),
             });
+            // Apply language and theme immediately
             if (values.language) {
                 setLanguage(values.language);
             }
