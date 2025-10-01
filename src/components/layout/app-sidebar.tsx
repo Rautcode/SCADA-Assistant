@@ -24,7 +24,6 @@ import { AppLogo } from './app-logo';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import imageData from '@/app/lib/placeholder-images.json';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 
@@ -66,7 +65,13 @@ export function AppSidebar() {
   const UserProfile = () => (
      <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 border-2 border-sidebar-primary">
-            <AvatarImage src={user?.photoURL || imageData.avatars.user.src} alt={imageData.avatars.user.alt} data-ai-hint={imageData.avatars.user.hint} />
+            {user?.photoURL ? (
+              <AvatarImage src={user.photoURL} alt={user.displayName || 'User Avatar'} />
+            ) : (
+              <AvatarFallback className="bg-background text-foreground">
+                <UserCircle2 className="h-7 w-7" />
+              </AvatarFallback>
+            )}
             <AvatarFallback>{user?.email?.charAt(0).toUpperCase() ?? 'U'}</AvatarFallback>
         </Avatar>
         {state === 'expanded' && (
@@ -158,5 +163,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    

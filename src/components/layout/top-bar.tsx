@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { Bell, CalendarDays, ChevronRight, LogOut, Settings, User, PanelLeft, AlertTriangle } from 'lucide-react';
+import { Bell, CalendarDays, ChevronRight, LogOut, Settings, User, PanelLeft, AlertTriangle, UserCircle2 } from 'lucide-react';
 import { AppLogo } from './app-logo';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,13 +20,11 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { useSidebar } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import imageData from '@/app/lib/placeholder-images.json';
 import { useAuth } from '../auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { onLogs } from '@/services/database-service';
 import type { SystemLog } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
-import { iconMap } from '@/lib/icon-map';
 import { ScrollArea } from '../ui/scroll-area';
 
 export function TopBar() {
@@ -219,7 +217,13 @@ export function TopBar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.photoURL || imageData.avatars.user.src} alt={imageData.avatars.user.alt} data-ai-hint={imageData.avatars.user.hint}/>
+                {user?.photoURL ? (
+                    <AvatarImage src={user.photoURL} alt={user.displayName || 'User Avatar'} />
+                ) : (
+                    <AvatarFallback className="bg-background text-foreground">
+                        <UserCircle2 className="h-7 w-7" />
+                    </AvatarFallback>
+                )}
                 <AvatarFallback>{user?.email?.charAt(0).toUpperCase() ?? 'U'}</AvatarFallback>
               </Avatar>
             </Button>
