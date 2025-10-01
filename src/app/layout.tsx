@@ -9,9 +9,9 @@ import { GeistMono } from 'geist/font/mono';
 import { cn } from '@/lib/utils';
 import { LocalizationProvider, useLocalization } from '@/components/localization/localization-provider';
 import { AuthenticatedLayout } from './authenticated-layout';
+import { getUserSettings } from './actions/scada-actions';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useEffect } from 'react';
-import { getUserSettings } from './actions/scada-actions';
 
 // Metadata can now be correctly exported from the RootLayout Server Component.
 export const metadata: Metadata = {
