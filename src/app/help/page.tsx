@@ -4,7 +4,7 @@ import { HelpCircle } from 'lucide-react';
 
 export default function HelpPage() {
   return (
-    <div>
+    <div className="animate-fade-in">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-bold">

@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings } from 'lucide-react';
 import { onScheduledTasks, onReportTemplates } from '@/services/database-service';
@@ -12,10 +13,13 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { NewTaskDialog } from '@/components/scheduler/new-task-dialog';
 import Image from 'next/image';
 import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
+
+const NewTaskDialog = dynamic(() =>
+  import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog)
+);
 
 const statusConfig = {
     scheduled: { icon: Timer, color: "bg-blue-500", label: "Scheduled" },
@@ -112,7 +116,7 @@ export default function SchedulerPage() {
     const showConnectionMessage = !loading && tasks.length === 0 && dbStatus !== 'connected';
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="container mx-auto py-8 animate-fade-in">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -168,7 +172,7 @@ export default function SchedulerPage() {
                     )}
                 </CardContent>
             </Card>
-            <NewTaskDialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen} />
+            {isNewTaskDialogOpen && <NewTaskDialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen} />}
         </div>
     );
 }
