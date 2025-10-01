@@ -62,14 +62,23 @@ export function AppSidebar() {
     }
   };
 
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+    const words = name.split(' ');
+    if (words.length > 1) {
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   const UserProfile = () => (
      <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 border-2 border-sidebar-primary">
             {user?.photoURL ? (
               <AvatarImage src={user.photoURL} alt={user.displayName || 'User Avatar'} />
             ) : (
-              <AvatarFallback className="bg-background text-foreground">
-                <UserCircle2 className="h-7 w-7" />
+              <AvatarFallback className="bg-background text-foreground font-semibold">
+                {getInitials(user?.displayName)}
               </AvatarFallback>
             )}
         </Avatar>

@@ -77,6 +77,15 @@ export function TopBar() {
     }
   };
 
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+    const words = name.split(' ');
+    if (words.length > 1) {
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split('/').filter(segment => segment);
     const breadcrumbs = [{ label: 'Home', href: '/dashboard' }];
@@ -220,8 +229,8 @@ export function TopBar() {
                 {user?.photoURL ? (
                     <AvatarImage src={user.photoURL} alt={user.displayName || 'User Avatar'} />
                 ) : (
-                    <AvatarFallback className="bg-background text-foreground">
-                        <UserCircle2 className="h-7 w-7" />
+                    <AvatarFallback className="bg-muted text-muted-foreground font-semibold">
+                        {getInitials(user?.displayName)}
                     </AvatarFallback>
                 )}
               </Avatar>
