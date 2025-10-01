@@ -1,17 +1,24 @@
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// A function to check if the config is valid
+function isFirebaseConfigValid(config: Partial<FirebaseOptions>): config is FirebaseOptions {
+    return !!(config.apiKey && config.authDomain && config.projectId);
+}
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase
+const app = !getApps().length && isFirebaseConfigValid(firebaseConfig)
+  ? initializeApp(firebaseConfig)
+  : (getApps().length > 0 ? getApp() : null);
+
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
 
 // Enable persistence
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && db) {
     enableIndexedDbPersistence(db).catch((err) => {
         if (err.code == 'failed-precondition') {
             // Multiple tabs open, persistence can only be enabled
