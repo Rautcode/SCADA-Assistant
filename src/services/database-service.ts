@@ -57,6 +57,11 @@ async function seedReportTemplates() {
 
 
 function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string): Unsubscribe {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot create listener.");
+        callback([]);
+        return () => {};
+    }
     const collRef = collection(db, collectionName);
     const q = orderField ? query(collRef, orderBy(orderField, 'desc')) : query(collRef);
     
@@ -79,6 +84,10 @@ function createListener<T>(collectionName: string, callback: (data: T[]) => void
 }
 
 export function onDashboardStats(callback: (stats: DashboardStats | null) => void): Unsubscribe {
+    if (!db) {
+        callback(null);
+        return () => {};
+    }
     const statsRef = doc(db, 'dashboard', 'stats');
     return onSnapshot(statsRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -101,6 +110,10 @@ export function onSystemComponentStatuses(callback: (statuses: SystemComponentSt
 }
 
 export function onRecentActivities(callback: (activities: RecentActivity[]) => void, count: number = 10): Unsubscribe {
+    if (!db) {
+        callback([]);
+        return () => {};
+    }
     const activitiesRef = collection(db, 'recentActivities');
     const q = query(activitiesRef, orderBy('timestamp', 'desc'), limit(count));
     
@@ -141,26 +154,33 @@ export function onEmailLogs(callback: (logs: EmailLog[]) => void): Unsubscribe {
 
 // ===== Settings Service =====
 export async function saveUserSettingsToDb(userId: string, settings: Omit<UserSettings, 'userId'>) {
+    if (!db) throw new Error("Firestore is not initialized.");
     const settingsRef = doc(db, 'userSettings', userId);
     await setDoc(settingsRef, settings, { merge: true });
 }
 
 export async function getUserSettingsFromDb(userId: string): Promise<UserSettings | null> {
+    if (!db) throw new Error("Firestore is not initialized.");
     const settingsRef = doc(db, 'userSettings', userId);
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
         const data = docSnap.data();
-        // Ensure nested objects exist
-        if (!data.database) data.database = {};
-        if (!data.email) data.email = {};
-        if (!data.dataMapping) data.dataMapping = {};
-        return { userId, ...data } as UserSettings;
+        // Ensure nested objects exist to prevent client-side errors
+        return { 
+            userId,
+            ...data,
+            database: data.database || {},
+            email: data.email || {},
+            dataMapping: data.dataMapping || {},
+            notifications: data.notifications || {},
+        } as UserSettings;
     }
     return null;
 }
 
 // ===== Scheduler Service =====
 export async function scheduleNewTaskInDb(task: Omit<ScheduledTask, 'id' | 'status'>) {
+    if (!db) throw new Error("Firestore is not initialized.");
     await addDoc(collection(db, 'scheduledTasks'), {
         ...task,
         status: 'scheduled',
@@ -169,6 +189,7 @@ export async function scheduleNewTaskInDb(task: Omit<ScheduledTask, 'id' | 'stat
 
 // ===== Template Service =====
 export async function createNewTemplateInDb(template: Omit<ReportTemplate, 'id' | 'lastModified'>) {
+    if (!db) throw new Error("Firestore is not initialized.");
      await addDoc(collection(db, 'reportTemplates'), {
         ...template,
         lastModified: serverTimestamp(),
@@ -177,6 +198,7 @@ export async function createNewTemplateInDb(template: Omit<ReportTemplate, 'id' 
 
 // ===== Email Service =====
 export async function addEmailLogToDb(log: Omit<EmailLog, 'id' | 'timestamp'>) {
+    if (!db) throw new Error("Firestore is not initialized.");
     await addDoc(collection(db, 'emailLogs'), {
         ...log,
         timestamp: serverTimestamp(),
