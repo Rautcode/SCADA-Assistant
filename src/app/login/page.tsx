@@ -24,7 +24,7 @@ export default function LoginPage() {
                             Sign up
                         </Link>
                     </p>
-                    <p className="mt-4 text-xs">Support: support@scada-assistant.com</p>
+                    <p className="mt-4 text-xs">Support: manav@evio.in</p>
                 </CardFooter>
             </Card>
         </div>

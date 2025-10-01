@@ -157,8 +157,8 @@ export default function HelpPage() {
             <p className="text-sm text-muted-foreground">
                 Our support team is here to help. Reach out to us for any technical issues or further questions.
             </p>
-            <a href="mailto:support@scada-assistant.com" className="text-sm font-semibold text-primary mt-2 inline-block">
-                support@scada-assistant.com
+            <a href="mailto:manav@evio.in" className="text-sm font-semibold text-primary mt-2 inline-block">
+                manav@evio.in
             </a>
           </CardContent>
         </Card>
