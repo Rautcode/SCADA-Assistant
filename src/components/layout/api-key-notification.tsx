@@ -7,7 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { KeyRound, Settings } from 'lucide-react';
 import { useAuth } from '../auth/auth-provider';
-import { getUserSettings } from '@/app/actions/scada-actions';
+import { getUserSettings } from '@/app/actions/settings-actions';
 import { Skeleton } from '../ui/skeleton';
 
 export function ApiKeyNotification() {

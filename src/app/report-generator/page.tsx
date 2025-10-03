@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -18,7 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { z } from 'zod';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/auth/auth-provider';
-import { getUserSettings } from '../actions/scada-actions';
+import { getUserSettings } from '../actions/settings-actions';
 
 // Dynamically import step components
 const ReportStep1Criteria = dynamic(() => import('@/components/report-generator/step1-criteria').then(mod => mod.ReportStep1Criteria), {

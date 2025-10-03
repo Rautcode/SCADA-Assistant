@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -21,7 +20,8 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Machine, onMachines } from "@/services/database-service";
 import { Skeleton } from "../ui/skeleton";
 import { Unsubscribe } from "firebase/firestore";
-import { getScadaTags, getUserSettings } from "@/app/actions/scada-actions";
+import { getScadaTags } from "@/app/actions/scada-actions";
+import { getUserSettings } from "@/app/actions/settings-actions";
 import { useAuth } from "../auth/auth-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";

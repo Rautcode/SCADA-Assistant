@@ -6,8 +6,7 @@ import sql from 'mssql';
 import nodemailer from 'nodemailer';
 import { reportCriteriaSchema } from "@/components/report-generator/step1-criteria";
 import { z } from "zod";
-import { dataMappingSchema, emailSettingsSchema, settingsSchema } from "@/lib/types/database";
-import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
+import { dataMappingSchema, emailSettingsSchema } from "@/lib/types/database";
 
 
 // Types for credentials to be passed around
@@ -266,21 +265,4 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
         console.error("SMTP connection test failed:", error.message);
         return { success: false, error: error.message };
     }
-}
-
-
-// Server Actions for User Settings
-export async function saveUserSettings(input: { userId: string, settings: z.infer<typeof settingsSchema> }) {
-  await saveUserSettingsToDb(input.userId, input.settings);
-}
-
-export async function getUserSettings(input: { userId: string }) {
-  try {
-    return await getUserSettingsFromDb(input.userId);
-  } catch (error) {
-    console.error('Failed to get user settings from DB:', error);
-    // Return null or re-throw, but don't let it be an unhandled rejection.
-    // For the purpose of the client-side call, returning null is safer.
-    return null;
-  }
 }

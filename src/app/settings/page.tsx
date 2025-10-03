@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -18,7 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, testSmtpConnection, getUserSettings, saveUserSettings, getDbSchema } from "@/app/actions/scada-actions";
+import { testScadaConnection, testSmtpConnection, getDbSchema } from "@/app/actions/scada-actions";
+import { getUserSettings, saveUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";

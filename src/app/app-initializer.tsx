@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useAuth } from '@/components/auth/auth-provider';
 import { useLocalization } from '@/components/localization/localization-provider';
 import { useEffect, type ReactNode } from 'react';
-import { getUserSettings } from './actions/scada-actions';
+import { getUserSettings } from './actions/settings-actions';
 
 export function applyTheme(theme: string) {
   const root = window.document.documentElement;

@@ -1,4 +1,3 @@
-
 "use client";
 import * as React from "react";
 import { Wand2, Loader2 } from "lucide-react";
@@ -8,7 +7,7 @@ import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { suggestChartStyle, ChartStyleSuggestion } from "@/ai/flows/chart-stylist-flow";
 import { useAuth } from "../auth/auth-provider";
-import { getUserSettings } from "@/app/actions/scada-actions";
+import { getUserSettings } from "@/app/actions/settings-actions";
 
 interface AiChartStylistProps {
     onStyleApply: (style: ChartStyleSuggestion) => void;

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -17,7 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown, Search, AlertCircle, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScadaDataPoint } from "@/lib/types/database";
-import { getScadaData, getUserSettings } from "@/app/actions/scada-actions";
+import { getScadaData } from "@/app/actions/scada-actions";
+import { getUserSettings } from "@/app/actions/settings-actions";
 import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
