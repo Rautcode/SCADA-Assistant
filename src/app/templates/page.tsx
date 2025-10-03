@@ -42,7 +42,7 @@ const TemplateCard = React.memo(function TemplateCard({ template, loading }: { t
           alt={template.name}
           width={300} height={200}
           className="rounded-t-lg object-cover w-full aspect-[3/2]"
-          data-ai-hint="technical document"
+          data-ai-hint="technical diagram"
         />
       </CardHeader>
       <CardContent className="p-4">
@@ -74,7 +74,7 @@ const TemplateListItem = React.memo(function TemplateListItem({ template, loadin
         alt={template.name}
         width={120} height={80}
         className="rounded-md object-cover aspect-[3/2] mr-4"
-        data-ai-hint="technical document"
+        data-ai-hint="technical diagram"
       />
       <div className="flex-1">
         <CardTitle className="text-md mb-1">{template.name}</CardTitle>
@@ -201,5 +201,3 @@ export default function TemplatesPage() {
     </div>
   );
 }
-
-    
