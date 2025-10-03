@@ -111,18 +111,22 @@ export default function SettingsPage() {
 
         setIsLoading(true);
         try {
-            await saveUserSettings({ userId: user.uid, settings: values });
-            
-            // Apply language and theme immediately on the client-side after successful save.
-            setLanguage(values.language);
-            applyTheme(values.theme);
+            const result = await saveUserSettings({ userId: user.uid, settings: values });
 
-            toast({
-                title: t('settings_saved_title'),
-                description: t('settings_saved_description'),
-            });
-            
-            refetchDbStatus();
+            if (result.success) {
+                // Apply language and theme immediately on the client-side after successful save.
+                setLanguage(values.language);
+                applyTheme(values.theme);
+
+                toast({
+                    title: t('settings_saved_title'),
+                    description: t('settings_saved_description'),
+                });
+                
+                refetchDbStatus();
+            } else {
+                throw new Error(result.error || "Could not save your settings.");
+            }
         } catch (error: any) {
              console.error("Failed to save settings:", error);
              toast({ title: "Error", description: error.message || "Could not save your settings.", variant: "destructive" });
