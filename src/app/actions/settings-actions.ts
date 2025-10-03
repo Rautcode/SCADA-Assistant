@@ -25,4 +25,3 @@ export async function getUserSettings(input: { userId: string }) {
     return null;
   }
 }
-
