@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useLocalization } from '@/components/localization/localization-provider';
 import { useEffect, type ReactNode } from 'react';
 import { getUserSettings } from './actions/settings-actions';
+import { useToast } from '@/hooks/use-toast';
 
 export function applyTheme(theme: string) {
   const root = window.document.documentElement;
@@ -21,6 +22,7 @@ export function applyTheme(theme: string) {
 export function AppInitializer({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const { setLanguage } = useLocalization();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Only run this effect if the user object is available and not loading
@@ -38,9 +40,14 @@ export function AppInitializer({ children }: { children: ReactNode }) {
         })
         .catch(error => {
           console.warn("Could not fetch user settings on load:", error);
+          toast({
+            title: "Could not load settings",
+            description: "There was a problem loading your saved preferences.",
+            variant: "destructive"
+          });
         });
     }
-  }, [user, loading, setLanguage]);
+  }, [user, loading, setLanguage, toast]);
 
   return <>{children}</>;
 }

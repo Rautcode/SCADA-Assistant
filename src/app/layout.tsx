@@ -37,8 +37,8 @@ export default function RootLayout({
                 <AuthenticatedLayout>
                     {children}
                 </AuthenticatedLayout>
-                <Toaster />
             </AppInitializer>
+            <Toaster />
         </Providers>
       </body>
     </html>
