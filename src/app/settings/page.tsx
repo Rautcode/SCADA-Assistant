@@ -113,7 +113,6 @@ export default function SettingsPage() {
         try {
             await saveUserSettings({ userId: user.uid, settings: values });
             
-            // --- CRITICAL FIX FOR INSTANT UPDATE ---
             // Apply language and theme immediately on the client-side after successful save.
             setLanguage(values.language);
             applyTheme(values.theme);
