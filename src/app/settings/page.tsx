@@ -114,10 +114,7 @@ export default function SettingsPage() {
             const result = await saveUserSettings({ userId: user.uid, settings: values });
 
             if (result.success) {
-                // Apply language and theme immediately on the client-side after successful save.
-                setLanguage(values.language);
-                applyTheme(values.theme);
-
+                // UI is already updated via onValueChange, so we just show confirmation.
                 toast({
                     title: t('settings_saved_title'),
                     description: t('settings_saved_description'),
@@ -291,7 +288,10 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>{t('theme')}</FormLabel>
                                     <Select 
-                                        onValueChange={field.onChange} 
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+                                            applyTheme(value);
+                                        }}
                                         value={field.value}
                                     >
                                         <FormControl>
@@ -317,7 +317,10 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel>
                                     <Select 
-                                        onValueChange={field.onChange}
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+                                            setLanguage(value);
+                                        }}
                                         value={field.value}
                                     >
                                         <FormControl>
@@ -562,7 +565,7 @@ export default function SettingsPage() {
                                                     <FormItem>
                                                         <FormLabel>Machine/Server Column</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</selectContent>
                                                         </Select>
                                                     </FormItem>
                                                 )}
@@ -573,7 +576,7 @@ export default function SettingsPage() {
                                                     <FormItem>
                                                         <FormLabel>Parameter/Tag Name Column</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</selectContent>
                                                         </Select>
                                                     </FormItem>
                                                 )}
