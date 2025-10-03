@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
+import Link from "next/link";
 
 type ConnectionStatus = 'unknown' | 'testing' | 'success' | 'error';
 
@@ -704,5 +705,7 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
 
     
