@@ -88,8 +88,6 @@ export default function SettingsPage() {
             .then(settings => {
                 if (settings) {
                     form.reset(settings);
-                } else {
-                    form.reset(form.formState.defaultValues);
                 }
             })
             .catch(err => {
