@@ -672,7 +672,7 @@ export default function SettingsPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
-        )
+        );
     }
 
     return (
@@ -704,5 +704,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
