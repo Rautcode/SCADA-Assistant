@@ -590,7 +590,7 @@ export default function SettingsPage() {
                                                     <FormItem>
                                                         <FormLabel>Value Column</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</selectContent>
                                                         </Select>
                                                     </FormItem>
                                                 )}
