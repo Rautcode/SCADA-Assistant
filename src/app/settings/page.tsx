@@ -579,7 +579,7 @@ export default function SettingsPage() {
                                                     <FormItem>
                                                         <FormLabel>Parameter/Tag Name Column</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</selectContent>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
                                                 )}
@@ -673,7 +673,7 @@ export default function SettingsPage() {
                 </TabsContent>
             </Tabs>
         );
-    }
+    };
 
     return (
         <div className="animate-fade-in">
@@ -704,3 +704,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
