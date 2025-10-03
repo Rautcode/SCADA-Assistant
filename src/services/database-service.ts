@@ -10,31 +10,31 @@ const defaultTemplates: Omit<ReportTemplate, 'id' | 'lastModified'>[] = [
         name: 'Daily Production Summary',
         description: 'Tracks key production metrics like output, uptime, and efficiency over a 24-hour period.',
         category: 'Production',
-        thumbnailUrl: 'https://picsum.photos/seed/production_summary/300/200',
+        thumbnailUrl: 'https://picsum.photos/seed/tech_abstract_1/300/200',
     },
     {
         name: 'Weekly Downtime Analysis',
         description: 'Analyzes all machine downtime events over the past week to identify recurring issues.',
         category: 'Maintenance',
-        thumbnailUrl: 'https://picsum.photos/seed/downtime_analysis/300/200',
+        thumbnailUrl: 'https://picsum.photos/seed/tech_chart_2/300/200',
     },
     {
         name: 'Monthly Quality Control Report',
         description: 'A comprehensive review of quality metrics, including defect rates and specification adherence for the month.',
         category: 'Quality',
-        thumbnailUrl: 'https://picsum.photos/seed/quality_control/300/200',
+        thumbnailUrl: 'https://picsum.photos/seed/data_visualization_3/300/200',
     },
     {
         name: 'Energy Consumption Overview',
         description: 'Monitors and reports on the energy usage of selected machines to optimize consumption.',
         category: 'Energy',
-        thumbnailUrl: 'https://picsum.photos/seed/energy_overview/300/200',
+        thumbnailUrl: 'https://picsum.photos/seed/green_tech_4/300/200',
     },
     {
         name: 'Operator Shift Handover',
         description: 'A summary of key events, alarms, and production notes for a smooth shift transition.',
         category: 'Operations',
-        thumbnailUrl: 'https://picsum.photos/seed/shift_handover/300/200',
+        thumbnailUrl: 'https://picsum.photos/seed/industrial_control_5/300/200',
     }
 ];
 
