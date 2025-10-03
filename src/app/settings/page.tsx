@@ -26,6 +26,10 @@ import { useConnection } from "@/components/database/connection-provider";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
 import Link from "next/link";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronsUpDown } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 type ConnectionStatus = 'unknown' | 'testing' | 'success' | 'error';
 
@@ -120,7 +124,7 @@ export default function SettingsPage() {
                     description: t('settings_saved_description'),
                 });
                 
-                // Also apply the settings immediately for instant feedback
+                // Apply settings immediately for instant feedback
                 applyTheme(values.theme);
                 setLanguage(values.language);
                 refetchDbStatus();
@@ -591,7 +595,7 @@ export default function SettingsPage() {
                                                     <FormItem>
                                                         <FormLabel>Value Column</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</selectContent>
+                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
                                                 )}
@@ -705,7 +709,5 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
 
     
