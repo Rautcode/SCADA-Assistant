@@ -34,7 +34,7 @@ export function NewTemplateDialog({ open, onOpenChange }: NewTemplateDialogProps
             name: "",
             description: "",
             category: "",
-            thumbnailUrl: "https://picsum.photos/seed/tech_abstract_6/300/200",
+            thumbnailUrl: "https://picsum.photos/seed/new_template/300/200",
         },
     });
     
