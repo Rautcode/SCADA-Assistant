@@ -33,12 +33,12 @@ export default function RootLayout({
         )}
       >
         <Providers>
-          <AuthenticatedLayout>
             <AppInitializer>
-              {children}
+                <AuthenticatedLayout>
+                    {children}
+                </AuthenticatedLayout>
+                <Toaster />
             </AppInitializer>
-          </AuthenticatedLayout>
-          <Toaster />
         </Providers>
       </body>
     </html>

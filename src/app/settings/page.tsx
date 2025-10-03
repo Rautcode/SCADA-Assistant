@@ -113,7 +113,8 @@ export default function SettingsPage() {
         try {
             await saveUserSettings({ userId: user.uid, settings: values });
             
-            // Apply language and theme immediately after saving
+            // --- CRITICAL FIX FOR INSTANT UPDATE ---
+            // Apply language and theme immediately on the client-side after successful save.
             setLanguage(values.language);
             applyTheme(values.theme);
 
@@ -123,9 +124,9 @@ export default function SettingsPage() {
             });
             
             refetchDbStatus();
-        } catch (error) {
+        } catch (error: any) {
              console.error("Failed to save settings:", error);
-             toast({ title: "Error", description: "Could not save your settings.", variant: "destructive" });
+             toast({ title: "Error", description: error.message || "Could not save your settings.", variant: "destructive" });
         } finally {
             setIsLoading(false);
         }

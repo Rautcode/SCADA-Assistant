@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/components/auth/auth-provider';
@@ -18,11 +19,12 @@ export function applyTheme(theme: string) {
 
 // This is a client component to handle client-side effects like fetching settings.
 export function AppInitializer({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { setLanguage } = useLocalization();
 
   useEffect(() => {
-    if (user) {
+    // Only run this effect if the user object is available and not loading
+    if (user && !loading) {
       getUserSettings({ userId: user.uid })
         .then(settings => {
           if (settings) {
@@ -38,7 +40,7 @@ export function AppInitializer({ children }: { children: ReactNode }) {
           console.warn("Could not fetch user settings on load:", error);
         });
     }
-  }, [user, setLanguage]);
+  }, [user, loading, setLanguage]);
 
   return <>{children}</>;
 }

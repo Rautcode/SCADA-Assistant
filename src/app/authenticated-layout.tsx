@@ -20,6 +20,7 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router, pathname, isAuthPage]);
 
+  // Show a loading screen while auth state is resolving, or if we are about to redirect.
   if (loading || (!user && !isAuthPage)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -31,9 +32,12 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
     );
   }
   
+  // If we're on an auth page (Login/Register), just render the content directly
+  // without the main app shell.
   if (isAuthPage) {
     return <>{children}</>;
   }
 
+  // If the user is authenticated and not on an auth page, render the full app shell.
   return <AppShell>{children}</AppShell>;
 }
