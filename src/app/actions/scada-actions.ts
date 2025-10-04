@@ -36,11 +36,11 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
     }
 
     try {
-        const dbConfig = {
-            user: dbCreds.user || '',
-            password: dbCreds.password || '',
-            server: dbCreds.server || '',
-            database: dbCreds.dbName || '',
+        const dbConfig: sql.config = {
+            user: dbCreds.user || undefined,
+            password: dbCreds.password || undefined,
+            server: dbCreds.server,
+            database: dbCreds.dbName,
             options: {
                 encrypt: true, 
                 trustServerCertificate: true 
@@ -117,11 +117,11 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
     }
     
     try {
-        const dbConfig = {
-            user: dbCreds.user || '',
-            password: dbCreds.password || '',
-            server: dbCreds.server || '',
-            database: dbCreds.dbName || '',
+        const dbConfig: sql.config = {
+            user: dbCreds.user || undefined,
+            password: dbCreds.password || undefined,
+            server: dbCreds.server,
+            database: dbCreds.dbName,
             options: { encrypt: true, trustServerCertificate: true }
         };
 
@@ -160,18 +160,18 @@ type GetDbSchemaInput = {
 export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
     console.log("Fetching DB schema...");
     
-    const dbConfig = {
-        user: dbCreds.user || '',
-        password: dbCreds.password || '',
-        server: dbCreds.server || '',
-        database: dbCreds.dbName || '',
+    if (!dbCreds.server || !dbCreds.dbName) {
+         throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
+    }
+    
+    const dbConfig: sql.config = {
+        user: dbCreds.user || undefined,
+        password: dbCreds.password || undefined,
+        server: dbCreds.server,
+        database: dbCreds.dbName,
         options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
     };
     
-    if (!dbConfig.server || !dbConfig.database) {
-         throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
-    }
-
     try {
         await sql.connect(dbConfig);
 
@@ -201,22 +201,23 @@ export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tabl
 // Server Action to test SCADA connection
 export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredentials }): Promise<{ success: boolean, error?: string }> {
     console.log("Testing SCADA DB connection...");
+    
+    if (!dbCreds.server || !dbCreds.dbName) {
+        return { success: false, error: "Server and Database Name are required." };
+    }
+
     try {
-        const dbConfig = {
-            user: dbCreds.user || '',
-            password: dbCreds.password || '',
-            server: dbCreds.server || '',
-            database: dbCreds.dbName || '',
+        const dbConfig: sql.config = {
+            user: dbCreds.user || undefined,
+            password: dbCreds.password || undefined,
+            server: dbCreds.server,
+            database: dbCreds.dbName,
             options: {
                 encrypt: true, 
                 trustServerCertificate: true,
                 connectionTimeout: 5000 // 5 second timeout
             }
         };
-
-        if (!dbConfig.server || !dbConfig.database) {
-            throw new Error("Server and Database Name are required.");
-        }
 
         await sql.connect(dbConfig);
         await sql.close();
