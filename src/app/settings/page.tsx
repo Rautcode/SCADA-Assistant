@@ -155,7 +155,7 @@ export default function SettingsPage() {
         setDbConnectionStatus('testing');
 
         try {
-            const result = await testScadaConnection({ dbCreds: { server: dbCreds.server, database: dbCreds.dbName, user: dbCreds.user, password: dbCreds.password } });
+            const result = await testScadaConnection({ dbCreds: { server: dbCreds.server, dbName: dbCreds.dbName, user: dbCreds.user, password: dbCreds.password } });
             if (result.success) {
                 setDbConnectionStatus('success');
                 toast({
@@ -190,7 +190,7 @@ export default function SettingsPage() {
         }
         setIsFetchingSchema(true);
         try {
-            const schema = await getDbSchema({ dbCreds: { server: dbCreds.server, database: dbCreds.dbName, user: dbCreds.user, password: dbCreds.password } });
+            const schema = await getDbSchema({ dbCreds: { server: dbCreds.server, dbName: dbCreds.dbName, user: dbCreds.user, password: dbCreds.password } });
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
@@ -709,5 +709,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
