@@ -23,10 +23,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { onRecentActivities } from '@/services/database-service';
-import type { RecentActivity } from '@/lib/types/database';
+import type { RecentActivity, UserSettings } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { ScrollArea } from '../ui/scroll-area';
 import { iconMap } from '@/lib/icon-map';
+import { getUserSettings } from '@/app/actions/settings-actions';
 
 export function TopBar() {
   const [date, setDate] = React.useState<Date | undefined>(undefined);
@@ -37,10 +38,17 @@ export function TopBar() {
   const { toast } = useToast();
   const [notifications, setNotifications] = React.useState<RecentActivity[]>([]);
   const [lastSeen, setLastSeen] = React.useState<Date | null>(null);
+  const [userSettings, setUserSettings] = React.useState<UserSettings | null>(null);
+
 
   React.useEffect(() => {
     // This will only run on the client, after hydration, avoiding mismatch
     setDate(new Date());
+
+    if (!user) return;
+
+    // Fetch user settings to check notification preferences
+    getUserSettings({ userId: user.uid }).then(setUserSettings);
 
     const unsubscribe: Unsubscribe = onRecentActivities((activities) => {
       // Filter for activities that should appear as notifications (e.g., alerts, warnings)
@@ -58,7 +66,7 @@ export function TopBar() {
     }
     
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const handleNotificationsOpen = () => {
     const now = new Date();
@@ -69,6 +77,8 @@ export function TopBar() {
   const unreadCount = lastSeen ? notifications.filter(
     (log) => log.timestamp > lastSeen
   ).length : notifications.length;
+
+  const showNotifications = userSettings?.notifications?.inApp !== false;
 
 
   const handleLogout = async () => {
@@ -175,56 +185,58 @@ export function TopBar() {
           </PopoverContent>
         </Popover>
 
-        <Popover onOpenChange={(open) => { if(open) handleNotificationsOpen()}}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                  {unreadCount}
-                </span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0">
-            <div className='p-4 border-b'>
-              <h3 className="text-lg font-medium">Notifications</h3>
-              <p className="text-sm text-muted-foreground">You have {unreadCount} new notifications.</p>
-            </div>
-             <ScrollArea className="h-80">
-              {notifications.length > 0 ? (
-                <ul>
-                  {notifications.map((notification) => {
-                    const Icon = iconMap[notification.icon] || AlertTriangle;
-                    const timeAgo = lastSeen ? formatDistanceToNow(notification.timestamp, { addSuffix: true }) : '';
-                    const isUnread = lastSeen && notification.timestamp > lastSeen;
-
-                    return (
-                       <li key={notification.id} className={`flex items-start gap-3 p-4 border-b ${isUnread ? 'bg-blue-50 dark:bg-primary/10' : ''}`}>
-                          <div className={`p-1.5 rounded-full mt-1 ${notification.iconColor ? `${notification.iconColor}/20` : 'bg-muted'}`}>
-                            <Icon className={`h-5 w-5 ${notification.iconColor || 'text-muted-foreground'}`} />
-                          </div>
-                          <div className='flex-1'>
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
-                          </div>
-                          {isUnread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
-                       </li>
-                    )
-                  })}
-                </ul>
-              ) : (
-                <div className='p-8 text-center text-muted-foreground'>
-                  <p>No new notifications.</p>
+        {showNotifications && (
+            <Popover onOpenChange={(open) => { if(open) handleNotificationsOpen()}}>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+                    {unreadCount}
+                    </span>
+                )}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 p-0">
+                <div className='p-4 border-b'>
+                <h3 className="text-lg font-medium">Notifications</h3>
+                <p className="text-sm text-muted-foreground">You have {unreadCount} new notifications.</p>
                 </div>
-              )}
-             </ScrollArea>
-             <div className="p-2 border-t text-center">
-                <Link href="/wincc-activity-logger" className='text-sm text-primary hover:underline'>View all activity</Link>
-             </div>
-          </PopoverContent>
-        </Popover>
+                <ScrollArea className="h-80">
+                {notifications.length > 0 ? (
+                    <ul>
+                    {notifications.map((notification) => {
+                        const Icon = iconMap[notification.icon] || AlertTriangle;
+                        const timeAgo = lastSeen ? formatDistanceToNow(notification.timestamp, { addSuffix: true }) : '';
+                        const isUnread = lastSeen && notification.timestamp > lastSeen;
+
+                        return (
+                        <li key={notification.id} className={`flex items-start gap-3 p-4 border-b ${isUnread ? 'bg-blue-50 dark:bg-primary/10' : ''}`}>
+                            <div className={`p-1.5 rounded-full mt-1 ${notification.iconColor ? `${notification.iconColor}/20` : 'bg-muted'}`}>
+                                <Icon className={`h-5 w-5 ${notification.iconColor || 'text-muted-foreground'}`} />
+                            </div>
+                            <div className='flex-1'>
+                                <p className="text-sm font-medium">{notification.title}</p>
+                                <p className="text-xs text-muted-foreground">{notification.description}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
+                            </div>
+                            {isUnread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
+                        </li>
+                        )
+                    })}
+                    </ul>
+                ) : (
+                    <div className='p-8 text-center text-muted-foreground'>
+                    <p>No new notifications.</p>
+                    </div>
+                )}
+                </ScrollArea>
+                <div className="p-2 border-t text-center">
+                    <Link href="/wincc-activity-logger" className='text-sm text-primary hover:underline'>View all activity</Link>
+                </div>
+            </PopoverContent>
+            </Popover>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
