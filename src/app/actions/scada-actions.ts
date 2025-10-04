@@ -160,19 +160,19 @@ type GetDbSchemaInput = {
 export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
     console.log("Fetching DB schema...");
     
-    if (!dbCreds.server || !dbCreds.dbName) {
+    const dbConfig = {
+        user: dbCreds.user || '',
+        password: dbCreds.password || '',
+        server: dbCreds.server || '',
+        database: dbCreds.dbName || '',
+        options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
+    };
+    
+    if (!dbConfig.server || !dbConfig.database) {
          throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
     }
 
     try {
-        const dbConfig = {
-            user: dbCreds.user || '',
-            password: dbCreds.password || '',
-            server: dbCreds.server || '',
-            database: dbCreds.dbName || '',
-            options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
-        };
-
         await sql.connect(dbConfig);
 
         const tablesResult = await sql.query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
