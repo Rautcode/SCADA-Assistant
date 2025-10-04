@@ -12,7 +12,7 @@ import { dataMappingSchema, emailSettingsSchema } from "@/lib/types/database";
 // Types for credentials to be passed around
 export type ScadaDbCredentials = {
     server?: string | null;
-    dbName?: string | null;
+    databaseName?: string | null;
     user?: string | null;
     password?: string | null;
 }
@@ -28,7 +28,7 @@ type GetScadaDataInput = {
 export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataInput): Promise<ScadaDataPoint[]> {
     console.log("Fetching SCADA data with criteria:", criteria);
     
-    if (!dbCreds.server || !dbCreds.dbName) {
+    if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
     }
     if (!mapping.table || !mapping.timestampColumn || !mapping.machineColumn || !mapping.parameterColumn || !mapping.valueColumn) {
@@ -40,7 +40,7 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
             user: dbCreds.user || undefined,
             password: dbCreds.password || undefined,
             server: dbCreds.server,
-            database: dbCreds.dbName,
+            database: dbCreds.databaseName,
             options: {
                 encrypt: true, 
                 trustServerCertificate: true 
@@ -109,7 +109,7 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
     console.log("Fetching SCADA tags for machines:", machineIds);
     if (!machineIds || machineIds.length === 0) return [];
     
-    if (!dbCreds.server || !dbCreds.dbName) {
+    if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured.");
     }
      if (!mapping.table || !mapping.machineColumn || !mapping.parameterColumn) {
@@ -121,7 +121,7 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
             user: dbCreds.user || undefined,
             password: dbCreds.password || undefined,
             server: dbCreds.server,
-            database: dbCreds.dbName,
+            database: dbCreds.databaseName,
             options: { encrypt: true, trustServerCertificate: true }
         };
 
@@ -160,7 +160,7 @@ type GetDbSchemaInput = {
 export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
     console.log("Fetching DB schema...");
     
-    if (!dbCreds.server || !dbCreds.dbName) {
+    if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
     }
     
@@ -168,7 +168,7 @@ export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tabl
         user: dbCreds.user || undefined,
         password: dbCreds.password || undefined,
         server: dbCreds.server,
-        database: dbCreds.dbName,
+        database: dbCreds.databaseName,
         options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
     };
     
@@ -202,7 +202,7 @@ export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tabl
 export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredentials }): Promise<{ success: boolean, error?: string }> {
     console.log("Testing SCADA DB connection...");
     
-    if (!dbCreds.server || !dbCreds.dbName) {
+    if (!dbCreds.server || !dbCreds.databaseName) {
         return { success: false, error: "Server and Database Name are required." };
     }
 
@@ -211,7 +211,7 @@ export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredent
             user: dbCreds.user || undefined,
             password: dbCreds.password || undefined,
             server: dbCreds.server,
-            database: dbCreds.dbName,
+            database: dbCreds.databaseName,
             options: {
                 encrypt: true, 
                 trustServerCertificate: true,

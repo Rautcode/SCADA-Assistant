@@ -65,7 +65,7 @@ export default function SettingsPage() {
             apiKey: "",
             database: {
                 server: "",
-                dbName: "",
+                databaseName: "",
                 user: "",
                 password: "",
             },
@@ -142,7 +142,7 @@ export default function SettingsPage() {
     
     async function handleTestDbConnection() {
         const dbCreds = form.getValues('database');
-        if (!dbCreds?.server || !dbCreds?.dbName) {
+        if (!dbCreds?.server || !dbCreds?.databaseName) {
             toast({
                 title: "Missing Information",
                 description: "Please provide a server address and database name.",
@@ -155,7 +155,7 @@ export default function SettingsPage() {
         setDbConnectionStatus('testing');
 
         try {
-            const result = await testScadaConnection({ dbCreds: { server: dbCreds.server, dbName: dbCreds.dbName, user: dbCreds.user, password: dbCreds.password } });
+            const result = await testScadaConnection({ dbCreds });
             if (result.success) {
                 setDbConnectionStatus('success');
                 toast({
@@ -184,13 +184,13 @@ export default function SettingsPage() {
     
     async function handleFetchSchema() {
         const dbCreds = form.getValues('database');
-        if (!dbCreds?.server || !dbCreds?.dbName) {
+        if (!dbCreds?.server || !dbCreds?.databaseName) {
             toast({ title: "Missing Credentials", description: "Please enter and save database credentials first.", variant: "destructive" });
             return;
         }
         setIsFetchingSchema(true);
         try {
-            const schema = await getDbSchema({ dbCreds: { server: dbCreds.server, dbName: dbCreds.dbName, user: dbCreds.user, password: dbCreds.password } });
+            const schema = await getDbSchema({ dbCreds });
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
@@ -473,7 +473,7 @@ export default function SettingsPage() {
                             />
                             <FormField
                                 control={form.control}
-                                name="database.dbName"
+                                name="database.databaseName"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>{t('database_name')}</FormLabel>

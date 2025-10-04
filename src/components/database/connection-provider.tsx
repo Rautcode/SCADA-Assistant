@@ -40,7 +40,7 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
             const settings = await getUserSettings({ userId: user.uid });
             const dbCreds = settings?.database;
 
-            if (!dbCreds?.server || !dbCreds?.dbName) {
+            if (!dbCreds?.server || !dbCreds?.databaseName) {
                 setStatus('unconfigured');
                 setError("Database server or name not configured.");
                 return;

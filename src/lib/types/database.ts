@@ -36,7 +36,7 @@ export const settingsSchema = z.object({
   // Database Credentials
   database: z.object({
     server: z.string().optional(),
-    dbName: z.string().optional(),
+    databaseName: z.string().optional(),
     user: z.string().optional(),
     password: z.string().optional(),
   }).optional(),
