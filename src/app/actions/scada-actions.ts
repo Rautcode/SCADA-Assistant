@@ -267,9 +267,3 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
         return { success: false, error: error.message };
     }
 }
-
-    
-
-    
-
-    

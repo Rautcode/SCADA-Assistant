@@ -5,6 +5,7 @@ import * as React from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { getUserSettings } from '@/app/actions/settings-actions';
 import { testScadaConnection } from '@/app/actions/scada-actions';
+import type { ScadaDbCredentials } from '@/app/actions/scada-actions';
 
 type ConnectionStatus = 'loading' | 'connected' | 'error' | 'unconfigured';
 
@@ -38,14 +39,22 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
 
         try {
             const settings = await getUserSettings({ userId: user.uid });
-            const dbCreds = settings?.database;
+            const dbSettings = settings?.database;
 
-            if (!dbCreds?.server || !dbCreds?.databaseName) {
+            if (!dbSettings?.server || !dbSettings?.databaseName) {
                 setStatus('unconfigured');
                 setError("Database server or name not configured.");
                 return;
             }
             
+            // Explicitly create the credentials object to pass to the server action
+            const dbCreds: ScadaDbCredentials = {
+                server: dbSettings.server,
+                databaseName: dbSettings.databaseName,
+                user: dbSettings.user,
+                password: dbSettings.password,
+            };
+
             const result = await testScadaConnection({ dbCreds });
 
             if (result.success) {
@@ -88,11 +97,3 @@ export function useConnection() {
     }
     return context;
 }
-
-    
-
-    
-
-
-
-    
