@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, testSmtpConnection, getDbSchema } from "@/app/actions/scada-actions";
+import { testScadaConnection, getDbSchema } from "@/app/actions/scada-actions";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -215,6 +215,7 @@ export default function SettingsPage() {
         setSmtpConnectionStatus('testing');
 
         try {
+            const { testSmtpConnection } = await import('@/app/actions/scada-actions');
             const result = await testSmtpConnection({ emailCreds });
             if (result.success) {
                 setSmtpConnectionStatus('success');
@@ -713,4 +714,5 @@ export default function SettingsPage() {
     
 
     
+
 
