@@ -62,7 +62,7 @@ interface QuickActionProps {
 const QuickAction: React.FC<QuickActionProps> = React.memo(function QuickAction({ title, icon: Icon, href, description }) {
   return (
     <Link href={href} passHref>
-      <Card className="p-4 flex flex-col items-start justify-start h-auto text-left shadow-sm hover:shadow-md transition-shadow duration-300 w-full hover:bg-muted/50 cursor-pointer">
+      <Card className="p-4 flex flex-col items-start justify-start h-full text-left shadow-sm hover:shadow-md transition-shadow duration-300 w-full hover:bg-muted/50 cursor-pointer">
         <div className="flex items-center mb-2">
           <Icon className="h-6 w-6 mr-3 text-primary" />
           <span className="text-lg font-semibold text-foreground">{title}</span>
@@ -280,7 +280,9 @@ export default function DashboardPage() {
                   <p>Connect to the database to see recent activity.</p>
                 </div>
              ) : isDataLoading && activities.length === 0 ? (
-                Array.from({length: 5}).map((_, i) => <ActivityItem key={i} activity={{} as any} loading />)
+                <ul className="divide-y divide-border -mx-6 px-6">
+                    {Array.from({length: 5}).map((_, i) => <ActivityItem key={i} activity={{} as any} loading />)}
+                </ul>
               ) : activities.length > 0 ? (
                 <ul className="divide-y divide-border -mx-6 px-6">
                   {activities.map((activity) => <ActivityItem key={activity.id} activity={activity} />)}

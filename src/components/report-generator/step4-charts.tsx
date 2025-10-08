@@ -15,6 +15,7 @@ import { ScadaDataPoint } from "@/lib/types/database";
 import { get, set } from "react-hook-form";
 import { AiChartStylist } from "./ai-chart-stylist";
 import { Skeleton } from "../ui/skeleton";
+import { Input } from "../ui/input";
 
 const RechartsBarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false, loading: () => <Skeleton className="w-full h-[300px]" /> });
 const RechartsLineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false, loading: () => <Skeleton className="w-full h-[300px]" /> });
@@ -236,6 +237,18 @@ export function ReportStep4Charts({ onValidated, initialData, scadaData }: Repor
                   form.setValue('colorScheme', style.colorScheme);
                 }}
                />
+              <FormField
+                control={form.control}
+                name="chartTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chart Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter a title for your chart" {...field} value={field.value || ''} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="chartType"

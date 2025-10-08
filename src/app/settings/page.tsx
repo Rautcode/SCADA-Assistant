@@ -279,7 +279,7 @@ export default function SettingsPage() {
         }
         return (
             <Tabs defaultValue="appearance" className="w-full">
-                <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto">
+                <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto flex-wrap">
                     <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
                     <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
                     <TabsTrigger value="integrations"><Workflow className="mr-2 h-4 w-4" />{t('integrations')}</TabsTrigger>
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                 <TabsContent value="mapping" className="mt-6">
                     <Card>
                          <CardHeader>
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div>
                                     <CardTitle>Data Column Mapping</CardTitle>
                                     <CardDescription>Map your database columns to the fields required by the application.</CardDescription>
