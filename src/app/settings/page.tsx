@@ -25,9 +25,6 @@ import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
-import Link from "next/link";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronsUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
@@ -434,12 +431,12 @@ export default function SettingsPage() {
                             name="apiKey"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>API Key</FormLabel>
+                                    <FormLabel>Gemini API Key</FormLabel>
                                     <FormControl>
                                         <Input type="password" placeholder={t('api_key_placeholder')} {...field} value={field.value || ''} />
                                     </FormControl>
                                     <FormDescription>
-                                        {t('api_key_description')}
+                                        {t('api_key_description')} This is required for all AI features.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -492,7 +489,7 @@ export default function SettingsPage() {
                                     <FormItem>
                                         <FormLabel>{t('database_user')}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., report_user" {...field} value={field.value || ''} />
+                                            <Input placeholder="e.g., report_user (optional)" {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -505,7 +502,7 @@ export default function SettingsPage() {
                                     <FormItem>
                                         <FormLabel>{t('password')}</FormLabel>
                                         <FormControl>
-                                            <Input type="password" {...field} value={field.value || ''}/>
+                                            <Input type="password" placeholder="(optional)" {...field} value={field.value || ''}/>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -523,21 +520,27 @@ export default function SettingsPage() {
                 <TabsContent value="mapping" className="mt-6">
                     <Card>
                          <CardHeader>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle>Data Column Mapping</CardTitle>
-                                    <CardDescription>Map your database columns to the fields required by the application.</CardDescription>
-                                </div>
-                                <Button type="button" onClick={handleFetchSchema} disabled={isFetchingSchema}>
-                                    {isFetchingSchema ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4"/>}
-                                    Fetch Schema
-                                </Button>
+                            <div>
+                                <CardTitle>Data Column Mapping</CardTitle>
+                                <CardDescription>Map your database columns to the fields required by the application.</CardDescription>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            {isFetchingSchema ? <Skeleton className="h-24 w-full" /> : !dbSchema ? (
-                                <p className="text-sm text-muted-foreground text-center py-4">Click "Fetch Schema" to load your database tables and columns.</p>
-                            ) : (
+                            <Alert>
+                                <Database className="h-4 w-4" />
+                                <AlertTitle>Instructions</AlertTitle>
+                                <AlertDescription>
+                                    First, ensure your database credentials are saved and the connection test is successful. Then, click &quot;Fetch Schema&quot; to load your tables and columns.
+                                </AlertDescription>
+                            </Alert>
+                             <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema}>
+                                {isFetchingSchema ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4"/>}
+                                Fetch Schema
+                            </Button>
+
+                            {isFetchingSchema && <Skeleton className="h-48 w-full" />}
+                            
+                            {dbSchema && (
                                 <>
                                     <FormField
                                         control={form.control}
@@ -556,13 +559,13 @@ export default function SettingsPage() {
                                         )}
                                     />
                                     {selectedTable && dbSchema.columns[selectedTable] && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                                             <FormField
                                                 control={form.control} name="dataMapping.timestampColumn"
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Timestamp Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl>
                                                             <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
@@ -573,7 +576,7 @@ export default function SettingsPage() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Machine/Server Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
                                                             <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
@@ -584,7 +587,7 @@ export default function SettingsPage() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Parameter/Tag Name Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
                                                             <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
@@ -595,7 +598,7 @@ export default function SettingsPage() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Value Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
                                                             <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
