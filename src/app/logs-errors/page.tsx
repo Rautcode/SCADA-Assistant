@@ -201,5 +201,3 @@ export default function LogsErrorsPage() {
         </div>
     );
 }
-
-    

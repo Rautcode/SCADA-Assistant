@@ -224,8 +224,8 @@ export default function DashboardPage() {
   const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
 
   return (
-    <div className="animate-fade-in">
-      <Card className="mb-6 shadow-lg bg-card">
+    <div className="animate-fade-in space-y-6">
+      <Card className="shadow-lg bg-card">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
       <ApiKeyNotification />
       <DatabaseConnectionNotification />
 
-      <section className="mb-8">
+      <section>
         <h2 className="text-xl font-semibold mb-4 text-foreground">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <QuickAction title="New Report" icon={FilePlus} href="/report-generator" description="Generate a new SCADA report." />
@@ -258,7 +258,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="mb-8">
+      <section>
         <h2 className="text-xl font-semibold mb-4 text-foreground">System Overview</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Reports Generated (Month)" value={stats?.reports?.toLocaleString() ?? '...'} icon={FilePlus} description="Monthly total from live data" loading={isDataLoading} />
