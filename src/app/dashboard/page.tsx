@@ -178,7 +178,7 @@ const DatabaseConnectionNotification = () => {
             <AlertTitle>{title}</AlertTitle>
             <AlertDescription>
                 {description}
-                <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 font-semibold text-destructive-foreground/90 hover:text-destructive-foreground">
+                <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 font-semibold text-destructive/80 hover:text-destructive dark:text-destructive-foreground/80 dark:hover:text-destructive-foreground">
                     <Link href="/settings">
                         <Settings className="mr-2 h-4 w-4" /> Go to Settings
                     </Link>
