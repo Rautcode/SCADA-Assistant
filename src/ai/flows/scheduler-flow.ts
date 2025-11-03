@@ -10,8 +10,9 @@ import { z } from 'genkit';
 const NewTaskSchema = z.object({
     name: z.string().min(1, "Task name is required."),
     templateId: z.string().min(1, "A report template must be selected."),
-    scheduledTime: z.date(),
+    scheduledTime: z.string().describe("The scheduled time as an ISO string."),
 });
+
 type NewTask = z.infer<typeof NewTaskSchema>;
 
 export async function scheduleNewTask(task: NewTask) {
@@ -25,6 +26,12 @@ const scheduleNewTaskFlow = ai.defineFlow(
         outputSchema: z.void(),
     },
     async (task) => {
-        await scheduleNewTaskInDb(task);
+        // When a Date object is passed from the client to a server action/flow,
+        // it gets serialized to an ISO string. We need to convert it back to a Date object.
+        const taskWithDate = {
+            ...task,
+            scheduledTime: new Date(task.scheduledTime),
+        };
+        await scheduleNewTaskInDb(taskWithDate);
     }
 );
