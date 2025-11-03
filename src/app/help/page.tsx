@@ -51,9 +51,9 @@ const faqData = [
     category: "Database",
   },
   {
-    question: "Where can I find the reports I generate?",
+    question: "How are generated reports delivered?",
     answer:
-      "Currently, the generated report content is displayed in a pop-up dialog after the AI finishes processing. From there, you can copy the content. Future updates will include options to download files directly.",
+      "After generation, the report content is displayed in a pop-up dialog. From there, you can copy the content. You also have the option in the final step to email the report to specified recipients.",
     category: "Reports",
   },
   {
@@ -96,7 +96,7 @@ export default function HelpPage() {
       <Card className="shadow-lg">
         <CardHeader className="text-center">
           <HelpCircle className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-3xl font-bold mt-2">
+          <CardTitle>
             How can we help?
           </CardTitle>
           <CardDescription className="max-w-xl mx-auto">

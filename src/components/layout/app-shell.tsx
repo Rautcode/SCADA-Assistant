@@ -13,8 +13,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <AppSidebar />
         <div className="flex flex-1 flex-col min-w-0">
           <TopBar />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-            {children}
+          <main className="flex-1 p-4 md:p-6 lg:p-8">
+            <div className="w-full mx-auto">
+              {children}
+            </div>
           </main>
         </div>
       </div>

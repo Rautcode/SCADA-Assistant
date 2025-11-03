@@ -558,54 +558,52 @@ export default function SettingsPage() {
                                             </FormItem>
                                         )}
                                     />
-                                    {selectedTable && dbSchema.columns[selectedTable] && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                                            <FormField
-                                                control={form.control} name="dataMapping.timestampColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Timestamp Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control} name="dataMapping.machineColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Machine/Server Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control} name="dataMapping.parameterColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Parameter/Tag Name Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control} name="dataMapping.valueColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Value Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable].map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                    )}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                                        <FormField
+                                            control={form.control} name="dataMapping.timestampColumn"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Timestamp Column</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl>
+                                                        <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control} name="dataMapping.machineColumn"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Machine/Server Column</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
+                                                        <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control} name="dataMapping.parameterColumn"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Parameter/Tag Name Column</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
+                                                        <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control} name="dataMapping.valueColumn"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Value Column</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
+                                                        <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </>
                             )}
                         </CardContent>

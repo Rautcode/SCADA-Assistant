@@ -114,7 +114,7 @@ const generateReportFlow = ai.defineFlow(
     });
     
     if (!output) {
-        throw new Error("AI model failed to generate a report.");
+        throw new Error("The AI model failed to generate a report. It returned no output.");
     }
     
     console.log('Backend flow completed successfully.');

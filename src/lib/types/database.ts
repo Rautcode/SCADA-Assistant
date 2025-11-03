@@ -68,7 +68,7 @@ export interface RecentActivity {
     title: string;
     description: string;
     timestamp: Date;
-    icon: string; // Corresponds to a lucide-react icon name
+    icon: string;
     iconColor?: string;
 }
   
@@ -110,7 +110,7 @@ export interface SystemLog {
     timestamp: Date;
     level: 'info' | 'warn' | 'error' | 'success';
     message: string;
-    source: string; // e.g., 'ReportEngine', 'Auth', 'Database'
+    source: string;
 }
 
 export interface EmailLog {

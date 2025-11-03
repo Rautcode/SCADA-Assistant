@@ -38,7 +38,6 @@ const ReportStep5Output = dynamic(() => import('@/components/report-generator/st
 });
 
 
-// ScadaDataPoint and ReportTemplate are already defined in types/database.ts
 const ScadaDataPointSchema = z.object({
   id: z.string(),
   timestamp: z.date(),
@@ -99,10 +98,27 @@ export default function ReportGeneratorPage() {
   const [step3Data, setStep3Data] = React.useState<{ scadaData: ScadaDataPoint[] } | null>(null);
   const [step4Data, setStep4Data] = React.useState<z.infer<typeof chartConfigSchema> | null>(null);
   const [step5Data, setStep5Data] = React.useState<z.infer<typeof outputOptionsSchema> | null>(null);
+  
+  const canGoNext = React.useMemo(() => {
+    switch (currentStep) {
+      case 0: return step1Data !== null;
+      case 1: return step2Data?.selectedTemplate !== null;
+      case 2: return step3Data !== null && step3Data.scadaData.length > 0;
+      case 3: return step4Data !== null;
+      default: return true;
+    }
+  }, [currentStep, step1Data, step2Data, step3Data, step4Data]);
+
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    if (canGoNext && currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+    } else {
+        toast({
+            title: "Incomplete Step",
+            description: "Please complete the current step before proceeding.",
+            variant: "destructive"
+        })
     }
   };
 
@@ -180,10 +196,10 @@ export default function ReportGeneratorPage() {
         return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} />;
       case 2:
         return <ReportStep3Preview onValidated={setStep3Data} initialData={step3Data} criteria={step1Data} />;
-      case 4:
-        return <ReportStep5Output onValidated={setStep5Data} initialData={step5Data} />;
       case 3:
         return <ReportStep4Charts onValidated={setStep4Data} initialData={step4Data} scadaData={step3Data?.scadaData} />;
+      case 4:
+        return <ReportStep5Output onValidated={setStep5Data} initialData={step5Data} />;
       default:
         return null;
     }
@@ -193,7 +209,7 @@ export default function ReportGeneratorPage() {
     <div className="animate-fade-in">
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center text-foreground">
+          <CardTitle className="text-center">
             Report Generator
           </CardTitle>
           <StepIndicator steps={steps} currentStep={currentStep} className="mt-4" />
@@ -206,7 +222,7 @@ export default function ReportGeneratorPage() {
             Back
           </Button>
           {currentStep < steps.length - 1 ? (
-            <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={!canGoNext}>
               Next
             </Button>
           ) : (
