@@ -28,7 +28,7 @@ import { applyTheme } from "@/app/app-initializer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
-type ConnectionStatus = 'unknown' | 'testing' | 'success' | 'error';
+type ConnectionStatus = 'untested' | 'testing' | 'success' | 'error';
 
 export default function SettingsPage() {
     const { user } = useAuth();
@@ -38,10 +38,10 @@ export default function SettingsPage() {
     const [isFetching, setIsFetching] = React.useState(true);
     const { t, setLanguage } = useLocalization();
     
-    const [dbConnectionStatus, setDbConnectionStatus] = React.useState<ConnectionStatus>('unknown');
+    const [dbConnectionStatus, setDbConnectionStatus] = React.useState<ConnectionStatus>('untested');
     const [isTestingDbConnection, setIsTestingDbConnection] = React.useState(false);
 
-    const [smtpConnectionStatus, setSmtpConnectionStatus] = React.useState<ConnectionStatus>('unknown');
+    const [smtpConnectionStatus, setSmtpConnectionStatus] = React.useState<ConnectionStatus>('untested');
     const [isTestingSmtpConnection, setIsTestingSmtpConnection] = React.useState(false);
 
     const [dbSchema, setDbSchema] = React.useState<{ tables: string[], columns: { [key: string]: string[] } } | null>(null);
@@ -83,6 +83,20 @@ export default function SettingsPage() {
     });
 
     const selectedTable = form.watch("dataMapping.table");
+    const dbCredsWatched = form.watch(["database.server", "database.databaseName", "database.user", "database.password"]);
+    const smtpCredsWatched = form.watch(["email.smtpHost", "email.smtpPort", "email.smtpUser", "email.smtpPass"]);
+
+    React.useEffect(() => {
+        if (!isTestingDbConnection) {
+            setDbConnectionStatus('untested');
+        }
+    }, [dbCredsWatched, isTestingDbConnection]);
+
+    React.useEffect(() => {
+        if (!isTestingSmtpConnection) {
+            setSmtpConnectionStatus('untested');
+        }
+    }, [smtpCredsWatched, isTestingSmtpConnection]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -192,6 +206,7 @@ export default function SettingsPage() {
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
             toast({ title: "Schema Fetch Failed", description: error.message, variant: "destructive" });
+            setDbSchema(null);
         } finally {
             setIsFetchingSchema(false);
         }
@@ -244,7 +259,7 @@ export default function SettingsPage() {
     const ConnectionStatusBadge = React.memo(function ConnectionStatusBadge({ status }: { status: ConnectionStatus}) {
         switch(status) {
             case 'success':
-                return <Badge variant="default" className="bg-green-500 text-white"><Wifi className="mr-1 h-4 w-4" />{t('connected')}</Badge>;
+                return <Badge variant="default" className="bg-green-500 hover:bg-green-500/90 text-white"><Wifi className="mr-1 h-4 w-4" />{t('connected')}</Badge>;
             case 'error':
                 return <Badge variant="destructive"><WifiOff className="mr-1 h-4 w-4" />{t('connection_failed')}</Badge>;
             case 'testing':
@@ -358,7 +373,10 @@ export default function SettingsPage() {
                                 name="notifications.inApp"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>{t('in_app_notifications')}</FormLabel>
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">{t('in_app_notifications')}</FormLabel>
+                                            <FormDescription>Receive notifications within the application.</FormDescription>
+                                        </div>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -367,8 +385,11 @@ export default function SettingsPage() {
                                 control={form.control}
                                 name="notifications.email"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>{t('email_notifications')}</FormLabel>
+                                     <FormItem className="flex flex-row items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">{t('email_notifications')}</FormLabel>
+                                            <FormDescription>Receive notifications via email.</FormDescription>
+                                        </div>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -381,7 +402,10 @@ export default function SettingsPage() {
                                 name="notifications.systemAlerts"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>{t('critical_system_alerts')}</FormLabel>
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">{t('critical_system_alerts')}</FormLabel>
+                                             <FormDescription>Get notified about critical system-level events.</FormDescription>
+                                        </div>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -391,7 +415,10 @@ export default function SettingsPage() {
                                 name="notifications.reportCompletion"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between">
-                                        <FormLabel>{t('report_generation_complete')}</FormLabel>
+                                         <div className="space-y-0.5">
+                                            <FormLabel className="text-base">{t('report_generation_complete')}</FormLabel>
+                                            <FormDescription>Get notified when a scheduled report is ready.</FormDescription>
+                                        </div>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
@@ -533,7 +560,7 @@ export default function SettingsPage() {
                                     First, ensure your database credentials are saved and the connection test is successful. Then, click &quot;Fetch Schema&quot; to load your tables and columns.
                                 </AlertDescription>
                             </Alert>
-                             <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema}>
+                             <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema || dbConnectionStatus !== 'success'}>
                                 {isFetchingSchema ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4"/>}
                                 Fetch Schema
                             </Button>
@@ -711,3 +738,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    

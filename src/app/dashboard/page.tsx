@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2, Settings } from 'lucide-react';
+import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2, Settings, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import imageData from '@/app/lib/placeholder-images.json';
@@ -21,7 +21,7 @@ import { ApiKeyNotification } from '@/components/layout/api-key-notification';
 
 interface StatCardProps {
   title: string;
-  value: string;
+  value: string | React.ReactNode;
   icon: React.ElementType;
   description?: string;
   trendDirection?: 'up' | 'down';
@@ -51,6 +51,31 @@ const StatCard: React.FC<StatCardProps> = React.memo(function StatCard({ title, 
     </Card>
   );
 });
+
+const SystemStatusStat = ({ status, loading }: { status?: string; loading?: boolean }) => {
+    if (loading || !status) {
+        return <Skeleton className="h-8 w-3/4" />;
+    }
+
+    const statusConfig = {
+        Operational: { color: "bg-green-500", label: "Operational" },
+        Degraded: { color: "bg-orange-500", label: "Degraded" },
+        Offline: { color: "bg-red-500", label: "Offline" },
+    };
+
+    const { color, label } = statusConfig[status as keyof typeof statusConfig] || { color: "bg-gray-400", label: "Unknown" };
+
+    return (
+        <div className="flex items-center gap-2">
+            <span className="relative flex h-3 w-3">
+                <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", color)}></span>
+                <span className={cn("relative inline-flex rounded-full h-3 w-3", color)}></span>
+            </span>
+            <span className="text-3xl font-bold">{label}</span>
+        </div>
+    )
+};
+
 
 interface QuickActionProps {
   title: string;
@@ -149,11 +174,11 @@ const DatabaseConnectionNotification = () => {
 
     return (
         <Alert variant="destructive" className="mb-6 shadow-lg">
-            <AlertTriangle className="h-4 w-4" />
+            <WifiOff className="h-4 w-4" />
             <AlertTitle>{title}</AlertTitle>
             <AlertDescription>
                 {description}
-                <Button asChild variant="destructive" className="mt-4">
+                <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 text-destructive-foreground font-semibold">
                     <Link href="/settings">
                         <Settings className="mr-2 h-4 w-4" /> Go to Settings
                     </Link>
@@ -264,7 +289,13 @@ export default function DashboardPage() {
           <StatCard title="Reports Generated (Month)" value={stats?.reports?.toLocaleString() ?? '...'} icon={FilePlus} description="Monthly total from live data" loading={isDataLoading} />
           <StatCard title="Scheduled Tasks" value={stats?.tasks?.toString() ?? '...'} icon={CalendarClock} description="Pending automated tasks" loading={isDataLoading} />
           <StatCard title="Active Users" value={stats?.users?.toString() ?? '...'} icon={Users} description="Users currently online" loading={isDataLoading} />
-          <StatCard title="System Status" value={stats?.systemStatus ?? '...'} icon={CheckCircle2} description="Overall operational status" loading={isDataLoading} />
+          <StatCard 
+            title="System Status" 
+            value={<SystemStatusStat status={stats?.systemStatus} loading={isDataLoading} />} 
+            icon={CheckCircle2} 
+            description="Overall operational status" 
+            loading={isDataLoading} 
+          />
         </div>
       </section>
       
@@ -320,3 +351,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

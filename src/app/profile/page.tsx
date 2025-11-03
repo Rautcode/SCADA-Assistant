@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail } from 'lucide-react';
+import { User as UserIcon, Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -23,9 +23,9 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -50,7 +50,7 @@ export default function ProfilePage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       await updateProfile(user, { displayName: values.displayName });
       toast({
@@ -65,13 +65,13 @@ export default function ProfilePage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   }
 
   return (
     <div className="animate-fade-in">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-bold">
             <UserIcon className="mr-3 h-7 w-7 text-primary" />
@@ -84,7 +84,18 @@ export default function ProfilePage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
-              {user ? (
+              {authLoading ? (
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                     <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                </div>
+              ) : (
                 <>
                   <FormField
                     control={form.control}
@@ -116,22 +127,12 @@ export default function ProfilePage() {
                     )}
                   />
                 </>
-              ) : (
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                     <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                </div>
               )}
             </CardContent>
             <CardFooter className="border-t pt-6">
-              <Button type="submit" disabled={isLoading || !user}>
-                {isLoading ? "Saving..." : "Save Changes"}
+              <Button type="submit" disabled={isSubmitting || authLoading}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </CardFooter>
           </form>
@@ -140,3 +141,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
