@@ -72,13 +72,19 @@ const ChartPreview = React.memo(function ChartPreview({
   if (!data || data.length === 0) {
     return <p className="text-center text-muted-foreground">No data available for preview.</p>;
   }
+  
+  const numericData = data.filter(d => typeof d[yAxisKey] === 'number');
+  if (numericData.length === 0) {
+    return <p className="text-center text-muted-foreground">The selected Y-Axis field has no numeric data to display.</p>;
+  }
+
 
   const ChartComponent = React.useMemo(() => {
     switch (chartType) {
         case 'bar':
         return (
             <ResponsiveContainer width="100%" height={300}>
-            <RechartsBarChart data={data}>
+            <RechartsBarChart data={numericData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey={xAxisKey} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -90,7 +96,7 @@ const ChartPreview = React.memo(function ChartPreview({
                 />
                 <Legend />
                 <Bar dataKey={yAxisKey} name={yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1)}>
-                {data.map((entry, index) => (
+                {numericData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                 ))}
                 </Bar>
@@ -100,7 +106,7 @@ const ChartPreview = React.memo(function ChartPreview({
         case 'line':
         return (
             <ResponsiveContainer width="100%" height={300}>
-            <RechartsLineChart data={data}>
+            <RechartsLineChart data={numericData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey={xAxisKey} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -127,7 +133,7 @@ const ChartPreview = React.memo(function ChartPreview({
                 />
                 <Legend />
                 <Pie
-                data={data}
+                data={numericData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -137,7 +143,7 @@ const ChartPreview = React.memo(function ChartPreview({
                 nameKey={xAxisKey}
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                {data.map((entry, index) => (
+                {numericData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                 ))}
                 </Pie>
@@ -147,7 +153,7 @@ const ChartPreview = React.memo(function ChartPreview({
         default:
         return <p className="text-center text-muted-foreground">Select a chart type to see a preview.</p>;
     }
-  }, [chartType, xAxisKey, yAxisKey, data, chartColors]);
+  }, [chartType, xAxisKey, yAxisKey, numericData, chartColors]);
 
   return (
     <React.Suspense fallback={<Skeleton className="w-full h-[300px]" />}>
@@ -178,11 +184,6 @@ export function ReportStep4Charts({ onValidated, initialData, scadaData }: Repor
     onValidated(form.getValues());
     return () => subscription.unsubscribe();
   }, [form, onValidated]);
-
-  const chartData = React.useMemo(() => {
-    if (!scadaData) return [];
-    return scadaData.filter(d => typeof d.value === 'number');
-  }, [scadaData]);
   
   const dataKeys = React.useMemo(() => {
     if (!scadaData || scadaData.length === 0) return { stringKeys: [], numberKeys: [] };
@@ -197,6 +198,9 @@ export function ReportStep4Charts({ onValidated, initialData, scadaData }: Repor
             numberKeys.push(key);
         }
     });
+    // Ensure default fields are present if possible
+    if (!stringKeys.includes("parameter")) stringKeys.push("parameter");
+    if (!numberKeys.includes("value")) numberKeys.push("value");
     return { stringKeys, numberKeys };
   }, [scadaData]);
 
@@ -324,7 +328,7 @@ export function ReportStep4Charts({ onValidated, initialData, scadaData }: Repor
         </CardHeader>
         <CardContent className="h-[350px] flex items-center justify-center border rounded-md p-4 bg-muted/20">
           {includeCharts ? (
-            <ChartPreview chartType={chartType as ChartType} xAxisKey={xAxisField} yAxisKey={yAxisField} data={chartData} colors={colorScheme} />
+            <ChartPreview chartType={chartType as ChartType} xAxisKey={xAxisField} yAxisKey={yAxisField} data={scadaData ?? []} colors={colorScheme} />
           ) : (
             <p className="text-center text-muted-foreground">Charts are disabled.</p>
           )}

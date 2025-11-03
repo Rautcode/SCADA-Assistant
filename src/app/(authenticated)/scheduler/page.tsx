@@ -33,7 +33,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
     if (loading || !task) {
         return (
             <Card className="shadow-sm">
-                <CardHeader>
+                <CardHeader className="pb-4">
                     <Skeleton className="h-6 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
                 </CardHeader>
@@ -45,13 +45,13 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
                              <Skeleton className="h-3 w-24" />
                         </div>
                     </div>
-                     <Skeleton className="h-6 w-24" />
+                     <Skeleton className="h-8 w-24 rounded-full" />
                 </CardContent>
             </Card>
         )
     }
 
-    const { icon: Icon, color, label } = statusConfig[task.status];
+    const { icon: Icon, color, label } = statusConfig[task.status] || statusConfig.scheduled;
 
     return (
         <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -72,7 +72,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
                     )}
                     <div>
                         <p className="font-semibold text-sm text-foreground">{template?.name || "Template not found"}</p>
-                        <p className="text-xs text-muted-foreground">{template?.category}</p>
+                        <p className="text-xs text-muted-foreground">{template?.category || "Uncategorized"}</p>
                     </div>
                 </div>
                  <Badge className={cn("text-white flex-shrink-0", color)}>
