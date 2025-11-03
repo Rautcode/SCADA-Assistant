@@ -178,7 +178,7 @@ const DatabaseConnectionNotification = () => {
             <AlertTitle>{title}</AlertTitle>
             <AlertDescription>
                 {description}
-                <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 text-destructive-foreground font-semibold">
+                <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 font-semibold text-destructive-foreground/90 hover:text-destructive-foreground">
                     <Link href="/settings">
                         <Settings className="mr-2 h-4 w-4" /> Go to Settings
                     </Link>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
   const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <Card className="shadow-lg bg-card">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -302,7 +302,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
+            <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Track the latest system and user activities.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -328,7 +328,7 @@ export default function DashboardPage() {
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg">System Status</CardTitle>
+            <CardTitle>System Status</CardTitle>
              <CardDescription>Health overview of critical components.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -351,5 +351,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
