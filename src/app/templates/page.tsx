@@ -7,17 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
-import Image from "next/image";
+import { LayoutGrid, List, PlusCircle, Search, FileText, BarChart3, AlertTriangle, CheckSquare, Zap, ClipboardList } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
 import { onReportTemplates } from "@/services/database-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Unsubscribe } from "firebase/firestore";
+import { cn } from "@/lib/utils";
 
 const NewTemplateDialog = dynamic(() =>
   import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
   { ssr: false, loading: () => <p>Loading...</p> }
 );
+
+const categoryIcons: { [key: string]: React.ElementType } = {
+  'Production': BarChart3,
+  'Maintenance': AlertTriangle,
+  'Quality': CheckSquare,
+  'Energy': Zap,
+  'Operations': ClipboardList,
+  'default': FileText,
+}
 
 const TemplateCard = React.memo(function TemplateCard({ template, loading }: { template?: ReportTemplate, loading?: boolean }) {
   if (loading || !template) {
@@ -34,16 +43,15 @@ const TemplateCard = React.memo(function TemplateCard({ template, loading }: { t
       </Card>
     )
   }
+  const Icon = categoryIcons[template.category] || categoryIcons['default'];
+
   return (
-    <Card className="cursor-pointer transition-all duration-200 hover:shadow-xl shadow-md">
-      <CardHeader className="p-0">
-        <Image
-          src={template.thumbnailUrl}
-          alt={template.name}
-          width={300} height={200}
-          className="rounded-t-lg object-cover w-full aspect-[3/2]"
-          data-ai-hint={`${template.category} graph`}
-        />
+    <Card className="cursor-pointer transition-all duration-200 hover:shadow-xl shadow-md group">
+      <CardHeader className="p-0 relative overflow-hidden rounded-t-lg aspect-[3/2]">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/20 animate-shimmer" />
+        <div className="absolute inset-0 flex items-center justify-center">
+            <Icon className="h-16 w-16 text-primary/70 transition-transform duration-300 group-hover:scale-110" />
+        </div>
       </CardHeader>
       <CardContent className="p-4">
         <CardTitle className="text-md mb-1">{template.name}</CardTitle>
@@ -58,7 +66,7 @@ const TemplateListItem = React.memo(function TemplateListItem({ template, loadin
   if (loading || !template) {
     return (
       <Card className="flex items-center p-4 shadow-sm">
-        <Skeleton className="rounded-md object-cover aspect-[3/2] mr-4 h-[80px] w-[120px]" />
+        <Skeleton className="rounded-md object-cover aspect-square mr-4 h-[60px] w-[60px]" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/4" />
@@ -67,15 +75,14 @@ const TemplateListItem = React.memo(function TemplateListItem({ template, loadin
       </Card>
     );
   }
+  
+  const Icon = categoryIcons[template.category] || categoryIcons['default'];
+
   return (
-     <Card className="flex items-center p-4 cursor-pointer transition-all duration-200 hover:shadow-lg shadow-md">
-      <Image
-        src={template.thumbnailUrl}
-        alt={template.name}
-        width={120} height={80}
-        className="rounded-md object-cover aspect-[3/2] mr-4"
-        data-ai-hint={`${template.category} chart`}
-      />
+     <Card className="flex items-center p-4 cursor-pointer transition-all duration-200 hover:shadow-lg shadow-md group">
+        <div className="relative overflow-hidden rounded-md aspect-square mr-4 h-[60px] w-[60px] flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+            <Icon className="h-8 w-8 text-primary/80 transition-transform duration-300 group-hover:scale-110" />
+        </div>
       <div className="flex-1">
         <CardTitle className="text-md mb-1">{template.name}</CardTitle>
         <p className="text-xs text-muted-foreground mb-1">{template.category}</p>
