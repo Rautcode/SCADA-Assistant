@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createNewTemplate } from '@/ai/flows/template-flow';
+import imageData from '@/app/lib/placeholder-images.json';
 
 const NewTemplateSchema = z.object({
     name: z.string().min(1, "Template name is required."),
@@ -34,7 +35,7 @@ export function NewTemplateDialog({ open, onOpenChange }: NewTemplateDialogProps
             name: "",
             description: "",
             category: "",
-            thumbnailUrl: "https://picsum.photos/seed/new_template/300/200",
+            thumbnailUrl: imageData.templates.new.src,
         },
     });
     

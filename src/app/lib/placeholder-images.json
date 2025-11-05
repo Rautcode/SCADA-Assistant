@@ -17,5 +17,14 @@
       "alt": "User Avatar",
       "hint": "person face"
     }
+  },
+  "templates": {
+    "new": {
+      "src": "https://picsum.photos/seed/new-template/300/200",
+      "width": 300,
+      "height": 200,
+      "alt": "New template placeholder",
+      "hint": "document layout"
+    }
   }
 }
