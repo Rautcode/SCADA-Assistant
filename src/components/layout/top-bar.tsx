@@ -28,6 +28,7 @@ import { Unsubscribe } from 'firebase/firestore';
 import { ScrollArea } from '../ui/scroll-area';
 import { iconMap } from '@/lib/icon-map';
 import { getUserSettings } from '@/app/actions/settings-actions';
+import { cn } from '@/lib/utils';
 
 export function TopBar() {
   const [date, setDate] = React.useState<Date | undefined>(undefined);
@@ -155,7 +156,12 @@ export function TopBar() {
                   {index > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
                   <Link
                     href={crumb.href}
-                    className={`ml-1 font-medium ${index === breadcrumbs.length -1 ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={cn(
+                        'ml-1 font-medium',
+                        index === breadcrumbs.length - 1 
+                        ? 'text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
                     aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}
                   >
                     {crumb.label}

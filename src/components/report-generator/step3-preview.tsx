@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -210,7 +211,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     return (
        <ScrollArea className="rounded-md border h-96">
         <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
+          <TableHeader className="sticky top-0 bg-muted z-10">
             <TableRow>
               <TableHead className="w-[50px]">
                 <Checkbox
@@ -219,19 +220,19 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
                   aria-label="Select all rows"
                 />
               </TableHead>
-              <TableHead onClick={() => requestSort('timestamp')} className="cursor-pointer hover:bg-muted">
+              <TableHead onClick={() => requestSort('timestamp')} className="cursor-pointer hover:bg-muted/50">
                 Timestamp <ArrowUpDown className="ml-2 h-4 w-4 inline" />
               </TableHead>
-              <TableHead onClick={() => requestSort('machine')} className="cursor-pointer hover:bg-muted">
+              <TableHead onClick={() => requestSort('machine')} className="cursor-pointer hover:bg-muted/50">
                 Machine <ArrowUpDown className="ml-2 h-4 w-4 inline" />
               </TableHead>
-              <TableHead onClick={() => requestSort('parameter')} className="cursor-pointer hover:bg-muted">
+              <TableHead onClick={() => requestSort('parameter')} className="cursor-pointer hover:bg-muted/50">
                 Parameter <ArrowUpDown className="ml-2 h-4 w-4 inline" />
               </TableHead>
-              <TableHead onClick={() => requestSort('value')} className="cursor-pointer hover:bg-muted">
+              <TableHead onClick={() => requestSort('value')} className="cursor-pointer hover:bg-muted/50">
                 Value <ArrowUpDown className="ml-2 h-4 w-4 inline" />
               </TableHead>
-              <TableHead onClick={() => requestSort('unit')} className="cursor-pointer hover:bg-muted">
+              <TableHead onClick={() => requestSort('unit')} className="cursor-pointer hover:bg-muted/50">
                 Unit <ArrowUpDown className="ml-2 h-4 w-4 inline" />
               </TableHead>
             </TableRow>

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
+import { categoryIcons } from '@/lib/icon-map';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
@@ -52,6 +53,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
     }
 
     const { icon: Icon, color, label } = statusConfig[task.status] || statusConfig.scheduled;
+    const TemplateIcon = categoryIcons[template?.category || 'default'] || FileText;
 
     return (
         <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -63,13 +65,9 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
             </CardHeader>
             <CardContent className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    {template ? (
-                         <Image src={template.thumbnailUrl} alt={template.name} width={50} height={50} className="rounded-md border aspect-video object-cover" />
-                    ): (
-                        <div className="h-12 w-12 flex items-center justify-center bg-muted rounded-md">
-                            <FileText className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                    )}
+                    <div className="relative overflow-hidden rounded-md aspect-square h-12 w-12 flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+                        <TemplateIcon className="h-6 w-6 text-primary/80 transition-transform duration-300 group-hover:scale-110" />
+                    </div>
                     <div>
                         <p className="font-semibold text-sm text-foreground">{template?.name || "Template not found"}</p>
                         <p className="text-xs text-muted-foreground">{template?.category || "Uncategorized"}</p>
