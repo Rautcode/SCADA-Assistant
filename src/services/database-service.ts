@@ -2,6 +2,7 @@
 import { db } from '@/lib/firebase/firebase';
 import { DashboardStats, RecentActivity, ScadaDataPoint, SystemComponentStatus, Machine, ReportTemplate, ScheduledTask, SystemLog, UserSettings, EmailLog } from '@/lib/types/database';
 import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, onSnapshot, Unsubscribe, Timestamp, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import imageData from '@/app/lib/placeholder-images.json';
 
 
 // --- Seeding Function for Default Templates ---
@@ -10,31 +11,31 @@ const defaultTemplates: Omit<ReportTemplate, 'id' | 'lastModified'>[] = [
         name: 'Daily Production Summary',
         description: 'Tracks key production metrics like output, uptime, and efficiency over a 24-hour period.',
         category: 'Production',
-        thumbnailUrl: 'https://picsum.photos/seed/daily-production/300/200',
+        thumbnailUrl: imageData.templates.default.production.src,
     },
     {
         name: 'Weekly Downtime Analysis',
         description: 'Analyzes all machine downtime events over the past week to identify recurring issues.',
         category: 'Maintenance',
-        thumbnailUrl: 'https://picsum.photos/seed/weekly-downtime/300/200',
+        thumbnailUrl: imageData.templates.default.downtime.src,
     },
     {
         name: 'Monthly Quality Control Report',
         description: 'A comprehensive review of quality metrics, including defect rates and specification adherence for the month.',
         category: 'Quality',
-        thumbnailUrl: 'https://picsum.photos/seed/monthly-quality/300/200',
+        thumbnailUrl: imageData.templates.default.quality.src,
     },
     {
         name: 'Energy Consumption Overview',
         description: 'Monitors and reports on the energy usage of selected machines to optimize consumption.',
         category: 'Energy',
-        thumbnailUrl: 'https://picsum.photos/seed/energy-consumption/300/200',
+        thumbnailUrl: imageData.templates.default.energy.src,
     },
     {
         name: 'Operator Shift Handover',
         description: 'A summary of key events, alarms, and production notes for a smooth shift transition.',
         category: 'Operations',
-        thumbnailUrl: 'https://picsum.photos/seed/operator-shift/300/200',
+        thumbnailUrl: imageData.templates.default.operations.src,
     }
 ];
 

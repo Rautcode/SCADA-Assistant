@@ -25,6 +25,43 @@
       "height": 200,
       "alt": "New template placeholder",
       "hint": "document layout"
+    },
+    "default": {
+      "production": {
+        "src": "https://picsum.photos/seed/production-summary/300/200",
+        "width": 300,
+        "height": 200,
+        "alt": "Production summary template",
+        "hint": "factory machine"
+      },
+      "downtime": {
+        "src": "https://picsum.photos/seed/downtime-analysis/300/200",
+        "width": 300,
+        "height": 200,
+        "alt": "Downtime analysis template",
+        "hint": "warning sign"
+      },
+      "quality": {
+        "src": "https://picsum.photos/seed/quality-control/300/200",
+        "width": 300,
+        "height": 200,
+        "alt": "Quality control template",
+        "hint": "magnifying glass"
+      },
+      "energy": {
+        "src": "https://picsum.photos/seed/energy-consumption/300/200",
+        "width": 300,
+        "height": 200,
+        "alt": "Energy consumption template",
+        "hint": "power lines"
+      },
+      "operations": {
+        "src": "https://picsum.photos/seed/shift-handover/300/200",
+        "width": 300,
+        "height": 200,
+        "alt": "Operator shift handover template",
+        "hint": "checklist clipboard"
+      }
     }
   }
 }
