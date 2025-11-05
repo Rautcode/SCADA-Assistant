@@ -63,7 +63,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
                     Scheduled for: {format(task.scheduledTime, 'PPpp')}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-4">
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="relative overflow-hidden rounded-md aspect-square h-12 w-12 flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
                         <TemplateIcon className="h-6 w-6 text-primary/80 transition-transform duration-300 group-hover:scale-110" />
@@ -73,7 +73,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
                         <p className="text-xs text-muted-foreground">{template?.category || "Uncategorized"}</p>
                     </div>
                 </div>
-                 <Badge className={cn("text-white flex-shrink-0", color)}>
+                 <Badge className={cn("text-white flex-shrink-0 self-start sm:self-center", color)}>
                     <Icon className="mr-2 h-4 w-4" />
                     {label}
                 </Badge>

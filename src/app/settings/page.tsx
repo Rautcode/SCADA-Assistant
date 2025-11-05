@@ -290,17 +290,17 @@ export default function SettingsPage() {
             )
         }
         return (
-            <Tabs defaultValue="appearance" className="w-full">
-                <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto flex-wrap">
-                    <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
-                    <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
-                    <TabsTrigger value="integrations"><Workflow className="mr-2 h-4 w-4" />{t('integrations')}</TabsTrigger>
-                    <TabsTrigger value="database"><Server className="mr-2 h-4 w-4" />{t('database')}</TabsTrigger>
-                    <TabsTrigger value="mapping"><Map className="mr-2 h-4 w-4" />Data Mapping</TabsTrigger>
-                    <TabsTrigger value="email"><Mail className="mr-2 h-4 w-4" />{t('email')}</TabsTrigger>
+            <Tabs defaultValue="appearance" className="w-full" orientation="vertical">
+                <TabsList className="w-full md:w-48 h-auto flex-col items-start p-2 mr-6 shrink-0">
+                    <TabsTrigger value="appearance" className="w-full justify-start"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
+                    <TabsTrigger value="notifications" className="w-full justify-start"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
+                    <TabsTrigger value="integrations" className="w-full justify-start"><Workflow className="mr-2 h-4 w-4" />{t('integrations')}</TabsTrigger>
+                    <TabsTrigger value="database" className="w-full justify-start"><Server className="mr-2 h-4 w-4" />{t('database')}</TabsTrigger>
+                    <TabsTrigger value="mapping" className="w-full justify-start"><Map className="mr-2 h-4 w-4" />Data Mapping</TabsTrigger>
+                    <TabsTrigger value="email" className="w-full justify-start"><Mail className="mr-2 h-4 w-4" />{t('email')}</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="appearance" className="mt-6">
+                <TabsContent value="appearance" className="mt-0 flex-1">
                     <div className="space-y-8">
                         <FormField
                             control={form.control}
@@ -364,7 +364,7 @@ export default function SettingsPage() {
                     </div>
                 </TabsContent>
                 
-                <TabsContent value="notifications" className="mt-6">
+                <TabsContent value="notifications" className="mt-0 flex-1">
                      <div className="space-y-8">
                         <div className="space-y-4 rounded-lg border p-4">
                             <h3 className="text-lg font-medium">{t('notification_channels')}</h3>
@@ -427,7 +427,7 @@ export default function SettingsPage() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="integrations" className="mt-6">
+                <TabsContent value="integrations" className="mt-0 flex-1">
                     <div className="space-y-8">
                         <FormField
                             control={form.control}
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                         />
                     </div>
                 </TabsContent>
-                <TabsContent value="database" className="mt-6">
+                <TabsContent value="database" className="mt-0 flex-1">
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
@@ -544,7 +544,7 @@ export default function SettingsPage() {
                         </CardFooter>
                     </Card>
                 </TabsContent>
-                <TabsContent value="mapping" className="mt-6">
+                <TabsContent value="mapping" className="mt-0 flex-1">
                     <Card>
                          <CardHeader>
                             <div>
@@ -636,7 +636,7 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="email" className="mt-6">
+                <TabsContent value="email" className="mt-0 flex-1">
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
@@ -738,5 +738,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    

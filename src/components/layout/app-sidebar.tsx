@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const mainNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -83,12 +84,10 @@ export function AppSidebar() {
               </AvatarFallback>
             )}
         </Avatar>
-        {state === 'expanded' && (
-            <div className="flex flex-col truncate">
-              <span className="text-sm font-semibold text-sidebar-foreground truncate">{user?.displayName || 'User'}</span>
-              <span className="text-xs text-sidebar-foreground/70 truncate">{user?.email}</span>
-            </div>
-        )}
+        <div className={cn("flex flex-col truncate", state !== 'expanded' && "hidden")}>
+          <span className="text-sm font-semibold text-sidebar-foreground truncate">{user?.displayName || 'User'}</span>
+          <span className="text-xs text-sidebar-foreground/70 truncate">{user?.email}</span>
+        </div>
     </div>
   );
 
@@ -101,7 +100,7 @@ export function AppSidebar() {
           className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground"
         >
           <item.icon className="h-5 w-5" />
-          {state === "expanded" && <span className="truncate">{item.label}</span>}
+          <span className={cn("truncate", state !== 'expanded' && "hidden")}>{item.label}</span>
         </SidebarMenuButton>
       </Link>
     </SidebarMenuItem>

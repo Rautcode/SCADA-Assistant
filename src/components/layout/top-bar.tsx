@@ -29,10 +29,12 @@ import { ScrollArea } from '../ui/scroll-area';
 import { iconMap } from '@/lib/icon-map';
 import { getUserSettings } from '@/app/actions/settings-actions';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function TopBar() {
   const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const { toggleSidebar, isMobile } = useSidebar();
+  const { toggleSidebar } = useSidebar();
+  const isMobile = useIsMobile();
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -108,28 +110,19 @@ export function TopBar() {
     let currentPath = '';
     pathSegments.forEach(segment => {
       currentPath += `/${segment}`;
-      if (currentPath === '/dashboard' && breadcrumbs.length === 1 && breadcrumbs[0].href === '/dashboard') {
-        if (segment.toLowerCase() !== 'dashboard') {
-             breadcrumbs.push({
-                label: segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-                href: currentPath
-            });
-        } else if (breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length-1].href !== currentPath) {
-            breadcrumbs.push({
-                label: segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-                href: currentPath
-            });
+      const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      if (currentPath === '/dashboard') {
+        if (breadcrumbs.length === 1 && breadcrumbs[0].href === '/dashboard' && breadcrumbs[0].label.toLowerCase() !== 'dashboard') {
+           // Home is dashboard, but path is not /dashboard, so we add it
+            if (segment !== 'dashboard') breadcrumbs.push({ label, href: currentPath });
         }
-
       } else {
-         breadcrumbs.push({
-            label: segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            href: currentPath
-        });
+         breadcrumbs.push({ label, href: currentPath });
       }
     });
-    if (breadcrumbs.length > 1 && breadcrumbs[0].href === breadcrumbs[1].href) {
-        breadcrumbs.splice(0,1);
+
+    if (breadcrumbs.length > 1 && breadcrumbs[0].label === 'Home' && breadcrumbs[1].label === 'Dashboard') {
+        breadcrumbs.shift();
     }
 
     return breadcrumbs;
@@ -148,29 +141,31 @@ export function TopBar() {
         )}
         {!isMobile && <AppLogo href="/dashboard" iconSize={24} textSize="text-lg" />}
 
-        <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm">
-          <ol role="list" className="flex items-center space-x-1">
-            {breadcrumbs.map((crumb, index) => (
-              <li key={`${crumb.href}-${index}`}>
-                <div className="flex items-center">
-                  {index > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                  <Link
-                    href={crumb.href}
-                    className={cn(
-                        'ml-1 font-medium',
-                        index === breadcrumbs.length - 1 
-                        ? 'text-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}
-                  >
-                    {crumb.label}
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        {!isMobile && (
+            <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm">
+            <ol role="list" className="flex items-center space-x-1">
+                {breadcrumbs.map((crumb, index) => (
+                <li key={`${crumb.href}-${index}`}>
+                    <div className="flex items-center">
+                    {index > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                    <Link
+                        href={crumb.href}
+                        className={cn(
+                            'ml-1 font-medium',
+                            index === breadcrumbs.length - 1 
+                            ? 'text-foreground' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                        aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}
+                    >
+                        {crumb.label}
+                    </Link>
+                    </div>
+                </li>
+                ))}
+            </ol>
+            </nav>
+        )}
       </div>
 
       <div className="flex items-center gap-3 md:gap-4">
