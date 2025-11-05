@@ -47,32 +47,58 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
             }
         };
 
-        await sql.connect(dbConfig);
+        const pool = await sql.connect(dbConfig);
+        const request = pool.request();
 
         const { dateRange, machineIds, parameterIds } = criteria;
-        const machineIdList = machineIds.map(id => `'${id.replace(/'/g, "''")}'`).join(','); 
         
+        // Sanitize column names to prevent SQL injection from mapping settings
+        const safeCols = {
+            table: `[${mapping.table.replace(/\]/g, '')}]`,
+            timestamp: `[${mapping.timestampColumn.replace(/\]/g, '')}]`,
+            value: `[${mapping.valueColumn.replace(/\]/g, '')}]`,
+            machine: `[${mapping.machineColumn.replace(/\]/g, '')}]`,
+            parameter: `[${mapping.parameterColumn.replace(/\]/g, '')}]`,
+        };
+
+        // Bind parameters safely
+        request.input('startDate', sql.DateTime, dateRange.from);
+        request.input('endDate', sql.DateTime, dateRange.to);
+
+        let machineIdParams: string[] = [];
+        machineIds.forEach((id, i) => {
+            const paramName = `machineId${i}`;
+            request.input(paramName, sql.NVarChar, id);
+            machineIdParams.push(`@${paramName}`);
+        });
+
         let parameterFilter = '';
         if (parameterIds && parameterIds.length > 0) {
-            const parameterIdList = parameterIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
-            parameterFilter = `AND ${mapping.parameterColumn} IN (${parameterIdList})`;
+            let parameterIdParams: string[] = [];
+            parameterIds.forEach((id, i) => {
+                const paramName = `paramId${i}`;
+                request.input(paramName, sql.NVarChar, id);
+                parameterIdParams.push(`@${paramName}`);
+            });
+            parameterFilter = `AND ${safeCols.parameter} IN (${parameterIdParams.join(',')})`;
         }
         
         const queryString = `
             SELECT 
-                ${mapping.parameterColumn} as TagName, 
-                ${mapping.timestampColumn} as TimeStamp, 
-                ${mapping.valueColumn} as TagValue, 
-                ${mapping.machineColumn} as ServerName 
-            FROM ${mapping.table}
+                ${safeCols.parameter} as TagName, 
+                ${safeCols.timestamp} as TimeStamp, 
+                ${safeCols.value} as TagValue, 
+                ${safeCols.machine} as ServerName 
+            FROM ${safeCols.table}
             WHERE 
-                ${mapping.timestampColumn} BETWEEN '${dateRange.from.toISOString()}' AND '${dateRange.to.toISOString()}'
-                AND ${mapping.machineColumn} IN (${machineIdList})
+                ${safeCols.timestamp} BETWEEN @startDate AND @endDate
+                AND ${safeCols.machine} IN (${machineIdParams.join(',')})
                 ${parameterFilter}
             ORDER BY 
-                ${mapping.timestampColumn} DESC;
+                ${safeCols.timestamp} DESC;
         `;
-        const result = await sql.query(queryString);
+
+        const result = await request.query(queryString);
         
         const formattedData: ScadaDataPoint[] = result.recordset.map((row: any) => ({
             id: `${row.TagName}-${row.TimeStamp.toISOString()}`,
@@ -83,7 +109,7 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
             unit: "N/A", 
         }));
         
-        await sql.close();
+        await pool.close();
         
         console.log(`Returning ${formattedData.length} data points from live SCADA SQL database.`);
         return formattedData;
@@ -125,20 +151,33 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
             options: { encrypt: true, trustServerCertificate: true }
         };
 
-        await sql.connect(dbConfig);
+        const pool = await sql.connect(dbConfig);
+        const request = pool.request();
 
-        const machineIdList = machineIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
+        // Sanitize column names
+        const safeCols = {
+            table: `[${mapping.table.replace(/\]/g, '')}]`,
+            machine: `[${mapping.machineColumn.replace(/\]/g, '')}]`,
+            parameter: `[${mapping.parameterColumn.replace(/\]/g, '')}]`,
+        };
+
+        let machineIdParams: string[] = [];
+        machineIds.forEach((id, i) => {
+            const paramName = `machineId${i}`;
+            request.input(paramName, sql.NVarChar, id);
+            machineIdParams.push(`@${paramName}`);
+        });
         
         const queryString = `
-            SELECT DISTINCT ${mapping.parameterColumn} as TagName FROM ${mapping.table}
-            WHERE ${mapping.machineColumn} IN (${machineIdList})
+            SELECT DISTINCT ${safeCols.parameter} as TagName FROM ${safeCols.table}
+            WHERE ${safeCols.machine} IN (${machineIdParams.join(',')})
             ORDER BY TagName ASC;
         `;
-        const result = await sql.query(queryString);
+        const result = await request.query(queryString);
         
         const tags: string[] = result.recordset.map((row: any) => row.TagName);
         
-        await sql.close();
+        await pool.close();
         
         console.log(`Returning ${tags.length} unique tags.`);
         return tags;
@@ -173,18 +212,20 @@ export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tabl
     };
     
     try {
-        await sql.connect(dbConfig);
+        const pool = await sql.connect(dbConfig);
 
-        const tablesResult = await sql.query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
+        const tablesResult = await pool.request().query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
         const tables: string[] = tablesResult.recordset.map(row => row.TABLE_NAME);
 
         const columns: { [key: string]: string[] } = {};
         for (const table of tables) {
-            const columnsResult = await sql.query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${table.replace(/'/g, "''")}' ORDER BY ORDINAL_POSITION`);
+            // Table names from INFORMATION_SCHEMA are generally safe, but parameterized is best practice if possible.
+            // For this metadata query, direct use is common but should be understood as a controlled risk.
+            const columnsResult = await pool.request().query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION`, { tableName: table });
             columns[table] = columnsResult.recordset.map(row => row.COLUMN_NAME);
         }
         
-        await sql.close();
+        await pool.close();
         console.log(`Found ${tables.length} tables.`);
         return { tables, columns };
 
@@ -219,8 +260,8 @@ export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredent
             }
         };
 
-        await sql.connect(dbConfig);
-        await sql.close();
+        const pool = await sql.connect(dbConfig);
+        await pool.close();
         
         console.log("SCADA DB connection test successful.");
         return { success: true };
@@ -267,3 +308,5 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
         return { success: false, error: error.message };
     }
 }
+
+    
