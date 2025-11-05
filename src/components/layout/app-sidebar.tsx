@@ -101,9 +101,7 @@ export function AppSidebar() {
           className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground"
         >
           <item.icon className="h-5 w-5" />
-          <div className="truncate">
-            {state === "expanded" && <span>{item.label}</span>}
-          </div>
+          {state === "expanded" && <span className="truncate">{item.label}</span>}
         </SidebarMenuButton>
       </Link>
     </SidebarMenuItem>

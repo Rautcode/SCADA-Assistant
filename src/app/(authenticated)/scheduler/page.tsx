@@ -61,7 +61,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
                     Scheduled for: {format(task.scheduledTime, 'PPpp')}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <CardContent className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     {template ? (
                          <Image src={template.thumbnailUrl} alt={template.name} width={50} height={50} className="rounded-md border aspect-video object-cover" />

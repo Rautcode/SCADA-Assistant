@@ -170,7 +170,7 @@ export function TopBar() {
       <div className="flex items-center gap-3 md:gap-4">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-auto justify-start text-left font-normal">
+            <Button variant="outline" className="w-auto justify-start text-left font-normal hidden sm:flex">
               <CalendarDays className="mr-2 h-4 w-4" />
               {date ? format(date, 'PPP') : <span>Pick a date</span>}
             </Button>
