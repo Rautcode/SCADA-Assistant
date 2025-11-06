@@ -135,7 +135,6 @@ export default function SettingsPage() {
                     description: t('settings_saved_description'),
                 });
                 
-                // Apply settings immediately for instant feedback
                 applyTheme(values.theme);
                 setLanguage(values.language);
                 refetchDbStatus();
@@ -269,7 +268,6 @@ export default function SettingsPage() {
         }
     });
 
-
     const renderFormContent = () => {
         if (isFetching) {
             return (
@@ -291,13 +289,13 @@ export default function SettingsPage() {
         }
         return (
             <Tabs defaultValue="appearance" className="flex flex-col md:flex-row gap-8" orientation="vertical">
-                <TabsList className="md:w-48 h-auto flex-col items-start p-2 shrink-0 w-full">
-                    <TabsTrigger value="appearance" className="w-full justify-start"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
-                    <TabsTrigger value="notifications" className="w-full justify-start"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
-                    <TabsTrigger value="integrations" className="w-full justify-start"><Workflow className="mr-2 h-4 w-4" />{t('integrations')}</TabsTrigger>
-                    <TabsTrigger value="database" className="w-full justify-start"><Server className="mr-2 h-4 w-4" />{t('database')}</TabsTrigger>
-                    <TabsTrigger value="mapping" className="w-full justify-start"><Map className="mr-2 h-4 w-4" />Data Mapping</TabsTrigger>
-                    <TabsTrigger value="email" className="w-full justify-start"><Mail className="mr-2 h-4 w-4" />{t('email')}</TabsTrigger>
+                <TabsList className="md:w-56 h-auto flex-col items-start p-2 shrink-0 w-full">
+                    <TabsTrigger value="appearance" className="w-full justify-start text-base py-2"><Palette className="mr-2 h-5 w-5" />{t('appearance')}</TabsTrigger>
+                    <TabsTrigger value="notifications" className="w-full justify-start text-base py-2"><Bell className="mr-2 h-5 w-5" />{t('notifications')}</TabsTrigger>
+                    <TabsTrigger value="integrations" className="w-full justify-start text-base py-2"><Workflow className="mr-2 h-5 w-5" />{t('integrations')}</TabsTrigger>
+                    <TabsTrigger value="database" className="w-full justify-start text-base py-2"><Server className="mr-2 h-5 w-5" />{t('database')}</TabsTrigger>
+                    <TabsTrigger value="mapping" className="w-full justify-start text-base py-2"><Map className="mr-2 h-5 w-5" />Data Mapping</TabsTrigger>
+                    <TabsTrigger value="email" className="w-full justify-start text-base py-2"><Mail className="mr-2 h-5 w-5" />{t('email')}</TabsTrigger>
                 </TabsList>
                 
                 <div className="flex-1">
@@ -730,24 +728,28 @@ export default function SettingsPage() {
 
     return (
         <div className="w-full">
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="flex items-center text-2xl font-bold">
-                                <Settings className="mr-3 h-7 w-7 text-primary" />
-                                {t('app_settings')}
-                            </h1>
-                            <p className="text-muted-foreground">{t('settings_description')}</p>
-                        </div>
-                        <Button type="submit" disabled={isLoading || isFetching}>
-                            <Save className="mr-2 h-4 w-4" />
-                            {isLoading ? t('saving') : t('save_all')}
-                        </Button>
-                    </div>
-                    {renderFormContent()}
-                </form>
-            </Form>
+            <Card className="shadow-lg">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <CardHeader className="flex flex-row items-center justify-between border-b">
+                             <div>
+                                <h1 className="flex items-center text-2xl font-bold">
+                                    <Settings className="mr-3 h-7 w-7 text-primary" />
+                                    {t('app_settings')}
+                                </h1>
+                                <p className="text-muted-foreground mt-1">{t('settings_description')}</p>
+                            </div>
+                            <Button type="submit" disabled={isLoading || isFetching}>
+                                <Save className="mr-2 h-4 w-4" />
+                                {isLoading ? t('saving') : t('save_all')}
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            {renderFormContent()}
+                        </CardContent>
+                    </form>
+                </Form>
+            </Card>
         </div>
     );
 }
