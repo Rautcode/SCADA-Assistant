@@ -1,8 +1,21 @@
 
+'use client';
 import { AppLogo } from '@/components/layout/app-logo';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { RegisterForm } from '@/components/auth/register-form';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const RegisterForm = dynamic(() => import('@/components/auth/register-form').then(mod => mod.RegisterForm), {
+  loading: () => (
+    <div className="space-y-4">
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  ),
+  ssr: false,
+});
 
 export default function RegisterPage() {
   return (

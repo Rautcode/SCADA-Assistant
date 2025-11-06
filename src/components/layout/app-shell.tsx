@@ -9,12 +9,14 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-full">
+      <div className="flex h-full w-full">
         <AppSidebar />
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 h-full overflow-hidden">
           <TopBar />
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
-              {children}
+              <div className="w-full h-full">
+                {children}
+              </div>
           </main>
         </div>
       </div>
