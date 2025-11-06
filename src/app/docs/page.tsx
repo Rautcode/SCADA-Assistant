@@ -92,7 +92,7 @@ export default function DocsPage() {
   };
 
   return (
-    <div className="animate-fade-in w-full">
+    <div className="w-full">
       <div className="space-y-8">
           <Card className="shadow-lg">
               <CardHeader>

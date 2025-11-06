@@ -729,7 +729,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="animate-fade-in w-full">
+        <div className="w-full">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <Card className="shadow-lg">
