@@ -731,29 +731,25 @@ export default function SettingsPage() {
     return (
         <div className="w-full">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <Card className="shadow-lg">
-                        <CardHeader>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle className="flex items-center text-2xl font-bold">
-                                        <Settings className="mr-3 h-7 w-7 text-primary" />
-                                        {t('app_settings')}
-                                    </CardTitle>
-                                    <CardDescription>{t('settings_description')}</CardDescription>
-                                </div>
-                                <Button type="submit" disabled={isLoading || isFetching}>
-                                    <Save className="mr-2 h-4 w-4" />
-                                    {isLoading ? t('saving') : t('save_all')}
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                           {renderFormContent()}
-                        </CardContent>
-                    </Card>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h1 className="flex items-center text-2xl font-bold">
+                                <Settings className="mr-3 h-7 w-7 text-primary" />
+                                {t('app_settings')}
+                            </h1>
+                            <p className="text-muted-foreground">{t('settings_description')}</p>
+                        </div>
+                        <Button type="submit" disabled={isLoading || isFetching}>
+                            <Save className="mr-2 h-4 w-4" />
+                            {isLoading ? t('saving') : t('save_all')}
+                        </Button>
+                    </div>
+                    {renderFormContent()}
                 </form>
             </Form>
         </div>
     );
 }
+
+    
