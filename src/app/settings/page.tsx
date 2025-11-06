@@ -290,7 +290,7 @@ export default function SettingsPage() {
             )
         }
         return (
-            <Tabs defaultValue="appearance" className="flex flex-col md:flex-row gap-8" orientation="horizontal">
+            <Tabs defaultValue="appearance" className="flex flex-col md:flex-row gap-8" orientation="vertical">
                 <TabsList className="md:w-48 h-auto flex-col items-start p-2 shrink-0 w-full">
                     <TabsTrigger value="appearance" className="w-full justify-start"><Palette className="mr-2 h-4 w-4" />{t('appearance')}</TabsTrigger>
                     <TabsTrigger value="notifications" className="w-full justify-start"><Bell className="mr-2 h-4 w-4" />{t('notifications')}</TabsTrigger>
