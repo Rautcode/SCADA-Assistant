@@ -133,10 +133,11 @@ export default function SchedulerPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
+                    <div className="space-y-4">
                     {loading ? (
-                        <div className="space-y-4">
+                        <>
                             {Array.from({ length: 3 }).map((_, i) => <TaskItem key={i} loading />)}
-                        </div>
+                        </>
                     ) : showConnectionMessage ? (
                          <div className="mt-6 p-8 border-2 border-dashed border-border rounded-lg text-center">
                             <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -159,7 +160,7 @@ export default function SchedulerPage() {
                             </p>
                         </div>
                     ) : (
-                         <div className="space-y-4">
+                         <>
                             {tasks.map(task => (
                                 <TaskItem 
                                     key={task.id} 
@@ -167,8 +168,9 @@ export default function SchedulerPage() {
                                     template={templatesMap.get(task.templateId)} 
                                 />
                             ))}
-                        </div>
+                        </>
                     )}
+                    </div>
                 </CardContent>
             </Card>
             {isNewTaskDialogOpen && <NewTaskDialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen} />}

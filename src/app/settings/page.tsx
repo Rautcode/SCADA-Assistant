@@ -728,9 +728,9 @@ export default function SettingsPage() {
 
     return (
         <div className="w-full">
-            <Card className="shadow-lg">
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <Card className="shadow-lg">
                         <CardHeader className="flex flex-row items-center justify-between border-b">
                              <div>
                                 <h1 className="flex items-center text-2xl font-bold">
@@ -747,11 +747,9 @@ export default function SettingsPage() {
                         <CardContent className="pt-6">
                             {renderFormContent()}
                         </CardContent>
-                    </form>
-                </Form>
-            </Card>
+                    </Card>
+                </form>
+            </Form>
         </div>
     );
 }
-
-    
