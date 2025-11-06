@@ -115,6 +115,10 @@
   }
 }
 
+main {
+  width: 100%;
+}
+
 /* Custom scrollbar for webkit browsers */
 ::-webkit-scrollbar {
   width: 8px;
