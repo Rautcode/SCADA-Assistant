@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from '@/components/auth/auth-provider';
@@ -12,7 +11,7 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
   useEffect(() => {
     if (!loading && !user && !isAuthPage) {
