@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/components/auth/auth-provider';
+import { sendCustomPasswordResetEmail } from "@/app/actions/auth-actions";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -27,7 +27,6 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
   const { toast } = useToast();
-  const { sendPasswordReset } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<ForgotPasswordFormValues>({
@@ -39,21 +38,27 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsLoading(true);
     try {
-      await sendPasswordReset(values.email);
-      toast({
-        title: "Password Reset Email Sent",
-        description: "Please check your inbox for a link to reset your password.",
+      // The server action now handles everything, including link generation.
+      const result = await sendCustomPasswordResetEmail({
+        email: values.email,
       });
-      form.reset();
+
+      if (result.success) {
+        toast({
+            title: "Password Reset Email Sent",
+            description: "If an account exists for this email, you will receive a password reset link. Please check your inbox.",
+        });
+        form.reset();
+      } else {
+         throw new Error(result.error || "Failed to send email. Check SMTP configuration.");
+      }
+
     } catch (error: any) {
       console.error("Password reset failed:", error);
-      let errorMessage = "An unexpected error occurred. Please try again.";
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = "No user found with this email address.";
-      }
+      // Display a generic error to the user to avoid leaking information.
        toast({
         title: "Password Reset Failed",
-        description: errorMessage,
+        description: "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {

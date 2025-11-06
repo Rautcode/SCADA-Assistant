@@ -11,7 +11,7 @@ import { addEmailLogToDb, getUserSettingsFromDb } from '@/services/database-serv
 import { emailSettingsSchema } from '@/lib/types/database';
 
 export const SendEmailInputSchema = z.object({
-  userId: z.string(), // To fetch user-specific SMTP settings
+  userId: z.string(), // To fetch user-specific SMTP settings. Use 'system' for global settings.
   to: z.string().email(),
   subject: z.string(),
   text: z.string(),
@@ -31,11 +31,14 @@ const sendEmailFlow = ai.defineFlow(
   },
   async ({ userId, to, subject, text, html }) => {
     
+    // In a real app, you might have a global "system" user ID for settings,
+    // or a separate way to fetch system-wide configs.
     const userSettings = await getUserSettingsFromDb(userId);
     const smtpSettings = userSettings?.email;
     const notificationSettings = userSettings?.notifications;
 
-    if (!notificationSettings?.email) {
+    // For password resets, we bypass the user's notification preference.
+    if (userId !== 'system' && !notificationSettings?.email) {
         const errorMsg = "Email notifications are disabled by the user.";
         console.log(errorMsg);
         // Do not log this as a failure, it's an intended behavior.
@@ -43,9 +46,13 @@ const sendEmailFlow = ai.defineFlow(
     }
     
     if (!smtpSettings?.smtpHost || !smtpSettings?.smtpPort) {
-      const errorMsg = "SMTP settings are not configured.";
+      // This is a critical configuration error.
+      const errorMsg = "SMTP settings are not configured for this user or system. Cannot send email.";
       console.error(errorMsg);
-      await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
+      // We only log to the db if it's not a password reset, to avoid clutter.
+      if (userId !== 'system') {
+        await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
+      }
       return { success: false, error: errorMsg };
     }
 
@@ -65,7 +72,7 @@ const sendEmailFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('SMTP server verification failed:', error.message);
       await addEmailLogToDb({ to, subject, status: 'failed', error: 'SMTP server verification failed: ' + error.message });
-      return { success: false, error: 'SMTP server verification failed. Check your credentials.' };
+      return { success: false, error: 'SMTP server verification failed. Check your credentials in Settings.' };
     }
 
     try {

@@ -49,6 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const sendPasswordReset: SendPasswordResetFunction = (email) => {
+    // This now calls the standard firebase email function if needed, but our primary flow will use the custom action.
     return sendPasswordResetEmail(auth, email);
   };
 
