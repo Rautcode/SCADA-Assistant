@@ -9,11 +9,11 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen bg-background">
+      <div className="grid grid-cols-[auto_1fr] min-h-screen bg-background">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-col">
           <TopBar />
-          <main className="flex-1 p-4 md:p-6 lg:p-8">
+          <main className="p-4 md:p-6 lg:p-8">
             {children}
           </main>
         </div>
