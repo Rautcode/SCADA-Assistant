@@ -92,8 +92,8 @@ export default function DocsPage() {
   };
 
   return (
-    <div className="animate-fade-in">
-        <Card className="shadow-lg mb-8">
+    <div className="animate-fade-in space-y-8">
+        <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="flex items-center text-3xl font-bold">
                     <BookOpen className="mr-4 h-8 w-8 text-primary" />

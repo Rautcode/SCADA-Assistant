@@ -249,7 +249,7 @@ export default function DashboardPage() {
   const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="animate-fade-in space-y-6">
       <Card className="shadow-lg bg-card">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
