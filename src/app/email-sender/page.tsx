@@ -44,7 +44,7 @@ export default function EmailSenderPage() {
     }, []);
 
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in w-full">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>

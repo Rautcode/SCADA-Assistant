@@ -92,96 +92,98 @@ export default function HelpPage() {
   );
 
   return (
-    <div className="animate-fade-in space-y-8">
-      <Card className="shadow-lg">
-        <CardHeader className="text-center">
-          <HelpCircle className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle>
-            How can we help?
-          </CardTitle>
-          <CardDescription className="max-w-xl mx-auto">
-            Search our knowledge base or browse the frequently asked questions
-            below.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search for answers..."
-              className="pl-12 h-12 text-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Frequently Asked Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredFaqs.length > 0 ? (
-            <Accordion type="single" collapsible className="w-full">
-              {filteredFaqs.map((faq, index) => (
-                <AccordionItem value={`item-${index}`} key={index}>
-                  <AccordionTrigger className="text-left font-semibold hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          ) : (
-            <div className="text-center text-muted-foreground py-8">
-              <p>No results found for &quot;{searchTerm}&quot;.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-                <Mail className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <CardTitle>Contact Support</CardTitle>
-              <CardDescription>Can&apos;t find an answer?</CardDescription>
-            </div>
+    <div className="animate-fade-in w-full">
+      <div className="space-y-8">
+        <Card className="shadow-lg">
+          <CardHeader className="text-center">
+            <HelpCircle className="mx-auto h-12 w-12 text-primary" />
+            <CardTitle>
+              How can we help?
+            </CardTitle>
+            <CardDescription className="max-w-xl mx-auto">
+              Search our knowledge base or browse the frequently asked questions
+              below.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-                Our support team is here to help. Reach out to us for any technical issues or further questions.
-            </p>
-            <a href="mailto:manav@evio.in" className="text-sm font-semibold text-primary mt-2 inline-block">
-                manav@evio.in
-            </a>
+            <div className="relative max-w-2xl mx-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search for answers..."
+                className="pl-12 h-12 text-lg"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center gap-4">
-             <div className="p-3 bg-primary/10 rounded-full">
-                <BookOpen className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <CardTitle>Documentation</CardTitle>
-              <CardDescription>In-depth technical guides.</CardDescription>
-            </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Frequently Asked Questions</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-               Explore our full documentation for detailed information on setup, features, and advanced configurations.
-            </p>
-             <Link href="/docs" className="text-sm font-semibold text-primary mt-2 inline-block">
-                View Documentation
-            </Link>
+            {filteredFaqs.length > 0 ? (
+              <Accordion type="single" collapsible className="w-full">
+                {filteredFaqs.map((faq, index) => (
+                  <AccordionItem value={`item-${index}`} key={index}>
+                    <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                      {faq.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground">
+                      {faq.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                <p>No results found for &quot;{searchTerm}&quot;.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                  <Mail className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Contact Support</CardTitle>
+                <CardDescription>Can&apos;t find an answer?</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                  Our support team is here to help. Reach out to us for any technical issues or further questions.
+              </p>
+              <a href="mailto:manav@evio.in" className="text-sm font-semibold text-primary mt-2 inline-block">
+                  manav@evio.in
+              </a>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                  <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Documentation</CardTitle>
+                <CardDescription>In-depth technical guides.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Explore our full documentation for detailed information on setup, features, and advanced configurations.
+              </p>
+              <Link href="/docs" className="text-sm font-semibold text-primary mt-2 inline-block">
+                  View Documentation
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

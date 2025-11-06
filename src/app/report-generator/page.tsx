@@ -206,7 +206,7 @@ export default function ReportGeneratorPage() {
   };
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in w-full">
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="text-center">

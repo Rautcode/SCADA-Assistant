@@ -249,104 +249,106 @@ export default function DashboardPage() {
   const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <Card className="shadow-lg bg-card">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Welcome to SCADA Assistant</h1>
-              <p className="text-lg text-muted-foreground mt-1">
-                {currentDate}
-              </p>
+    <div className="animate-fade-in w-full">
+      <div className="space-y-6">
+        <Card className="shadow-lg bg-card">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Welcome to SCADA Assistant</h1>
+                <p className="text-lg text-muted-foreground mt-1">
+                  {currentDate}
+                </p>
+              </div>
+              <Image 
+                src={imageData.dashboard.banner.src} 
+                alt={imageData.dashboard.banner.alt} 
+                width={imageData.dashboard.banner.width} 
+                height={imageData.dashboard.banner.height} 
+                className="rounded-lg mt-4 md:mt-0 shadow-md" 
+                data-ai-hint={imageData.dashboard.banner.hint}
+              />
             </div>
-            <Image 
-              src={imageData.dashboard.banner.src} 
-              alt={imageData.dashboard.banner.alt} 
-              width={imageData.dashboard.banner.width} 
-              height={imageData.dashboard.banner.height} 
-              className="rounded-lg mt-4 md:mt-0 shadow-md" 
-              data-ai-hint={imageData.dashboard.banner.hint}
+          </CardContent>
+        </Card>
+        
+        <ApiKeyNotification />
+        <DatabaseConnectionNotification />
+
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <QuickAction title="New Report" icon={FilePlus} href="/report-generator" description="Generate a new SCADA report." />
+            <QuickAction title="View Templates" icon={BarChart3} href="/templates" description="Manage and edit report templates." />
+            <QuickAction title="Check Schedule" icon={CalendarClock} href="/scheduler" description="View and manage scheduled tasks." />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">System Overview</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Reports Generated (Month)" value={stats?.reports?.toLocaleString() ?? '...'} icon={FilePlus} description="Monthly total from live data" loading={isDataLoading} />
+            <StatCard title="Scheduled Tasks" value={stats?.tasks?.toString() ?? '...'} icon={CalendarClock} description="Pending automated tasks" loading={isDataLoading} />
+            <StatCard title="Active Users" value={stats?.users?.toString() ?? '...'} icon={Users} description="Users currently online" loading={isDataLoading} />
+            <StatCard 
+              title="System Status" 
+              value={<SystemStatusStat status={stats?.systemStatus} loading={isDataLoading} />} 
+              icon={CheckCircle2} 
+              description="Overall operational status" 
+              loading={isDataLoading} 
             />
           </div>
-        </CardContent>
-      </Card>
-      
-      <ApiKeyNotification />
-      <DatabaseConnectionNotification />
+        </section>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 shadow-md">
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Track the latest system and user activities.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {showEmptyState ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Connect to the database to see recent activity.</p>
+                  </div>
+              ) : isDataLoading && activities.length === 0 ? (
+                  <ul className="divide-y divide-border -mx-6 px-6">
+                      {Array.from({length: 5}).map((_, i) => <ActivityItem key={i} activity={{} as any} loading />)}
+                  </ul>
+                ) : activities.length > 0 ? (
+                  <ul className="divide-y divide-border -mx-6 px-6">
+                    {activities.map((activity) => <ActivityItem key={activity.id} activity={activity} />)}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No recent activity found.</p>
+                  </div>
+                )}
+            </CardContent>
+          </Card>
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <QuickAction title="New Report" icon={FilePlus} href="/report-generator" description="Generate a new SCADA report." />
-          <QuickAction title="View Templates" icon={BarChart3} href="/templates" description="Manage and edit report templates." />
-          <QuickAction title="Check Schedule" icon={CalendarClock} href="/scheduler" description="View and manage scheduled tasks." />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">System Overview</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Reports Generated (Month)" value={stats?.reports?.toLocaleString() ?? '...'} icon={FilePlus} description="Monthly total from live data" loading={isDataLoading} />
-          <StatCard title="Scheduled Tasks" value={stats?.tasks?.toString() ?? '...'} icon={CalendarClock} description="Pending automated tasks" loading={isDataLoading} />
-          <StatCard title="Active Users" value={stats?.users?.toString() ?? '...'} icon={Users} description="Users currently online" loading={isDataLoading} />
-          <StatCard 
-            title="System Status" 
-            value={<SystemStatusStat status={stats?.systemStatus} loading={isDataLoading} />} 
-            icon={CheckCircle2} 
-            description="Overall operational status" 
-            loading={isDataLoading} 
-          />
-        </div>
-      </section>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-md">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Track the latest system and user activities.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {showEmptyState ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Connect to the database to see recent activity.</p>
-                </div>
-             ) : isDataLoading && activities.length === 0 ? (
-                <ul className="divide-y divide-border -mx-6 px-6">
-                    {Array.from({length: 5}).map((_, i) => <ActivityItem key={i} activity={{} as any} loading />)}
-                </ul>
-              ) : activities.length > 0 ? (
-                <ul className="divide-y divide-border -mx-6 px-6">
-                  {activities.map((activity) => <ActivityItem key={activity.id} activity={activity} />)}
-                </ul>
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle>System Status</CardTitle>
+              <CardDescription>Health overview of critical components.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {showEmptyState ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                      <p>Connect to the database to see system status.</p>
+                  </div>
+              ) :isDataLoading && systemStatus.length === 0 ? (
+                  Array.from({length: 4}).map((_, i) => <SystemStatusItem key={i} loading />)
+              ) : systemStatus.length > 0 ? (
+                  systemStatus.map((item) => <SystemStatusItem key={item.name} item={item} />)
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No recent activity found.</p>
-                </div>
+                  <div className="text-center py-8 text-muted-foreground">
+                      <p>No system components to display.</p>
+                  </div>
               )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
-             <CardDescription>Health overview of critical components.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {showEmptyState ? (
-                <div className="text-center py-8 text-muted-foreground">
-                    <p>Connect to the database to see system status.</p>
-                </div>
-             ) :isDataLoading && systemStatus.length === 0 ? (
-                Array.from({length: 4}).map((_, i) => <SystemStatusItem key={i} loading />)
-             ) : systemStatus.length > 0 ? (
-                systemStatus.map((item) => <SystemStatusItem key={item.name} item={item} />)
-             ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                    <p>No system components to display.</p>
-                </div>
-             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

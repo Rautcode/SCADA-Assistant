@@ -70,7 +70,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in w-full">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-bold">

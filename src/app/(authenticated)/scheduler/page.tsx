@@ -115,7 +115,7 @@ export default function SchedulerPage() {
     const showConnectionMessage = !loading && tasks.length === 0 && dbStatus !== 'connected';
 
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in w-full">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
