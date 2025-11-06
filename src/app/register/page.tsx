@@ -8,7 +8,7 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col min-h-dvh">
         <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-            <Card className="w-full max-w-md shadow-xl animate-fade-in">
+            <Card className="w-full max-w-lg shadow-xl animate-fade-in">
                 <CardHeader className="items-center text-center">
                     <AppLogo className="mb-4" iconSize={40} textSize="text-3xl" href="/" />
                     <CardTitle className="text-2xl">Create an Account</CardTitle>

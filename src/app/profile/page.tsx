@@ -71,7 +71,7 @@ export default function ProfilePage() {
 
   return (
     <div className="animate-fade-in">
-      <Card className="shadow-lg max-w-2xl mx-auto">
+      <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-bold">
             <UserIcon className="mr-3 h-7 w-7 text-primary" />
@@ -141,5 +141,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
