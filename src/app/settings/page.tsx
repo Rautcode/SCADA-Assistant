@@ -611,7 +611,7 @@ export default function SettingsPage() {
                                                             <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
                                                         </Select>
                                                     </FormItem>
-                                                )}mmmmm
+                                                )}
                                             />
                                             <FormField
                                                 control={form.control} name="dataMapping.machineColumn"

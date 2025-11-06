@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
 import { categoryIcons } from '@/lib/icon-map';

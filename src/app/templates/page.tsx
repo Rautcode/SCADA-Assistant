@@ -7,26 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LayoutGrid, List, PlusCircle, Search, FileText, BarChart3, AlertTriangle, CheckSquare, Zap, ClipboardList } from "lucide-react";
+import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
 import { onReportTemplates } from "@/services/database-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Unsubscribe } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { categoryIcons } from "@/lib/icon-map";
 
 const NewTemplateDialog = dynamic(() =>
   import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
   { ssr: false, loading: () => <p>Loading...</p> }
 );
-
-const categoryIcons: { [key: string]: React.ElementType } = {
-  'Production': BarChart3,
-  'Maintenance': AlertTriangle,
-  'Quality': CheckSquare,
-  'Energy': Zap,
-  'Operations': ClipboardList,
-  'default': FileText,
-}
 
 const TemplateCard = React.memo(function TemplateCard({ template, loading }: { template?: ReportTemplate, loading?: boolean }) {
   if (loading || !template) {
@@ -154,7 +146,7 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div className="w-full">
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
