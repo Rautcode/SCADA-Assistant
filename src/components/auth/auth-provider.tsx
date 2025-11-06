@@ -11,9 +11,10 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
-import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction } from '@/lib/types/auth';
+import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction, SendPasswordResetFunction } from '@/lib/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -47,12 +48,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return signOut(auth);
   };
 
+  const sendPasswordReset: SendPasswordResetFunction = (email) => {
+    return sendPasswordResetEmail(auth, email);
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    sendPasswordReset,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
