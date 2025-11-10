@@ -3,16 +3,18 @@
 
 import { sendEmail } from "@/ai/flows/send-email-flow";
 import { getAuth } from "firebase-admin/auth";
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
 
 // Ensure Firebase admin is initialized
 function getAdminApp(): App {
     if (getApps().length) {
         return getApps()[0];
     }
-    // In a real server environment, you'd use serviceAccountCredentials
-    // For this environment, we rely on default application credentials if available
-    return initializeApp();
+    // In a real server environment, you'd use serviceAccountCredentials.
+    // For this environment, we rely on default application credentials.
+    return initializeApp({
+        credential: applicationDefault(),
+    });
 }
 
 /**
