@@ -8,9 +8,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import * as nodemailer from 'nodemailer';
 import { addEmailLogToDb, getUserSettingsFromDb } from '@/services/database-service';
-import { emailSettingsSchema } from '@/lib/types/database';
 
-export const SendEmailInputSchema = z.object({
+// Define the schema inside the function scope, not as an export.
+const SendEmailInputSchema = z.object({
   userId: z.string(), // To fetch user-specific SMTP settings. Use 'system' for global settings.
   to: z.string().email(),
   subject: z.string(),
