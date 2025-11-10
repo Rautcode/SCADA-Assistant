@@ -19,6 +19,40 @@ export type ScadaDbCredentials = {
 export type SmtpCredentials = z.infer<typeof emailSettingsSchema>;
 export type ScadaDataMapping = z.infer<typeof dataMappingSchema>;
 
+// Helper to validate column mappings against the actual schema
+async function validateMapping(pool: sql.ConnectionPool, mapping: ScadaDataMapping): Promise<void> {
+    if (!mapping.table || !mapping.timestampColumn || !mapping.machineColumn || !mapping.parameterColumn || !mapping.valueColumn) {
+        throw new Error("Data mapping is incomplete. Please configure all columns in Settings > Data Mapping.");
+    }
+    
+    // Validate table exists
+    const tableCheck = await pool.request()
+        .input('tableName', sql.NVarChar, mapping.table)
+        .query(`SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @tableName`);
+    if (tableCheck.recordset.length === 0) {
+        throw new Error(`The table "${mapping.table}" does not exist in the database.`);
+    }
+
+    // Validate all columns exist in the specified table
+    const allColumns = [mapping.timestampColumn, mapping.machineColumn, mapping.parameterColumn, mapping.valueColumn];
+    const columnCheckQuery = `
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME = @tableName AND COLUMN_NAME IN (${allColumns.map((_, i) => `@col${i}`).join(',')})
+    `;
+    const request = pool.request().input('tableName', sql.NVarChar, mapping.table);
+    allColumns.forEach((col, i) => request.input(`col${i}`, sql.NVarChar, col));
+    
+    const result = await request.query(columnCheckQuery);
+    
+    if (result.recordset.length !== allColumns.length) {
+        const foundCols = result.recordset.map(r => r.COLUMN_NAME);
+        const missingCols = allColumns.filter(c => !foundCols.includes(c));
+        throw new Error(`The following columns could not be found in table "${mapping.table}": ${missingCols.join(', ')}. Please check your Data Mapping settings.`);
+    }
+}
+
+
 // Server Action to get SCADA data
 type GetScadaDataInput = {
     criteria: z.infer<typeof reportCriteriaSchema>;
@@ -31,10 +65,8 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
     if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
     }
-    if (!mapping.table || !mapping.timestampColumn || !mapping.machineColumn || !mapping.parameterColumn || !mapping.valueColumn) {
-        throw new Error("Database table and column mappings are not fully configured in Settings > Data Mapping.");
-    }
-
+    
+    let pool: sql.ConnectionPool | undefined;
     try {
         const dbConfig: sql.config = {
             user: dbCreds.user || undefined,
@@ -47,20 +79,23 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
             }
         };
 
-        const pool = await sql.connect(dbConfig);
-        const request = pool.request();
+        pool = await sql.connect(dbConfig);
 
-        const { dateRange, machineIds, parameterIds } = criteria;
-        
-        // Sanitize column names to prevent SQL injection from mapping settings
+        // Securely validate mapping before building query
+        await validateMapping(pool, mapping);
+
+        // All mappings are validated, so it's safe to use them now
         const safeCols = {
-            table: `[${mapping.table.replace(/\]/g, '')}]`,
-            timestamp: `[${mapping.timestampColumn.replace(/\]/g, '')}]`,
-            value: `[${mapping.valueColumn.replace(/\]/g, '')}]`,
-            machine: `[${mapping.machineColumn.replace(/\]/g, '')}]`,
-            parameter: `[${mapping.parameterColumn.replace(/\]/g, '')}]`,
+            table: `[${mapping.table}]`,
+            timestamp: `[${mapping.timestampColumn}]`,
+            value: `[${mapping.valueColumn}]`,
+            machine: `[${mapping.machineColumn}]`,
+            parameter: `[${mapping.parameterColumn}]`,
         };
 
+        const request = pool.request();
+        const { dateRange, machineIds, parameterIds } = criteria;
+        
         // Bind parameters safely
         request.input('startDate', sql.DateTime, dateRange.from);
         request.input('endDate', sql.DateTime, dateRange.to);
@@ -109,18 +144,16 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
             unit: "N/A", 
         }));
         
-        await pool.close();
-        
         console.log(`Returning ${formattedData.length} data points from live SCADA SQL database.`);
         return formattedData;
 
     } catch (error: any) {
         console.error("Failed to fetch SCADA data from SQL Server:", error.message);
-        // Ensure connection is closed on error, if it was opened
-        if (sql.connected) {
-            await sql.close();
+        throw new Error(`Database query failed: ${error.message}. Please check your connection details and mappings in Settings.`);
+    } finally {
+        if (pool) {
+            await pool.close();
         }
-        throw new Error(`Database connection failed: ${error.message}. Please check your connection details in Settings.`);
     }
 }
 
@@ -138,10 +171,8 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
     if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured.");
     }
-     if (!mapping.table || !mapping.machineColumn || !mapping.parameterColumn) {
-        throw new Error("Database table and column mappings are not fully configured in Settings > Data Mapping.");
-    }
     
+    let pool: sql.ConnectionPool | undefined;
     try {
         const dbConfig: sql.config = {
             user: dbCreds.user || undefined,
@@ -151,14 +182,18 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
             options: { encrypt: true, trustServerCertificate: true }
         };
 
-        const pool = await sql.connect(dbConfig);
+        pool = await sql.connect(dbConfig);
+        
+        // Securely validate mapping before building query
+        await validateMapping(pool, mapping);
+        
         const request = pool.request();
 
-        // Sanitize column names
+        // All mappings are validated, so it's safe to use them
         const safeCols = {
-            table: `[${mapping.table.replace(/\]/g, '')}]`,
-            machine: `[${mapping.machineColumn.replace(/\]/g, '')}]`,
-            parameter: `[${mapping.parameterColumn.replace(/\]/g, '')}]`,
+            table: `[${mapping.table}]`,
+            machine: `[${mapping.machineColumn}]`,
+            parameter: `[${mapping.parameterColumn}]`,
         };
 
         let machineIdParams: string[] = [];
@@ -177,17 +212,16 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
         
         const tags: string[] = result.recordset.map((row: any) => row.TagName);
         
-        await pool.close();
-        
         console.log(`Returning ${tags.length} unique tags.`);
         return tags;
 
     } catch (error: any) {
         console.error("Failed to fetch SCADA tags from SQL Server:", error.message);
-        if (sql.connected) {
-            await sql.close();
+        throw new Error(`Database query for tags failed: ${error.message}. Please check your connection details and mappings in Settings.`);
+    } finally {
+        if (pool) {
+            await pool.close();
         }
-        throw new Error(`Database query for tags failed: ${error.message}. Please check your connection details in Settings.`);
     }
 }
 
@@ -211,30 +245,29 @@ export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tabl
         options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
     };
     
+    let pool: sql.ConnectionPool | undefined;
     try {
-        const pool = await sql.connect(dbConfig);
+        pool = await sql.connect(dbConfig);
 
         const tablesResult = await pool.request().query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
         const tables: string[] = tablesResult.recordset.map(row => row.TABLE_NAME);
 
         const columns: { [key: string]: string[] } = {};
         for (const table of tables) {
-            // Table names from INFORMATION_SCHEMA are generally safe, but parameterized is best practice if possible.
-            // For this metadata query, direct use is common but should be understood as a controlled risk.
-            const columnsResult = await pool.request().query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION`, { tableName: table });
+            const columnsResult = await pool.request().input('tableName', sql.NVarChar, table).query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION`);
             columns[table] = columnsResult.recordset.map(row => row.COLUMN_NAME);
         }
         
-        await pool.close();
         console.log(`Found ${tables.length} tables.`);
         return { tables, columns };
 
     } catch (error: any) {
         console.error("Failed to fetch DB schema from SQL Server:", error.message);
-        if (sql.connected) {
-            await sql.close();
-        }
         throw new Error(`Database schema query failed: ${error.message}.`);
+    } finally {
+        if (pool) {
+            await pool.close();
+        }
     }
 }
 
@@ -246,7 +279,8 @@ export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredent
     if (!dbCreds.server || !dbCreds.databaseName) {
         return { success: false, error: "Server and Database Name are required." };
     }
-
+    
+    let pool: sql.ConnectionPool | undefined;
     try {
         const dbConfig: sql.config = {
             user: dbCreds.user || undefined,
@@ -260,18 +294,18 @@ export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredent
             }
         };
 
-        const pool = await sql.connect(dbConfig);
-        await pool.close();
+        pool = await sql.connect(dbConfig);
         
         console.log("SCADA DB connection test successful.");
         return { success: true };
 
     } catch (error: any) {
         console.error("SCADA DB connection test failed:", error.message);
-        if (sql.connected) {
-            await sql.close();
-        }
         return { success: false, error: error.message };
+    } finally {
+        if (pool) {
+            await pool.close();
+        }
     }
 }
 
