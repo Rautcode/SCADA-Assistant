@@ -5,6 +5,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +39,6 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsLoading(true);
     try {
-      // The server action now handles everything, including link generation.
       const result = await sendCustomPasswordResetEmail({
         email: values.email,
       });
@@ -50,15 +50,15 @@ export function ForgotPasswordForm() {
         });
         form.reset();
       } else {
-         throw new Error(result.error || "Failed to send email. Check SMTP configuration.");
+         // This error is now for SMTP or other real server failures.
+         throw new Error(result.error || "Failed to send email. Check SMTP configuration in settings.");
       }
 
     } catch (error: any) {
       console.error("Password reset failed:", error);
-      // Display a generic error to the user to avoid leaking information.
        toast({
         title: "Password Reset Failed",
-        description: "An unexpected error occurred. Please try again later.",
+        description: error.message || "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -83,6 +83,7 @@ export function ForgotPasswordForm() {
           )}
         />
         <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isLoading ? "Sending..." : "Send Reset Link"}
         </Button>
       </form>

@@ -32,7 +32,7 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
         console.warn(`Password reset attempted for non-existent user: ${email}`);
         return { success: true }; // Don't reveal that the user doesn't exist
     }
-    return { success: false, error: "Failed to generate password reset link." };
+    return { success: false, error: "Failed to generate password reset link. Please check server logs." };
   }
 
   const emailHtml = `
