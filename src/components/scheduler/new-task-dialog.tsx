@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -19,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { scheduleNewTask } from '@/ai/flows/scheduler-flow';
+import { scheduleNewTask } from '@/app/actions/scheduler-actions';
 
 const NewTaskSchema = z.object({
     name: z.string().min(1, "Task name is required."),
