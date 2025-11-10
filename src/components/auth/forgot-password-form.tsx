@@ -51,7 +51,11 @@ export function ForgotPasswordForm() {
         form.reset();
       } else {
          // This error is now for SMTP or other real server failures.
-         throw new Error(result.error || "Failed to send email. Check SMTP configuration in settings.");
+         toast({
+            title: "Password Reset Failed",
+            description: result.error || "Failed to send email. Check SMTP configuration in settings.",
+            variant: "destructive",
+        });
       }
 
     } catch (error: any) {
