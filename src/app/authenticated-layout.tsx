@@ -24,7 +24,7 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   // Show a loading screen while auth state is resolving, or if we are about to redirect.
   if (loading || (!user && !isAuthPage)) {
     return (
-      <div className={cn("flex flex-col items-center justify-center min-h-screen bg-background relative", isAuthPage ? 'bg-animated-auth' : 'bg-animated-app')}>
+      <div className={cn("flex flex-col items-center justify-center min-h-screen bg-background relative", "bg-animated-app")}>
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <CustomLoader />
           <p className="text-muted-foreground mt-4">Loading application...</p>
