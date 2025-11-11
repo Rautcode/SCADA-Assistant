@@ -104,11 +104,12 @@ const generateReportFlow = ai.defineFlow(
     console.log('Backend flow started with input:', input);
     const { apiKey, ...promptInput } = input;
     
-    const model = apiKey ? ai.model('googleai/gemini-pro', { clientOptions: { apiKey } }) : ai.model('googleai/gemini-pro');
+    const modelName = 'googleai/gemini-pro';
 
     const { output } = await ai.generate({
       prompt: reportGenerationPrompt.prompt,
-      model: model,
+      model: modelName,
+      config: apiKey ? { clientOptions: { apiKey } } : undefined,
       input: promptInput,
       output: { schema: GenerateReportOutputSchema },
     });

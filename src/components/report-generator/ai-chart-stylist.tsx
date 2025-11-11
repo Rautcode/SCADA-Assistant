@@ -38,6 +38,7 @@ export function AiChartStylist({ onStyleApply }: AiChartStylistProps) {
             const settings = await getUserSettings({ userId: user.uid });
             if (!settings?.apiKey) {
                 toast({ title: "API Key Missing", description: "Please set your Gemini API key in the settings.", variant: "destructive" });
+                setIsLoading(false);
                 return;
             }
             const suggestion = await suggestChartStyle({ promptText: prompt, apiKey: settings.apiKey });

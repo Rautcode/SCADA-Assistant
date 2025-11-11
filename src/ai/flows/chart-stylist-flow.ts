@@ -53,11 +53,12 @@ const suggestChartStyleFlow = ai.defineFlow(
   },
   async ({ promptText, apiKey }) => {
     
-    const model = apiKey ? ai.model('googleai/gemini-pro', { clientOptions: { apiKey } }) : ai.model('googleai/gemini-pro');
+    const modelName = 'googleai/gemini-pro';
 
     const { output } = await ai.generate({
         prompt: stylingPrompt.prompt,
-        model: model,
+        model: modelName,
+        config: apiKey ? { clientOptions: { apiKey } } : undefined,
         input: promptText,
         output: {
             schema: ChartStyleSuggestionSchema,
