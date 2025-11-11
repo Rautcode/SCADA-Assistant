@@ -424,5 +424,3 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
   );
 }
-
-    
