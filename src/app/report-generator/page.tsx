@@ -193,7 +193,7 @@ export default function ReportGeneratorPage() {
       case 0:
         return <ReportStep1Criteria onValidated={setStep1Data} initialData={step1Data} />;
       case 1:
-        return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} />;
+        return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} reportType={step1Data?.reportType} />;
       case 2:
         return <ReportStep3Preview onValidated={setStep3Data} initialData={step3Data} criteria={step1Data} />;
       case 3:

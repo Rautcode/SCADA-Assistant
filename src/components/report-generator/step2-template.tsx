@@ -1,22 +1,10 @@
+
 "use client";
 
 import * as React from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { LayoutGrid, List, CheckCircle2, Search } from "lucide-react";
 import Image from "next/image";
 import { ReportTemplate } from "@/lib/types/database";
@@ -27,52 +15,57 @@ import { Skeleton } from "../ui/skeleton";
 interface ReportStep2TemplateProps {
   onValidated: (data: { selectedTemplate: ReportTemplate | null }) => void;
   initialData: { selectedTemplate: ReportTemplate | null } | null;
+  reportType?: string; // Automatically filter by this type
 }
 
 export function ReportStep2Template({
   onValidated,
   initialData,
+  reportType,
 }: ReportStep2TemplateProps) {
-  const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
+  const [allTemplates, setAllTemplates] = React.useState<ReportTemplate[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
-  const [selectedTemplateId, setSelectedTemplateId] = React.useState<
-    string | null
-  >(initialData?.selectedTemplate?.id || null);
+  const [selectedTemplateId, setSelectedTemplateId] = React.useState<string | null>(initialData?.selectedTemplate?.id || null);
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [filterCategory, setFilterCategory] = React.useState("all");
 
-  // sync selection to parent
-  React.useEffect(() => {
-    const selectedTemplate =
-      templates.find((t) => t.id === selectedTemplateId) || null;
-    onValidated({ selectedTemplate });
-  }, [selectedTemplateId, templates, onValidated]);
-
-  // fetch templates
+  // fetch all templates once
   React.useEffect(() => {
     setLoading(true);
     const unsubscribe: Unsubscribe = onReportTemplates((templatesData) => {
-      setTemplates(templatesData);
+      setAllTemplates(templatesData);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // auto-select first template if none
+  // Filter templates based on search term and the report type from step 1
+  const filteredTemplates = React.useMemo(() => {
+    return allTemplates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (!reportType || template.category === reportType)
+    );
+  }, [allTemplates, searchTerm, reportType]);
+
+
+  // Auto-select the first template in the filtered list if the current selection is no longer valid
   React.useEffect(() => {
-    if (!selectedTemplateId && templates.length > 0) {
-      setSelectedTemplateId(templates[0].id);
+    const isCurrentSelectionValid = filteredTemplates.some(t => t.id === selectedTemplateId);
+    
+    if (!isCurrentSelectionValid && filteredTemplates.length > 0) {
+      setSelectedTemplateId(filteredTemplates[0].id);
+    } else if (filteredTemplates.length === 0) {
+      setSelectedTemplateId(null);
     }
-  }, [selectedTemplateId, templates]);
+  }, [filteredTemplates, selectedTemplateId]);
 
-  const filteredTemplates = templates.filter(
-    (template) =>
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filterCategory === "all" || template.category === filterCategory)
-  );
+  // sync selection to parent whenever it changes
+  React.useEffect(() => {
+    const selectedTemplate = allTemplates.find((t) => t.id === selectedTemplateId) || null;
+    onValidated({ selectedTemplate });
+  }, [selectedTemplateId, allTemplates, onValidated]);
 
-  const categories = ["all", ...Array.from(new Set(templates.map((t) => t.category)))];
 
   // --- Render Grid ---
   const renderGridContent = () => (
@@ -193,18 +186,6 @@ export function ReportStep2Template({
           />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat === "all" ? "All Categories" : cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button
             variant={viewMode === "grid" ? "secondary" : "outline"}
             size="icon"
@@ -223,6 +204,16 @@ export function ReportStep2Template({
           </Button>
         </div>
       </div>
+
+      {/* --- Informational header --- */}
+      {reportType && (
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center dark:bg-blue-950 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                Showing templates for &quot;{reportType}&quot;
+            </p>
+        </div>
+      )}
+
 
       {/* --- No Results --- */}
       {filteredTemplates.length === 0 && !loading && (
