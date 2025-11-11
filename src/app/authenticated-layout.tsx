@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import { CustomLoader } from '@/components/layout/custom-loader';
+import { cn } from '@/lib/utils';
 
 export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -23,7 +24,7 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   // Show a loading screen while auth state is resolving, or if we are about to redirect.
   if (loading || (!user && !isAuthPage)) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className={cn("flex flex-col items-center justify-center min-h-screen bg-background relative", isAuthPage ? 'bg-animated-auth' : 'bg-animated-app')}>
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <CustomLoader />
           <p className="text-muted-foreground mt-4">Loading application...</p>
@@ -35,9 +36,13 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   // If we're on an auth page (Login/Register), just render the content directly
   // without the main app shell.
   if (isAuthPage) {
-    return <>{children}</>;
+    return <div className="min-h-dvh bg-animated-auth relative">{children}</div>;
   }
 
   // If the user is authenticated and not on an auth page, render the full app shell.
-  return <AppShell>{children}</AppShell>;
+  return (
+    <div className="h-full bg-animated-app relative">
+        <AppShell>{children}</AppShell>
+    </div>
+  );
 }

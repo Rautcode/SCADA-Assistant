@@ -27,7 +27,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          'h-full bg-background font-sans antialiased relative bg-animated',
+          'h-full bg-background font-sans antialiased',
           GeistSans.variable,
           GeistMono.variable
         )}

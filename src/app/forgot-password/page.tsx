@@ -9,8 +9,8 @@ import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-dvh bg-background p-4">
-        <Card className="w-full max-w-lg shadow-xl animate-fade-in">
+    <div className="flex flex-col items-center justify-center min-h-dvh p-4">
+        <Card className="w-full max-w-lg shadow-xl animate-fade-in bg-card/80 backdrop-blur-sm">
             <CardHeader className="items-center text-center">
                 <AppLogo className="mb-4" iconSize={40} textSize="text-3xl" href="/" />
                 <CardTitle className="text-2xl">Forgot Password</CardTitle>
