@@ -337,3 +337,4 @@ export function ReportStep4Charts({ onValidated, initialData, scadaData }: Repor
     </div>
   );
 }
+
