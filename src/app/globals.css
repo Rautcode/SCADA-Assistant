@@ -168,74 +168,37 @@ main {
 }
 
 
-.bg-animated-auth::before,
-.bg-animated-auth::after,
-.bg-animated-app::before,
-.bg-animated-app::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  z-index: -1;
-  filter: blur(100px);
+.bg-animated-auth,
+.bg-animated-app {
+  background-color: hsl(var(--background));
+  opacity: 1;
+  background-image: radial-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
+    radial-gradient(hsl(var(--primary) / 0.1) 1px, hsl(var(--background)) 1px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  animation: pulse-grid 8s infinite ease-in-out;
 }
 
-/* Auth Pages Animation */
-.bg-animated-auth::before {
-  width: 600px;
-  height: 600px;
-  background-color: hsl(var(--primary));
-  animation: pulse-primary-auth 20s infinite ease-in-out alternate;
-  opacity: 0.2;
+.dark .bg-animated-auth,
+.dark .bg-animated-app {
+    background-image: radial-gradient(hsl(var(--primary) / 0.15) 1px, transparent 1px),
+    radial-gradient(hsl(var(--primary) / 0.15) 1px, hsl(var(--background)) 1px);
 }
 
-.bg-animated-auth::after {
-  width: 500px;
-  height: 500px;
-  background-color: hsl(var(--accent));
-  animation: pulse-secondary-auth 25s infinite ease-in-out alternate;
-  opacity: 0.2;
-}
 
-/* App Pages Animation */
-.bg-animated-app::before {
-  width: 800px;
-  height: 800px;
-  background-color: hsl(var(--primary));
-  animation: pulse-primary-app 30s infinite ease-in-out alternate;
-  opacity: 0.1;
-}
-
-.bg-animated-app::after {
-  width: 700px;
-  height: 700px;
-  background-color: hsl(var(--secondary));
-  animation: pulse-secondary-app 35s infinite ease-in-out alternate;
-  opacity: 0.1;
-}
-
-@keyframes pulse-primary-auth {
-  0% { transform: scale(1) translateX(-50%) translateY(-50%); opacity: 0.15; }
-  100% { transform: scale(1.1) translateX(-45%) translateY(-55%); opacity: 0.25; }
-}
-
-@keyframes pulse-secondary-auth {
-  0% { transform: scale(1) translateX(50%) translateY(50%); opacity: 0.15; }
-  100% { transform: scale(1.1) translateX(45%) translateY(45%); opacity: 0.25; }
-}
-
-@keyframes pulse-primary-app {
-  0% { transform: scale(1); opacity: 0.08; }
-  50% { transform: scale(1.05); opacity: 0.12; }
-  100% { transform: scale(1); opacity: 0.08; }
-}
-
-@keyframes pulse-secondary-app {
-  0% { transform: scale(1); opacity: 0.12; }
-  50% { transform: scale(1.05); opacity: 0.08; }
-  100% { transform: scale(1); opacity: 0.12; }
+@keyframes pulse-grid {
+  0% {
+    background-size: 40px 40px, 40px 40px;
+    opacity: 0.8;
+  }
+  50% {
+    background-size: 42px 42px, 38px 38px;
+    opacity: 1;
+  }
+  100% {
+    background-size: 40px 40px, 40px 40px;
+    opacity: 0.8;
+  }
 }
 
     
