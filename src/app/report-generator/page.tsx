@@ -19,6 +19,8 @@ import { z } from 'zod';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/auth/auth-provider';
 import { getUserSettings } from '../actions/settings-actions';
+import { downloadFile } from '@/lib/utils';
+import { Download } from 'lucide-react';
 
 // Dynamically import step components
 const ReportStep1Criteria = dynamic(() => import('@/components/report-generator/step1-criteria').then(mod => mod.ReportStep1Criteria), {
@@ -89,7 +91,7 @@ export default function ReportGeneratorPage() {
   const [currentStep, setCurrentStep] = React.useState(0);
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = React.useState(false);
-  const [generatedReport, setGeneratedReport] = React.useState<string | null>(null);
+  const [generatedReport, setGeneratedReport] = React.useState<GenerateReportOutput | null>(null);
   const { user } = useAuth();
 
   // State to hold data across steps
@@ -165,7 +167,7 @@ export default function ReportGeneratorPage() {
             apiKey: settings.apiKey,
         };
         const result = await generateReport(reportInput);
-        setGeneratedReport(result.reportContent);
+        setGeneratedReport(result);
     } catch (error) {
         console.error("Report generation failed:", error);
         toast({
@@ -177,6 +179,13 @@ export default function ReportGeneratorPage() {
         setIsGenerating(false);
     }
   };
+
+  const handleDownload = () => {
+    if (!generatedReport) return;
+    const { reportContent, fileName, format } = generatedReport;
+    const contentType = format === 'csv' ? 'text/csv' : 'text/markdown';
+    downloadFile(reportContent, fileName, contentType);
+  }
   
   const resetWizard = () => {
     setCurrentStep(0);
@@ -238,16 +247,20 @@ export default function ReportGeneratorPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Report Generated Successfully</AlertDialogTitle>
             <AlertDialogDescription>
-              The backend has processed your request. Here is the generated report content.
+              The backend has processed your request. You can now download the report or view its raw content below.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <ScrollArea className="max-h-[60vh] my-4 border rounded-md p-4 bg-muted/50">
             <pre className="text-sm whitespace-pre-wrap font-mono">
-                {generatedReport}
+                {generatedReport?.reportContent}
             </pre>
           </ScrollArea>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={resetWizard}>Close & Start Over</AlertDialogAction>
+            <Button variant="outline" onClick={resetWizard}>Close & Start Over</Button>
+            <AlertDialogAction onClick={handleDownload} className="bg-primary hover:bg-primary/90">
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

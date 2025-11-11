@@ -85,7 +85,7 @@ const reportGenerationPrompt = ai.definePrompt({
             - The summary of key findings, which MUST be aligned with the **Template Purpose**.
             - A section for charts (if requested): Mention the chart type ({{chartOptions.chartType}}) and what it represents.
             - A data table of the raw data.
-    4.  **Populate Output Schema**: Fill the 'reportContent', 'fileName', and 'format' fields in the output object.
+    4.  **Populate Output Schema**: Fill the 'reportContent', 'fileName', and 'format' fields in the output object. The filename should include the correct extension (.csv or .md).
 
     **Raw SCADA Data:**
     {{#each scadaData}}
@@ -118,6 +118,13 @@ const generateReportFlow = ai.defineFlow(
         throw new Error("The AI model failed to generate a report. It returned no output.");
     }
     
+    // Ensure the filename has the correct extension
+    if (output.format === 'pdf' && !output.fileName.endsWith('.md')) {
+      output.fileName += '.md';
+    } else if (output.format === 'csv' && !output.fileName.endsWith('.csv')) {
+      output.fileName += '.csv';
+    }
+
     console.log('Backend flow completed successfully.');
     return output;
   }
