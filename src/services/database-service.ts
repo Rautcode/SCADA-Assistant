@@ -160,8 +160,27 @@ export async function saveUserSettingsToDb(userId: string, settings: Omit<UserSe
     await setDoc(settingsRef, settings, { merge: true });
 }
 
+export async function getSystemSettingsFromDb(): Promise<UserSettings | null> {
+    // This is a dedicated function to get system-wide settings, e.g., for system emails.
+    // It fetches from a specific document ID 'system'.
+    if (!db) throw new Error("Firestore is not initialized.");
+    const settingsRef = doc(db, 'userSettings', 'system');
+    const docSnap = await getDoc(settingsRef);
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        return {
+            userId: 'system',
+            ...data,
+            email: data.email || {},
+        } as UserSettings;
+    }
+    return null;
+}
+
 export async function getUserSettingsFromDb(userId: string): Promise<UserSettings | null> {
     if (!db) throw new Error("Firestore is not initialized.");
+    if (userId === 'system') return getSystemSettingsFromDb();
+
     const settingsRef = doc(db, 'userSettings', userId);
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {

@@ -7,11 +7,11 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import * as nodemailer from 'nodemailer';
-import { addEmailLogToDb, getUserSettingsFromDb } from '@/services/database-service';
+import { addEmailLogToDb, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
+import { emailSettingsSchema } from '@/lib/types/database';
 
-// Define the schema inside the function scope, not as an export.
 const SendEmailInputSchema = z.object({
-  userId: z.string(), // To fetch user-specific SMTP settings. Use 'system' for global settings.
+  userId: z.string(), // To fetch user-specific or system-wide SMTP settings. Use 'system' for global.
   to: z.string().email(),
   subject: z.string(),
   text: z.string(),
@@ -31,29 +31,36 @@ const sendEmailFlow = ai.defineFlow(
   },
   async ({ userId, to, subject, text, html }) => {
     
-    // In a real app, you might have a global "system" user ID for settings,
-    // or a separate way to fetch system-wide configs.
-    const userSettings = await getUserSettingsFromDb(userId);
-    const smtpSettings = userSettings?.email;
-    const notificationSettings = userSettings?.notifications;
+    let smtpSettings: z.infer<typeof emailSettingsSchema> | undefined | null;
+    let notificationEnabled = true;
 
-    // For password resets, we bypass the user's notification preference.
-    if (userId !== 'system' && !notificationSettings?.email) {
-        const errorMsg = "Email notifications are disabled by the user.";
-        console.log(errorMsg);
-        // Do not log this as a failure, it's an intended behavior.
-        return { success: true, error: "Skipped: Email notifications are disabled." };
+    if (userId === 'system') {
+        // System-level emails (like password resets) use system-wide settings.
+        const systemSettings = await getSystemSettingsFromDb();
+        smtpSettings = systemSettings?.email;
+        // System emails are always "enabled" from a notification standpoint.
+    } else {
+        // User-specific emails respect the user's notification preferences.
+        const userSettings = await getUserSettingsFromDb(userId);
+        smtpSettings = userSettings?.email;
+        notificationEnabled = userSettings?.notifications?.email ?? false;
     }
     
-    if (!smtpSettings?.smtpHost || !smtpSettings?.smtpPort) {
-      // This is a critical configuration error.
-      const errorMsg = "SMTP settings are not configured for this user or system. Cannot send email.";
+    if (!notificationEnabled) {
+        const skipMsg = `Email notifications are disabled for user ${userId}. Skipping email to ${to}.`;
+        console.log(skipMsg);
+        // Do not log this as a failure in the DB, it's intended behavior.
+        return { success: true, error: "Skipped: Email notifications are disabled by the user." };
+    }
+    
+    if (!smtpSettings?.smtpHost || !smtpSettings?.smtpPort || !smtpSettings.smtpUser) {
+      const errorMsg = `SMTP settings are not configured for '${userId}'. Cannot send email.`;
       console.error(errorMsg);
-      // We only log to the db if it's not a password reset, to avoid clutter.
-      if (userId !== 'system') {
-        await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
-      }
-      return { success: false, error: errorMsg };
+      await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
+      const clientError = userId === 'system' 
+        ? "Skipped: System email notifications are not configured."
+        : "SMTP settings are not configured. Please configure them in Settings.";
+      return { success: false, error: clientError };
     }
 
     const transporter = nodemailer.createTransport({
@@ -64,14 +71,19 @@ const sendEmailFlow = ai.defineFlow(
         user: smtpSettings.smtpUser,
         pass: smtpSettings.smtpPass,
       },
+       tls: {
+          // Do not allow self-signed certificates
+          rejectUnauthorized: true
+      }
     });
 
     try {
       await transporter.verify();
-      console.log('SMTP server connection verified.');
+      console.log('SMTP server connection verified for:', userId);
     } catch (error: any) {
-      console.error('SMTP server verification failed:', error.message);
-      await addEmailLogToDb({ to, subject, status: 'failed', error: 'SMTP server verification failed: ' + error.message });
+      const errorMsg = 'SMTP server verification failed: ' + error.message;
+      console.error(errorMsg);
+      await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
       return { success: false, error: 'SMTP server verification failed. Check your credentials in Settings.' };
     }
 
@@ -89,9 +101,10 @@ const sendEmailFlow = ai.defineFlow(
       return { success: true };
 
     } catch (error: any) {
-      console.error('Failed to send email:', error.message);
-      await addEmailLogToDb({ to, subject, status: 'failed', error: error.message });
-      return { success: false, error: 'Failed to send email: ' + error.message };
+      const errorMsg = 'Failed to send email: ' + error.message;
+      console.error(errorMsg);
+      await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
+      return { success: false, error: errorMsg };
     }
   }
 );

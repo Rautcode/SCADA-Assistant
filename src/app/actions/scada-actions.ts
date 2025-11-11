@@ -326,7 +326,10 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
                 user: emailCreds.smtpUser,
                 pass: emailCreds.smtpPass,
             },
-            connectionTimeout: 10000 // 10 second timeout
+            connectionTimeout: 10000, // 10 second timeout
+            tls: {
+                rejectUnauthorized: true,
+            }
         });
 
         await transporter.verify();
@@ -339,7 +342,3 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
         return { success: false, error: error.message };
     }
 }
-
-    
-
-    

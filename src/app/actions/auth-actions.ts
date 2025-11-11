@@ -10,17 +10,28 @@ function getAdminApp(): App {
     if (getApps().length) {
         return getApps()[0];
     }
-    // In a real server environment, you'd use serviceAccountCredentials.
-    // For this environment, we rely on default application credentials.
     return initializeApp({
         credential: applicationDefault(),
     });
 }
 
+// In-memory store for rate limiting password reset requests.
+// In a distributed environment, a shared store like Redis would be more appropriate.
+const resetRequestTimestamps = new Map<string, number>();
+const RATE_LIMIT_PERIOD = 30000; // 30 seconds
+
 /**
  * A server action to generate a password reset link and send it via the custom SMTP service.
  */
 export async function sendCustomPasswordResetEmail({ email }: { email: string }): Promise<{ success: boolean; error?: string }> {
+  const now = Date.now();
+  const lastRequestTime = resetRequestTimestamps.get(email);
+
+  if (lastRequestTime && (now - lastRequestTime) < RATE_LIMIT_PERIOD) {
+    console.warn(`Rate limit exceeded for password reset: ${email}`);
+    // Return success to prevent leaking information about which emails are being targeted.
+    return { success: true, error: "Too many requests. Please wait before trying again." };
+  }
   
   let link: string;
   try {
@@ -28,13 +39,11 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
     link = await getAuth().generatePasswordResetLink(email);
   } catch (error: any) {
     console.error("Error generating password reset link:", error);
-    // Hide specific firebase errors from client, like "USER_NOT_FOUND"
-    // Return success to prevent user enumeration attacks.
     if (error.code === 'auth/user-not-found') {
         console.warn(`Password reset attempted for non-existent user: ${email}`);
         return { success: true }; // Don't reveal that the user doesn't exist
     }
-    return { success: false, error: "Failed to generate password reset link. Please check server logs." };
+    return { success: false, error: "Failed to generate password reset link on the server." };
   }
 
   const emailHtml = `
@@ -52,20 +61,26 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
   `;
   
   try {
-    // The sendEmail flow is designed to use a 'system' user for global SMTP settings
-    // when a specific user's settings aren't available (e.g., logged out state).
+    resetRequestTimestamps.set(email, now);
+    
     const result = await sendEmail({
-      userId: 'system',
+      userId: 'system', // Use 'system' to signify this is a system-level email
       to: email,
       subject: 'Your Password Reset Link for SCADA Assistant',
       text: `Hello,\n\nPlease reset your password by clicking this link: ${link}\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe SCADA Assistant Team`,
       html: emailHtml,
     });
     
+    if (!result.success && result.error === "Skipped: System email notifications are not configured.") {
+      console.error("CRITICAL: Password reset email could not be sent because system SMTP settings are not configured.");
+      // Do not expose this to the client, but it's a critical server log.
+      return { success: false, error: "The server is not configured to send emails. Please contact an administrator." };
+    }
+
     return result;
 
   } catch (error: any) {
     console.error("Error in sendCustomPasswordResetEmail action:", error);
-    return { success: false, error: error.message || "An unknown server error occurred." };
+    return { success: false, error: error.message || "An unknown server error occurred while sending the email." };
   }
 }
