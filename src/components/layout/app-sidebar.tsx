@@ -50,7 +50,7 @@ const helpAndSettingsItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { open, toggleSidebar, isMobile, state } = useSidebar();
+  const { open, toggleSidebar, isMobile, state, setOpen } = useSidebar();
   const { user, logout } = useAuth();
   const { toast } = useToast();
 
@@ -95,6 +95,11 @@ export function AppSidebar() {
     <SidebarMenuItem>
       <Link href={item.href} passHref legacyBehavior>
         <SidebarMenuButton
+          onClick={() => {
+            if (isMobile) {
+              setOpen(false);
+            }
+          }}
           isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
           tooltip={{ children: item.label, className: "bg-sidebar text-sidebar-foreground border-sidebar-border" }}
           className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground"
