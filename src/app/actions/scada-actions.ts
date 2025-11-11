@@ -326,9 +326,6 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
                 user: emailCreds.smtpUser,
                 pass: emailCreds.smtpPass,
             },
-            tls: {
-                rejectUnauthorized: false
-            },
             connectionTimeout: 10000 // 10 second timeout
         });
 
