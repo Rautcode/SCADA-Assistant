@@ -30,7 +30,7 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
   if (lastRequestTime && (now - lastRequestTime) < RATE_LIMIT_PERIOD) {
     console.warn(`Rate limit exceeded for password reset: ${email}`);
     // Return success to prevent leaking information about which emails are being targeted.
-    return { success: true, error: "Too many requests. Please wait before trying again." };
+    return { success: true };
   }
   
   let link: string;
@@ -41,9 +41,11 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
     console.error("Error generating password reset link:", error);
     if (error.code === 'auth/user-not-found') {
         console.warn(`Password reset attempted for non-existent user: ${email}`);
-        return { success: true }; // Don't reveal that the user doesn't exist
+        // Don't reveal that the user doesn't exist
+        return { success: true }; 
     }
-    return { success: false, error: "Failed to generate password reset link on the server." };
+    // Return a generic error to the client
+    return { success: false, error: "An unexpected error occurred while preparing the password reset." };
   }
 
   const emailHtml = `
@@ -81,6 +83,6 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
 
   } catch (error: any) {
     console.error("Error in sendCustomPasswordResetEmail action:", error);
-    return { success: false, error: error.message || "An unknown server error occurred while sending the email." };
+    return { success: false, error: "An unknown server error occurred while sending the email." };
   }
 }

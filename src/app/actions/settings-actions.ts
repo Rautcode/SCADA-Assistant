@@ -11,7 +11,7 @@ export async function saveUserSettings(input: { userId: string, settings: z.infe
     return { success: true };
   } catch (error: any) {
     console.error("Failed to save user settings:", error);
-    return { success: false, error: error.message || "An unknown error occurred." };
+    return { success: false, error: "An unexpected error occurred while saving settings." };
   }
 }
 

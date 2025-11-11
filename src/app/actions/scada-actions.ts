@@ -149,7 +149,8 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
 
     } catch (error: any) {
         console.error("Failed to fetch SCADA data from SQL Server:", error.message);
-        throw new Error(`Database query failed: ${error.message}. Please check your connection details and mappings in Settings.`);
+        // Do not expose raw error.message to the client
+        throw new Error(`Database query failed. Please check your connection details and mappings in Settings.`);
     } finally {
         if (pool) {
             await pool.close();
@@ -217,7 +218,7 @@ export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTag
 
     } catch (error: any) {
         console.error("Failed to fetch SCADA tags from SQL Server:", error.message);
-        throw new Error(`Database query for tags failed: ${error.message}. Please check your connection details and mappings in Settings.`);
+        throw new Error(`Database query for tags failed. Please check your connection details and mappings in Settings.`);
     } finally {
         if (pool) {
             await pool.close();
@@ -263,7 +264,7 @@ export async function getDbSchema({ dbCreds }: GetDbSchemaInput): Promise<{ tabl
 
     } catch (error: any) {
         console.error("Failed to fetch DB schema from SQL Server:", error.message);
-        throw new Error(`Database schema query failed: ${error.message}.`);
+        throw new Error(`Database schema query failed. Please check connection details.`);
     } finally {
         if (pool) {
             await pool.close();
@@ -301,7 +302,7 @@ export async function testScadaConnection({ dbCreds }: { dbCreds: ScadaDbCredent
 
     } catch (error: any) {
         console.error("SCADA DB connection test failed:", error.message);
-        return { success: false, error: error.message };
+        return { success: false, error: "Connection failed. Please check credentials and network." };
     } finally {
         if (pool) {
             await pool.close();
@@ -339,6 +340,6 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
 
     } catch (error: any) {
         console.error("SMTP connection test failed:", error.message);
-        return { success: false, error: error.message };
+        return { success: false, error: "SMTP connection failed. Check credentials and firewall rules." };
     }
 }
