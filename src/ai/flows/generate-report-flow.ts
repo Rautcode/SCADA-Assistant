@@ -62,35 +62,50 @@ const reportGenerationPrompt = ai.definePrompt({
   input: { schema: GenerateReportInputSchema },
   output: { schema: GenerateReportOutputSchema },
   prompt: `
-    You are a SCADA System Report Generation Assistant. Your task is to generate a report based on the provided criteria, data, and output format.
+    You are an expert SCADA System Analyst and technical writer. Your task is to generate a highly structured and professional report based on the provided criteria, data, and output format.
 
-    **Report Details:**
-    - **Report Name:** {{outputOptions.fileName}}
-    - **Template Used:** "{{template.name}}" (Category: {{template.category}})
-    - **Template Purpose:** {{template.description}}
-    - **Date Range:** {{criteria.dateRange.from}} to {{criteria.dateRange.to}}
-    - **Machines:** {{#each criteria.machineIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
-    - **Parameters/Tags:** {{#if criteria.parameterIds}}{{#each criteria.parameterIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}All available{{/if}}
+    **Output Format Instructions:**
+    - If the requested format is 'csv', generate ONLY a valid CSV string of the provided SCADA data. The first line must be the header row: "Timestamp,Machine,Parameter,Value,Unit". Each subsequent line should be a data point. Do not include any other text or explanation.
+    - If the requested format is 'pdf', generate a comprehensive report in structured Markdown format. The report MUST include the following sections in this exact order:
 
-    **Data Summary:**
-    - Total Data Points Received: {{scadaData.length}}
+    # {{outputOptions.fileName}}
+    *Report for the period: {{criteria.dateRange.from}} to {{criteria.dateRange.to}}*
 
-    **Instructions:**
-    1.  **Analyze the Data**: Review the provided SCADA data points.
-    2.  **Summarize Key Findings**: Create a high-level summary of the data. Your analysis should be guided by the **Template Purpose**. Identify trends, anomalies, or important metrics. For 'production' or 'summary' report types, focus on output. For 'downtime' or 'maintenance' reports, focus on errors or stoppages. For 'quality' reports, focus on deviations and standards.
-    3.  **Format the Output**: 
-        - If the requested format is 'csv', generate ONLY a valid CSV string of the provided SCADA data. The first line must be the header row: "Timestamp,Machine,Parameter,Value,Unit".
-        - If the requested format is 'pdf', generate a comprehensive report in Markdown format. The report should include:
-            - A main title.
-            - The summary of key findings, which MUST be aligned with the **Template Purpose**.
-            - A section for charts (if requested): Mention the chart type ({{chartOptions.chartType}}) and what it represents.
-            - A data table of the raw data.
-    4.  **Populate Output Schema**: Fill the 'reportContent', 'fileName', and 'format' fields in the output object. The filename should include the correct extension (.csv or .md).
+    ---
 
-    **Raw SCADA Data:**
+    ## Report Parameters
+    - **Template Used**: "{{template.name}}" ({{template.category}})
+    - **Template's Purpose**: *{{template.description}}*
+    - **Machines Analyzed**: {{#each criteria.machineIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+    - **Parameters/Tags Included**: {{#if criteria.parameterIds}}{{#each criteria.parameterIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}All available{{/if}}
+    - **Total Data Points Analyzed**: {{scadaData.length}}
+
+    ---
+
+    ## Executive Summary
+    **Your analysis MUST be guided by the Template's Purpose.**
+    - Write a high-level summary of the key findings from the data.
+    - Identify important trends, anomalies, or significant metrics.
+    - For 'Production' reports, focus on output and efficiency.
+    - For 'Maintenance' or 'Downtime' reports, focus on errors, stoppages, and failure rates.
+    - For 'Quality' reports, focus on deviations from standards and consistency.
+
+    ---
+
+    ## Chart Analysis
+    - **Chart Type**: {{chartOptions.chartType}}
+    - **Description**: Briefly explain what the chart ("{{chartOptions.chartTitle}}") represents and what conclusions can be drawn from it.
+
+    ---
+
+    ## Raw Data
+    | Timestamp | Machine | Parameter | Value | Unit |
+    |---|---|---|---|---|
     {{#each scadaData}}
-    - {{timestamp}}: {{machine}}, {{parameter}} = {{value}} {{unit}}
+    | {{timestamp}} | {{machine}} | {{parameter}} | {{value}} | {{unit}} |
     {{/each}}
+
+    **End of Report.**
   `,
 });
 
