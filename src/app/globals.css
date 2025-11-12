@@ -207,6 +207,13 @@ main {
     bottom: 12%;
 }
 
+.dark .wave-background > div::before {
+  background-color: hsl(var(--primary) / 0.05);
+}
+.dark .wave-background > div::after {
+  background-color: hsl(var(--secondary) / 0.05);
+}
+
 @keyframes wave {
     0% {
         transform: rotate(0deg);
@@ -216,4 +223,3 @@ main {
     }
 }
     
-
