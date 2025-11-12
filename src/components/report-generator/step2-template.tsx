@@ -228,5 +228,3 @@ export function ReportStep2Template({
     </div>
   );
 }
-
-    
