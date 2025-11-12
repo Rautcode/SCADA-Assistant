@@ -30,7 +30,6 @@ export const settingsSchema = z.object({
   }),
   
   // Data & Integration
-  syncFrequency: z.string().default("5"),
   apiKey: z.string().optional(),
 
   // Database Credentials

@@ -58,7 +58,6 @@ export default function SettingsPage() {
                 systemAlerts: true,
                 reportCompletion: true,
             },
-            syncFrequency: "5",
             apiKey: "",
             database: {
                 server: "",
@@ -444,30 +443,6 @@ export default function SettingsPage() {
                                 <CardDescription>Manage third-party service integrations.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-8">
-                                <FormField
-                                    control={form.control}
-                                    name="syncFrequency"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('data_sync_frequency')}</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={t('select_sync_frequency')} />
-                                                </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="1">{t('every_minute')}</SelectItem>
-                                                    <SelectItem value="5">{t('every_5_minutes')}</SelectItem>
-                                                    <SelectItem value="15">{t('every_15_minutes')}</SelectItem>
-                                                    <SelectItem value="manual">{t('manual_only')}</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormDescription>{t('data_sync_description')}</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
                                 <FormField
                                     control={form.control}
                                     name="apiKey"
