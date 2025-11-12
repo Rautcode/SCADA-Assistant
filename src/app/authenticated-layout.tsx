@@ -24,8 +24,11 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   // Show a loading screen while auth state is resolving, or if we are about to redirect.
   if (loading || (!user && !isAuthPage)) {
     return (
-      <div className={cn("flex flex-col items-center justify-center min-h-screen bg-background relative", "bg-animated-app")}>
-        <div className="flex flex-col items-center gap-4 animate-fade-in">
+      <div className={cn("flex flex-col items-center justify-center min-h-screen bg-background relative")}>
+        <div className="wave-background">
+          <div></div>
+        </div>
+        <div className="flex flex-col items-center gap-4 animate-fade-in z-10">
           <CustomLoader />
           <p className="text-muted-foreground mt-4">Loading application...</p>
         </div>
@@ -36,13 +39,25 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   // If we're on an auth page (Login/Register), just render the content directly
   // without the main app shell.
   if (isAuthPage) {
-    return <div className="min-h-dvh bg-animated-auth relative">{children}</div>;
+    return (
+      <div className="min-h-dvh bg-background relative">
+        <div className="wave-background">
+          <div></div>
+        </div>
+        <div className="relative z-10">{children}</div>
+      </div>
+    );
   }
 
   // If the user is authenticated and not on an auth page, render the full app shell.
   return (
-    <div className="h-full bg-animated-app relative">
-        <AppShell>{children}</AppShell>
+    <div className="h-full bg-background relative">
+        <div className="wave-background">
+          <div></div>
+        </div>
+        <div className="relative z-10 h-full">
+         <AppShell>{children}</AppShell>
+        </div>
     </div>
   );
 }
