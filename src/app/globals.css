@@ -224,14 +224,19 @@ main {
     }
 }
 
-/* Static dot-grid background for main application */
+/* Static blueprint-style grid for main application */
 .static-grid-background {
-  background-image: radial-gradient(hsl(var(--muted-foreground)) 1px, transparent 0);
-  background-size: 30px 30px;
-  background-position: -15px -15px;
+  --grid-color-light: hsl(var(--border) / 0.5);
+  --grid-color-dark: hsl(var(--border) / 0.2);
   background-color: hsl(var(--background));
+  background-image:
+    linear-gradient(var(--grid-color-light) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-color-light) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 .dark .static-grid-background {
-    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.2) 1px, transparent 0);
+  background-image:
+    linear-gradient(var(--grid-color-dark) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-color-dark) 1px, transparent 1px);
 }
