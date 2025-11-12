@@ -51,13 +51,8 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
 
   // If the user is authenticated and not on an auth page, render the full app shell.
   return (
-    <div className="h-full bg-background relative">
-        <div className="wave-background">
-          <div></div>
-        </div>
-        <div className="relative z-10 h-full">
-         <AppShell>{children}</AppShell>
-        </div>
+    <div className="h-full bg-background">
+        <AppShell>{children}</AppShell>
     </div>
   );
 }
