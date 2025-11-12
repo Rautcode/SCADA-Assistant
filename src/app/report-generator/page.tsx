@@ -66,7 +66,7 @@ export const GenerateReportInputSchema = z.object({
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
-  apiKey: z.string().optional(),
+  apiKey: z.string(),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 

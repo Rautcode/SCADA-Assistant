@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
 const ChartStyleSuggestionSchema = z.object({
   chartType: z.enum(['bar', 'line', 'pie']).describe("The suggested type of chart."),
@@ -20,7 +21,7 @@ export type ChartStyleSuggestion = z.infer<typeof ChartStyleSuggestionSchema>;
 
 const SuggestChartStyleInputSchema = z.object({
     promptText: z.string(),
-    apiKey: z.string().optional(),
+    apiKey: z.string(), // API key is now mandatory for this user-specific flow
 });
 type SuggestChartStyleInput = z.infer<typeof SuggestChartStyleInputSchema>;
 
@@ -53,12 +54,12 @@ const suggestChartStyleFlow = ai.defineFlow(
   },
   async ({ promptText, apiKey }) => {
     
-    const modelName = 'googleai/gemini-pro';
-
+    // Dynamically create a client with the user's API key
+    const dynamicClient = googleAI({ apiKey });
+    
     const { output } = await ai.generate({
         prompt: stylingPrompt.prompt,
-        model: modelName,
-        config: apiKey ? { clientOptions: { apiKey } } : undefined,
+        model: dynamicClient.model('gemini-pro'), // Use the model from the dynamic client
         input: promptText,
         output: {
             schema: ChartStyleSuggestionSchema,

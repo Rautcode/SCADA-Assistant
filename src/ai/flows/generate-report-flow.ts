@@ -12,6 +12,7 @@ import { reportCriteriaSchema } from '@/components/report-generator/step1-criter
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { format } from 'date-fns';
+import { googleAI } from '@genkit-ai/googleai';
 
 // Helper schemas for complex types
 const ScadaDataPointSchema = z.object({
@@ -40,7 +41,7 @@ const GenerateReportInputSchema = z.object({
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
-  apiKey: z.string().optional(),
+  apiKey: z.string(), // API key is now mandatory
 });
 type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -126,26 +127,26 @@ const generateReportFlow = ai.defineFlow(
       criteria: {
         ...restOfInput.criteria,
         dateRange: {
-          from: format(restOfInput.criteria.dateRange.from, 'yyyy-MM-dd'),
-          to: format(restOfInput.criteria.dateRange.to, 'yyyy-MM-dd'),
+          from: format(new Date(restOfInput.criteria.dateRange.from), 'yyyy-MM-dd'),
+          to: format(new Date(restOfInput.criteria.dateRange.to), 'yyyy-MM-dd'),
         },
       },
       scadaData: restOfInput.scadaData.map(d => ({
         ...d,
-        timestamp: format(d.timestamp, 'yyyy-MM-dd HH:mm:ss')
+        timestamp: format(new Date(d.timestamp), 'yyyy-MM-dd HH:mm:ss')
       })),
       template: {
         ...restOfInput.template,
-        lastModified: format(restOfInput.template.lastModified, 'yyyy-MM-dd'),
+        lastModified: format(new Date(restOfInput.template.lastModified), 'yyyy-MM-dd'),
       }
     };
     
-    const modelName = 'googleai/gemini-pro';
+    // Dynamically create a client with the user's API key
+    const dynamicClient = googleAI({ apiKey });
 
     const { output } = await ai.generate({
       prompt: reportGenerationPrompt.prompt,
-      model: modelName,
-      config: apiKey ? { clientOptions: { apiKey } } : undefined,
+      model: dynamicClient.model('gemini-pro'), // Use model from dynamic client
       input: promptInput,
       output: { schema: GenerateReportOutputSchema },
     });
