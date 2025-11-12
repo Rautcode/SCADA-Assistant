@@ -79,13 +79,14 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
 
   React.useEffect(() => {
     // This is the single source of truth for propagating state up.
+    // It runs whenever the form values or validity change.
     if (formState.isValid) {
       onValidated(getValues());
     } else {
       // If the form becomes invalid at any point, inform the parent.
       onValidated(null);
     }
-  }, [formState.isValid, getValues, onValidated]);
+  }, [formState, getValues, onValidated, watch]);
   
 
   React.useEffect(() => {
