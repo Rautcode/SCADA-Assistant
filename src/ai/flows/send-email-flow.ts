@@ -1,38 +1,72 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for sending emails on behalf of an authenticated user.
+ * @fileOverview A secure, robust Genkit flow for sending emails.
+ * It can be called by an authenticated user from the client, or by another
+ * trusted backend flow (like the task runner) with an auth override.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
-import { addEmailLogToDb, getUserSettingsFromDb } from '@/services/database-service';
+import { addEmailLogToDb, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
 import { emailSettingsSchema } from '@/lib/types/database';
 import { SendEmailInput } from '@/lib/types/flows';
-import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
+import { defineFlow } from 'genkit/flow';
 
-// This is an AUTHENTICATED flow. Genkit will verify the user's Firebase token.
-// The `auth` object is populated by the framework and can be trusted.
-export const sendEmail = defineAuthenticatedFlow(
+
+// Define an options object for the flow to allow for auth override from backend flows.
+const SendEmailFlowOptionsSchema = z.object({
+  authOverride: z.object({ uid: z.string() }).optional(),
+});
+
+
+// This is the primary email sending flow for the entire application.
+export const sendEmail = defineFlow(
   {
     name: 'sendEmailFlow',
     inputSchema: SendEmailInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
+    // The second argument to a flow is an options object.
   },
-  async (input, { auth }) => {
+  async (input, flowOptions) => {
     const { to, subject, text, html } = input;
     
-    // The user's ID is from the secure, verified `auth` context, not the client input.
-    const userId = auth.uid;
+    // Parse the flow options to check for an auth override.
+    const options = SendEmailFlowOptionsSchema.parse(flowOptions || {});
+
+    let userId: string;
+
+    if (options.authOverride) {
+      // If an auth override is provided, this flow is being called by a trusted backend service.
+      // We use the provided UID (e.g., 'system' or a user's ID for a scheduled task).
+      userId = options.authOverride.uid;
+      console.log(`sendEmailFlow running with auth override for user: ${userId}`);
+    } else {
+      // If no override, this is a standard client-side request.
+      // We securely get the authenticated user's ID.
+      const auth = await getAuthenticatedUser();
+      if (!auth) {
+        return { success: false, error: "User is not authenticated." };
+      }
+      userId = auth.uid;
+    }
 
     let smtpSettings: z.infer<typeof emailSettingsSchema> | undefined | null;
     let notificationEnabled = true;
+    let fromAddress: string;
 
-    // User-specific emails respect the user's notification preferences.
-    const userSettings = await getUserSettingsFromDb(userId);
-    smtpSettings = userSettings?.email;
-    notificationEnabled = userSettings?.notifications?.email ?? false;
+    if (userId === 'system') {
+        const systemSettings = await getSystemSettingsFromDb();
+        smtpSettings = systemSettings?.email;
+        fromAddress = `SCADA Assistant <${smtpSettings?.smtpUser || 'noreply@scada.local'}>`;
+    } else {
+        // User-specific emails respect the user's notification preferences.
+        const userSettings = await getUserSettingsFromDb(userId);
+        smtpSettings = userSettings?.email;
+        notificationEnabled = userSettings?.notifications?.email ?? false;
+        fromAddress = `SCADA Assistant <${smtpSettings?.smtpUser || 'noreply@scada.local'}>`;
+    }
     
     if (!notificationEnabled) {
         const skipMsg = `Email notifications are disabled for user ${userId}. Skipping email to ${to}.`;
@@ -45,7 +79,9 @@ export const sendEmail = defineAuthenticatedFlow(
       const errorMsg = `SMTP settings are not configured for user '${userId}'. Cannot send email.`;
       console.error(errorMsg);
       await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
-      const clientError = "SMTP settings are not configured. Please configure them in Settings.";
+      const clientError = userId === 'system' 
+        ? "System email notifications are not configured."
+        : "Your SMTP settings are not configured. Please configure them in Settings.";
       return { success: false, error: clientError };
     }
 
@@ -58,16 +94,14 @@ export const sendEmail = defineAuthenticatedFlow(
         pass: smtpSettings.smtpPass,
       },
        tls: {
-          // Do not allow self-signed certificates
           rejectUnauthorized: true
       }
     });
 
     try {
       await transporter.verify();
-      console.log('SMTP server connection verified for:', userId);
     } catch (error: any) {
-      const errorMsg = 'SMTP server verification failed: ' + error.message;
+      const errorMsg = `SMTP server verification failed for user ${userId}: ` + error.message;
       console.error(errorMsg);
       await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
       return { success: false, error: 'SMTP server verification failed. Check your credentials in Settings.' };
@@ -75,7 +109,7 @@ export const sendEmail = defineAuthenticatedFlow(
 
     try {
       const info = await transporter.sendMail({
-        from: `SCADA Assistant <${smtpSettings.smtpUser}>`,
+        from: fromAddress,
         to: to,
         subject: subject,
         text: text,

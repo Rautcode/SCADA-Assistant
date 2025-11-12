@@ -1,11 +1,9 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for running scheduled tasks.
  * This flow is designed to be triggered by an external scheduler (e.g., a cron job).
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb } from '@/services/database-service';
 import { generateReport } from './generate-report-flow';
@@ -120,12 +118,22 @@ export const runScheduledTasksFlow = defineFlow(
         const reportResult = await generateReport(reportInput);
 
         // If email notifications are enabled for the user, send the report.
-        if (notifications?.email && emailSettings?.smtpUser && userSettings.email) {
-            // Because this flow is not authenticated with a specific user context,
-            // we can't call the authenticated `sendEmail` flow.
-            // For now, we will just log that we would send an email.
-            // A more robust solution would involve a secure way to trigger user-specific actions.
-            console.log(`Email notifications enabled for ${task.userId}. Would send report to ${userSettings.email.smtpUser}`);
+        if (notifications?.email && emailSettings?.smtpUser && userSettings.email?.smtpUser) {
+            const emailResult = await sendEmail(
+                {
+                    to: userSettings.email.smtpUser,
+                    subject: `Your Scheduled Report: "${task.name}"`,
+                    text: `Attached is your automated report: ${task.name}.\n\n${reportResult.reportContent}`,
+                    html: `<p>Attached is your automated report: <strong>${task.name}</strong>.</p><hr/><pre>${reportResult.reportContent}</pre>`,
+                },
+                // Securely provide the user's ID to use their settings
+                { authOverride: { uid: task.userId } }
+            );
+
+            if (!emailResult.success) {
+                // Log the email failure but don't fail the entire task
+                console.error(`Scheduled task ${task.id} succeeded but failed to send email: ${emailResult.error}`);
+            }
         }
         
         await updateTaskStatus(task.id, 'completed');
