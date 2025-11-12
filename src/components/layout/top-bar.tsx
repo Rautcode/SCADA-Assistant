@@ -103,8 +103,12 @@ export function TopBar() {
 
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split('/').filter(segment => segment);
-    if (pathSegments.length === 0) return [];
     
+    // Don't generate breadcrumbs for the root dashboard page
+    if (pathSegments.length === 0 || (pathSegments.length === 1 && pathSegments[0] === 'dashboard')) {
+        return [];
+    }
+
     const breadcrumbs = pathSegments.map((segment, index) => {
       const href = `/${pathSegments.slice(0, index + 1).join('/')}`;
       const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -135,7 +139,7 @@ export function TopBar() {
             <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm ml-2">
             <ol role="list" className="flex items-center space-x-1">
                 {breadcrumbs.map((crumb, index) => (
-                <li key={crumb.href}>
+                <li key={`${crumb.href}-${index}`}>
                     <div className="flex items-center">
                         {index > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
                         <Link
