@@ -20,11 +20,13 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { scheduleNewTask } from '@/app/actions/scheduler-actions';
+import { useAuth } from '../auth/auth-provider';
 
 const NewTaskSchema = z.object({
     name: z.string().min(1, "Task name is required."),
     templateId: z.string().min(1, "A report template must be selected."),
     scheduledTime: z.date(),
+    userId: z.string(), // No validation needed, will be hidden
 });
 
 interface NewTaskDialogProps {
@@ -34,6 +36,7 @@ interface NewTaskDialogProps {
 
 export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isClient, setIsClient] = React.useState(false);
@@ -48,8 +51,15 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
             name: "",
             templateId: "",
             scheduledTime: new Date(),
+            userId: "",
         },
     });
+
+    React.useEffect(() => {
+        if (user) {
+            form.setValue('userId', user.uid);
+        }
+    }, [user, form]);
 
     React.useEffect(() => {
         if (!open) return;
@@ -61,6 +71,16 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
     
     async function onSubmit(values: z.infer<typeof NewTaskSchema>) {
         setIsLoading(true);
+        if (!values.userId) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be logged in to schedule a task.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
+
         try {
             await scheduleNewTask({
                 ...values,
@@ -127,7 +147,6 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
-                                    </Select>
                                      <FormMessage />
                                 </FormItem>
                             )}
@@ -185,5 +204,3 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         </Dialog>
     )
 }
-
-    

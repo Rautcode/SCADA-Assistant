@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from "zod";
@@ -7,6 +8,7 @@ const NewTaskSchema = z.object({
     name: z.string().min(1, "Task name is required."),
     templateId: z.string().min(1, "A report template must be selected."),
     scheduledTime: z.string().describe("The scheduled time as an ISO string."),
+    userId: z.string().min(1, "User ID is required."), // Added userId
 });
 
 type NewTask = z.infer<typeof NewTaskSchema>;

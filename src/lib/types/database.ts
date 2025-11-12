@@ -99,6 +99,7 @@ export interface ScheduledTask {
     id: string;
     name: string;
     templateId: string;
+    userId: string; // Added userId
     scheduledTime: Date;
     status: 'scheduled' | 'processing' | 'completed' | 'failed' | 'overdue';
     error?: string;
@@ -124,5 +125,3 @@ export interface EmailLog {
 export interface UserSettings extends SettingsFormValues {
     userId: string;
 }
-
-    

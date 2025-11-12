@@ -7,7 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
+import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb } from '@/services/database-service';
 import { generateReport } from './generate-report-flow';
 import { sendEmail } from './send-email-flow';
 import { getScadaData } from '@/app/actions/scada-actions';
@@ -41,7 +41,7 @@ const GenerateReportInputSchema = z.object({
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
-  apiKey: z.string().optional(),
+  apiKey: z.string(),
 });
 
 export const runScheduledTasksFlow = ai.defineFlow(
@@ -70,22 +70,22 @@ export const runScheduledTasksFlow = ai.defineFlow(
     for (const task of dueTasks) {
       try {
         await updateTaskStatus(task.id, 'processing');
-        const template = await getTemplateById(task.templateId);
         
-        if (!template) {
-          throw new Error(`Template with ID ${task.templateId} not found.`);
-        }
-        
-        // Scheduled tasks are associated with the 'system' user for settings
-        const systemSettings = await getSystemSettingsFromDb();
-        if (!systemSettings) {
-          throw new Error("System settings are not configured. Cannot run scheduled tasks.");
+        // Fetch the settings for the user who scheduled the task
+        const userSettings = await getUserSettingsFromDb(task.userId);
+        if (!userSettings) {
+          throw new Error(`Settings not found for user ${task.userId}. Cannot run task.`);
         }
 
-        const { apiKey, database: dbCreds, dataMapping, notifications, email: emailSettings } = systemSettings;
+        const { apiKey, database: dbCreds, dataMapping, notifications, email: emailSettings } = userSettings;
         
         if (!apiKey || !dbCreds || !dataMapping) {
-            throw new Error("System settings for API key, database, or data mapping are incomplete.");
+            throw new Error(`User ${task.userId} has incomplete settings for API key, database, or data mapping.`);
+        }
+        
+        const template = await getTemplateById(task.templateId);
+        if (!template) {
+          throw new Error(`Template with ID ${task.templateId} not found.`);
         }
 
         // Hardcode criteria for scheduled tasks for now. In a real app, this would be stored with the task.
@@ -118,10 +118,10 @@ export const runScheduledTasksFlow = ai.defineFlow(
         
         const reportResult = await generateReport(reportInput);
 
-        // If email notifications are enabled for the system, send the report.
+        // If email notifications are enabled for the user, send the report.
         if (notifications?.email && emailSettings?.smtpUser) {
             await sendEmail({
-                userId: 'system',
+                userId: task.userId, // Use the user's ID to respect their notification settings
                 to: emailSettings.smtpUser,
                 subject: `Scheduled Report: ${task.name}`,
                 text: `Your scheduled report "${task.name}" is attached.`,
