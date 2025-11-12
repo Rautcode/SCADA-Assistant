@@ -43,6 +43,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
   const { status: connectionStatus } = useConnection();
+  const hasFetched = React.useRef(false);
 
 
   React.useEffect(() => {
@@ -50,6 +51,11 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   }, [data, onValidated]);
 
   React.useEffect(() => {
+    // Only fetch if we have criteria and the connection is good.
+    // The `hasFetched` ref prevents re-fetching when navigating back to this step
+    // unless the criteria have changed.
+    if (hasFetched.current) return;
+
     async function fetchSettingsAndData() {
         if (!user || !criteria) {
             setLoading(false);
@@ -63,7 +69,6 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         }
 
         if (connectionStatus !== 'connected') {
-            // Don't fetch data if we know we're not connected
             setLoading(false);
             return;
         }
@@ -79,14 +84,21 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
 
             if (creds && mapping) {
                 const scadaData = await getScadaData({ criteria, dbCreds: creds, mapping });
-                const enrichedData = scadaData.map(d => ({...d, included: initialData?.scadaData.find(initial => initial.id === d.id)?.included ?? true }));
+                
+                // When fetching new data, intelligently merge it with any existing selections
+                // from the parent's `initialData` state.
+                const enrichedData = scadaData.map(d => {
+                  const existingRow = initialData?.scadaData.find(initial => initial.id === d.id);
+                  return { ...d, included: existingRow ? existingRow.included : true };
+                });
+
                 setData(enrichedData);
                  if (scadaData.length === 0) {
                    setError("No data was returned from the database. Check your criteria and connection settings.");
                 }
+                hasFetched.current = true; // Mark as fetched
 
             } else {
-                // This case should be handled by the connection provider, but as a fallback:
                 setError("Database credentials or data mappings are not configured. Please set them in your user settings.");
             }
         } catch (e: any) {
@@ -307,3 +319,5 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     </div>
   );
 }
+
+    
