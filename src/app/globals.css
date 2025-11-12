@@ -266,3 +266,5 @@ main {
 .dark .static-wave-background::after {
    background-color: hsl(var(--secondary) / 0.05);
 }
+
+    
