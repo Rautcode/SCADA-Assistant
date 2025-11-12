@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Firestore, Unsubscribe } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
 import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, SystemComponentStatus, SystemLog } from '@/lib/types/database';
 

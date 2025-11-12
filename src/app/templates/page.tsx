@@ -3,16 +3,17 @@
 
 import * as React from "react";
 import dynamic from 'next/dynamic';
+import { Unsubscribe } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
-import { getReportTemplates } from "@/app/actions/settings-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { categoryIcons } from "@/lib/icon-map";
+import { onReportTemplates } from "@/services/client-database-service";
 
 const NewTemplateDialog = dynamic(() =>
   import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
@@ -93,10 +94,11 @@ export default function TemplatesPage() {
 
   React.useEffect(() => {
     setLoading(true);
-    getReportTemplates().then(templatesData => {
+    const unsub: Unsubscribe = onReportTemplates(templatesData => {
         setTemplates(templatesData);
         setLoading(false);
     });
+    return () => unsub();
   }, []);
 
   const filteredTemplates = React.useMemo(() => templates.filter(template =>

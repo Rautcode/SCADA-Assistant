@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, ListFilter, BarChartBig, Search, AlertTriangle, ChevronsUpDown, Settings } from "lucide-react";
+import { Calendar as CalendarIcon, BarChartBig, Search, AlertTriangle, ChevronsUpDown, Settings } from "lucide-react";
 import Link from 'next/link';
+import { Unsubscribe } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,9 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
-import { Machine } from "@/lib/types/database";
+import { Machine, ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
-import { Unsubscribe } from "firebase/firestore";
 import { getScadaTags } from "@/app/actions/scada-actions";
 import { getUserSettings } from "@/app/actions/settings-actions";
 import { useAuth } from "../auth/auth-provider";
@@ -28,7 +28,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
-import { ReportTemplate } from "@/lib/types/database";
 import { categoryIcons } from "@/lib/icon-map";
 import { onMachines, onReportTemplates } from "@/services/client-database-service";
 
@@ -148,7 +147,11 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       }
     }
 
-    fetchTags();
+    const debounce = setTimeout(() => {
+      fetchTags();
+    }, 300); // Add a small debounce
+
+    return () => clearTimeout(debounce);
   }, [selectedMachineIds, user, connectionStatus]);
 
 
