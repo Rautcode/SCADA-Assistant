@@ -104,26 +104,21 @@ export function TopBar() {
   };
 
   const generateBreadcrumbs = () => {
+    if (pathname === '/dashboard') {
+        return [{ label: 'Dashboard', href: '/dashboard' }];
+    }
+    
     const pathSegments = pathname.split('/').filter(segment => segment);
-    const breadcrumbs = [{ label: 'Home', href: '/dashboard' }];
+    const breadcrumbs = [{ label: 'Dashboard', href: '/dashboard' }];
     
     let currentPath = '';
     pathSegments.forEach(segment => {
       currentPath += `/${segment}`;
       const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-      if (currentPath === '/dashboard') {
-        if (breadcrumbs.length === 1 && breadcrumbs[0].href === '/dashboard' && breadcrumbs[0].label.toLowerCase() !== 'dashboard') {
-           // Home is dashboard, but path is not /dashboard, so we add it
-            if (segment !== 'dashboard') breadcrumbs.push({ label, href: currentPath });
-        }
-      } else {
+       if (currentPath !== '/dashboard') {
          breadcrumbs.push({ label, href: currentPath });
-      }
+       }
     });
-
-    if (breadcrumbs.length > 1 && breadcrumbs[0].label === 'Home' && breadcrumbs[1].label === 'Dashboard') {
-        breadcrumbs.shift();
-    }
 
     return breadcrumbs;
   };

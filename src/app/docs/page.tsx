@@ -105,48 +105,52 @@ export default function DocsPage() {
                   </CardDescription>
               </CardHeader>
           </Card>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <aside className="md:col-span-1">
-                  <div className="sticky top-24">
-                      <h3 className="font-semibold mb-4">On this page</h3>
-                      <ul className="space-y-2">
-                          {docSections.map(section => (
-                              <li key={section.id}>
-                                  <a 
-                                      href={`#${section.id}`}
-                                      onClick={(e) => {
-                                          e.preventDefault();
-                                          document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
-                                          setActiveSection(section.id);
-                                      }}
-                                      className={cn(
-                                          "flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors",
-                                          activeSection === section.id && "text-primary font-semibold"
-                                      )}
-                                  >
-                                      <ChevronRight className={cn("h-4 w-4 mr-2 transition-transform", activeSection === section.id && "rotate-90")}/>
-                                      {section.title}
-                                  </a>
-                              </li>
-                          ))}
-                      </ul>
-                  </div>
-              </aside>
-              <main className="md:col-span-3">
-                  <ScrollArea className="h-[calc(100vh-12rem)]" onScroll={handleScroll}>
-                      <div className="space-y-12 pr-4">
-                          {docSections.map(section => (
-                              <section key={section.id} id={section.id} className="scroll-mt-20">
-                                  <h2 className="text-2xl font-bold border-b pb-2 mb-4">{section.title}</h2>
-                                  <div className="prose prose-sm max-w-none text-muted-foreground">
-                                      {section.content}
-                                  </div>
-                              </section>
-                          ))}
-                      </div>
-                  </ScrollArea>
-              </main>
-          </div>
+          <Card>
+            <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <aside className="md:col-span-1">
+                        <div className="sticky top-24">
+                            <h3 className="font-semibold mb-4">On this page</h3>
+                            <ul className="space-y-2">
+                                {docSections.map(section => (
+                                    <li key={section.id}>
+                                        <a 
+                                            href={`#${section.id}`}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
+                                                setActiveSection(section.id);
+                                            }}
+                                            className={cn(
+                                                "flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors",
+                                                activeSection === section.id && "text-primary font-semibold"
+                                            )}
+                                        >
+                                            <ChevronRight className={cn("h-4 w-4 mr-2 transition-transform", activeSection === section.id && "rotate-90")}/>
+                                            {section.title}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </aside>
+                    <main className="md:col-span-3">
+                        <ScrollArea className="h-[calc(100vh-16rem)]" onScroll={handleScroll}>
+                            <div className="space-y-12 pr-4">
+                                {docSections.map(section => (
+                                    <section key={section.id} id={section.id} className="scroll-mt-20">
+                                        <h2 className="text-2xl font-bold border-b pb-2 mb-4">{section.title}</h2>
+                                        <div className="prose prose-sm max-w-none text-muted-foreground">
+                                            {section.content}
+                                        </div>
+                                    </section>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </main>
+                </div>
+            </CardContent>
+        </Card>
       </div>
     </div>
   );

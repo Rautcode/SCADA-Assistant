@@ -573,7 +573,7 @@ export default function SettingsPage() {
                                     <Database className="h-4 w-4" />
                                     <AlertTitle>Instructions</AlertTitle>
                                     <AlertDescription>
-                                        First, ensure your database credentials are saved and the connection test is successful. Then, click &quot;Fetch Schema&quot; to load your tables and columns.
+                                        This is a critical step. First, ensure your database credentials are saved and the connection test is successful. Then, click &quot;Fetch Schema&quot; to load your tables and columns. Finally, map the required columns.
                                     </AlertDescription>
                                 </Alert>
                                 <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema || dbConnectionStatus !== 'success'}>
