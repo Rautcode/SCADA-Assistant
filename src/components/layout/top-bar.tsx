@@ -2,8 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { Bell, CalendarDays, ChevronRight, LogOut, Settings, User, PanelLeft, AlertTriangle, UserCircle2 } from 'lucide-react';
-import { AppLogo } from './app-logo';
+import { Bell, CalendarDays, ChevronRight, LogOut, Settings, User, PanelLeft, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,6 +29,9 @@ import { iconMap } from '@/lib/icon-map';
 import { getUserSettings } from '@/app/actions/settings-actions';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AppLogo } from './app-logo';
+
+const NOTIFICATION_COUNT = 30;
 
 export function TopBar() {
   const [date, setDate] = React.useState<Date | undefined>(undefined);
@@ -59,14 +61,10 @@ export function TopBar() {
         (act) => act.icon.includes('Alert') || act.icon.includes('Warning')
       );
       setNotifications(notificationActivities);
-    }, 30); // Fetch a reasonable number of recent items for notifications
+    }, NOTIFICATION_COUNT);
 
     const storedLastSeen = localStorage.getItem('lastNotificationSeen');
-    if (storedLastSeen) {
-      setLastSeen(new Date(storedLastSeen));
-    } else {
-      setLastSeen(new Date(0));
-    }
+    setLastSeen(storedLastSeen ? new Date(storedLastSeen) : new Date(0));
     
     return () => unsubscribe();
   }, [user]);
@@ -105,17 +103,14 @@ export function TopBar() {
 
   const generateBreadcrumbs = () => {
     if (pathname === '/dashboard' || pathname === '/') {
-      return [{ label: 'Dashboard', href: '/dashboard' }];
+      return [];
     }
     
     const pathSegments = pathname.split('/').filter(segment => segment);
-    const breadcrumbs = [{ label: 'Dashboard', href: '/dashboard' }];
-    
-    let currentPath = '';
-    pathSegments.forEach(segment => {
-      currentPath += `/${segment}`;
+    const breadcrumbs = pathSegments.map((segment, index) => {
+      const href = `/${pathSegments.slice(0, index + 1).join('/')}`;
       const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-       breadcrumbs.push({ label, href: currentPath });
+      return { label, href };
     });
 
     return breadcrumbs;
@@ -132,33 +127,35 @@ export function TopBar() {
             <span className="sr-only">Toggle Sidebar</span>
           </Button>
         )}
-        {!isMobile && <AppLogo href="/dashboard" iconSize={24} textSize="text-lg" />}
-
-        {!isMobile && (
-            <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm">
-            <ol role="list" className="flex items-center space-x-1">
-                {breadcrumbs.map((crumb, index) => (
-                <li key={`${crumb.href}-${index}`}>
-                    <div className="flex items-center">
-                    {index > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                    <Link
-                        href={crumb.href}
-                        className={cn(
-                            'ml-1 font-medium',
-                            index === breadcrumbs.length - 1 
-                            ? 'text-foreground' 
-                            : 'text-muted-foreground hover:text-foreground'
-                        )}
-                        aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}
-                    >
-                        {crumb.label}
-                    </Link>
-                    </div>
-                </li>
-                ))}
-            </ol>
-            </nav>
-        )}
+        
+        <div className="flex items-center">
+            <AppLogo href="/dashboard" iconSize={24} textSize="text-lg" />
+            {breadcrumbs.length > 0 && (
+                <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm ml-4">
+                <ol role="list" className="flex items-center space-x-1">
+                    {breadcrumbs.map((crumb, index) => (
+                    <li key={crumb.href}>
+                        <div className="flex items-center">
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <Link
+                                href={crumb.href}
+                                className={cn(
+                                    'ml-1 font-medium',
+                                    index === breadcrumbs.length - 1 
+                                    ? 'text-foreground' 
+                                    : 'text-muted-foreground hover:text-foreground'
+                                )}
+                                aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}
+                            >
+                                {crumb.label}
+                            </Link>
+                        </div>
+                    </li>
+                    ))}
+                </ol>
+                </nav>
+            )}
+        </div>
       </div>
 
       <div className="flex items-center gap-3 md:gap-4">
@@ -275,3 +272,5 @@ export function TopBar() {
     </header>
   );
 }
+
+    

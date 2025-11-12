@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -184,3 +185,5 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         </Dialog>
     )
 }
+
+    

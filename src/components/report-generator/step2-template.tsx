@@ -6,11 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LayoutGrid, List, CheckCircle2, Search } from "lucide-react";
-import Image from "next/image";
 import { ReportTemplate } from "@/lib/types/database";
 import { onReportTemplates } from "@/services/database-service";
 import { Unsubscribe } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
+import { categoryIcons } from "@/lib/icon-map";
 
 interface ReportStep2TemplateProps {
   onValidated: (data: { selectedTemplate: ReportTemplate | null }) => void;
@@ -81,45 +81,44 @@ export function ReportStep2Template({
               </CardContent>
             </Card>
           ))
-        : filteredTemplates.map((template) => (
-            <Card
-              key={template.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-xl ${
-                selectedTemplateId === template.id
-                  ? "ring-2 ring-primary shadow-xl"
-                  : "shadow-md"
-              }`}
-              onClick={() => setSelectedTemplateId(template.id)}
-            >
-              <CardHeader className="p-0">
-                <Image
-                  src={template.thumbnailUrl}
-                  alt={template.name}
-                  width={300}
-                  height={200}
-                  className="rounded-t-lg object-cover w-full aspect-[3/2]"
-                  data-ai-hint="report document"
-                />
-              </CardHeader>
-              <CardContent className="p-4">
-                <CardTitle className="text-md mb-1">{template.name}</CardTitle>
-                <p className="text-xs text-muted-foreground mb-2">
-                  {template.category}
-                </p>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {template.description}
-                </p>
-              </CardContent>
-              {selectedTemplateId === template.id && (
-                <CardFooter className="p-2 bg-primary/10 rounded-b-lg flex items-center">
-                  <CheckCircle2 className="h-5 w-5 text-primary mr-2" />
-                  <span className="text-sm font-medium text-primary">
-                    Selected
-                  </span>
-                </CardFooter>
-              )}
-            </Card>
-          ))}
+        : filteredTemplates.map((template) => {
+            const Icon = categoryIcons[template.category] || categoryIcons['default'];
+            return (
+                <Card
+                key={template.id}
+                className={`cursor-pointer transition-all duration-200 hover:shadow-xl group ${
+                    selectedTemplateId === template.id
+                    ? "ring-2 ring-primary shadow-xl"
+                    : "shadow-md"
+                }`}
+                onClick={() => setSelectedTemplateId(template.id)}
+                >
+                <CardHeader className="p-0 relative overflow-hidden rounded-t-lg aspect-[3/2]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Icon className="h-16 w-16 text-primary/60 transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                    <CardTitle className="text-md mb-1">{template.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground mb-2">
+                    {template.category}
+                    </p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    {template.description}
+                    </p>
+                </CardContent>
+                {selectedTemplateId === template.id && (
+                    <CardFooter className="p-2 bg-primary/10 rounded-b-lg flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-sm font-medium text-primary">
+                        Selected
+                    </span>
+                    </CardFooter>
+                )}
+                </Card>
+            )
+        })}
     </div>
   );
 
@@ -129,7 +128,7 @@ export function ReportStep2Template({
       {loading
         ? Array.from({ length: 3 }).map((_, index) => (
             <Card key={index} className="flex items-center p-4 shadow-md">
-              <Skeleton className="rounded-md object-cover aspect-[3/2] mr-4 h-[80px] w-[120px]" />
+              <Skeleton className="rounded-md object-cover aspect-square mr-4 h-[60px] w-[60px]" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/4" />
@@ -137,24 +136,22 @@ export function ReportStep2Template({
               </div>
             </Card>
           ))
-        : filteredTemplates.map((template) => (
+        : filteredTemplates.map((template) => {
+            const Icon = categoryIcons[template.category] || categoryIcons['default'];
+            return (
             <Card
               key={template.id}
-              className={`flex items-center p-4 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+              className={`flex items-center p-4 cursor-pointer transition-all duration-200 hover:shadow-lg group ${
                 selectedTemplateId === template.id
                   ? "ring-2 ring-primary shadow-lg"
                   : "shadow-md"
               }`}
               onClick={() => setSelectedTemplateId(template.id)}
             >
-              <Image
-                src={template.thumbnailUrl}
-                alt={template.name}
-                width={120}
-                height={80}
-                className="rounded-md object-cover aspect-[3/2] mr-4"
-                data-ai-hint="report document"
-              />
+              <div className="relative overflow-hidden rounded-md aspect-square mr-4 h-[60px] w-[60px] flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+                <Icon className="h-8 w-8 text-primary/70 transition-transform duration-300 group-hover:scale-110" />
+              </div>
+
               <div className="flex-1">
                 <CardTitle className="text-md mb-1">{template.name}</CardTitle>
                 <p className="text-xs text-muted-foreground mb-1">
@@ -168,7 +165,7 @@ export function ReportStep2Template({
                 <CheckCircle2 className="h-6 w-6 text-primary ml-4" />
               )}
             </Card>
-          ))}
+        )})}
     </div>
   );
 
@@ -227,3 +224,5 @@ export function ReportStep2Template({
     </div>
   );
 }
+
+    
