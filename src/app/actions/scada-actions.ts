@@ -65,6 +65,12 @@ export async function getScadaData({ criteria, dbCreds, mapping }: GetScadaDataI
     if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
     }
+
+    // Prevent invalid SQL if no machines are selected
+    if (!criteria.machineIds || criteria.machineIds.length === 0) {
+        console.log("No machine IDs provided, returning empty data set.");
+        return [];
+    }
     
     let pool: sql.ConnectionPool | undefined;
     try {
@@ -167,7 +173,9 @@ type GetScadaTagsInput = {
 }
 export async function getScadaTags({ machineIds, dbCreds, mapping }: GetScadaTagsInput): Promise<string[]> {
     console.log("Fetching SCADA tags for machines:", machineIds);
-    if (!machineIds || machineIds.length === 0) return [];
+    if (!machineIds || machineIds.length === 0) {
+        return [];
+    }
     
     if (!dbCreds.server || !dbCreds.databaseName) {
          throw new Error("SCADA Database Server or Database Name is not configured.");
@@ -343,3 +351,5 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
         return { success: false, error: "SMTP connection failed. Check credentials and firewall rules." };
     }
 }
+
+    
