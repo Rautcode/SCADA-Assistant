@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileWarning, AlertTriangle, Info, CheckCircle, Search, Calendar as CalendarIcon, ListFilter } from 'lucide-react';
-import { onLogs } from '@/services/database-service';
+import { onLogs } from '@/services/client-database-service';
 import type { SystemLog } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { format } from 'date-fns';

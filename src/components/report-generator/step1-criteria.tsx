@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
-import { Machine, onMachines, onReportTemplates } from "@/services/database-service";
+import { Machine } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
 import { Unsubscribe } from "firebase/firestore";
 import { getScadaTags } from "@/app/actions/scada-actions";
@@ -30,6 +30,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
 import { ReportTemplate } from "@/lib/types/database";
 import { categoryIcons } from "@/lib/icon-map";
+import { onMachines, onReportTemplates } from "@/services/client-database-service";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({

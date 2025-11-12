@@ -8,7 +8,7 @@ import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2,
 import Link from 'next/link';
 import Image from 'next/image';
 import imageData from '@/app/lib/placeholder-images.json';
-import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/database-service';
+import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/client-database-service';
 import type { DashboardStats, RecentActivity, SystemComponentStatus } from '@/lib/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';

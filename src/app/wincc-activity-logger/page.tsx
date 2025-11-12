@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Activity, AlertTriangle, Search, Calendar as CalendarIcon } from 'lucide-react';
-import { onRecentActivities } from '@/services/database-service';
+import { onRecentActivities } from '@/services/client-database-service';
 import type { RecentActivity } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -175,5 +175,3 @@ export default function WinccActivityLoggerPage() {
     </div>
   );
 }
-
-    

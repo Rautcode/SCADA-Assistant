@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Mail, Send, AlertTriangle, CheckCircle, Settings } from 'lucide-react';
-import { onEmailLogs } from '@/services/database-service';
+import { onEmailLogs } from '@/services/client-database-service';
 import type { EmailLog } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { format } from 'date-fns';

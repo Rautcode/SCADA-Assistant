@@ -1,7 +1,7 @@
 
 import { initAdmin } from '@/lib/firebase/admin';
-import { DashboardStats, RecentActivity, ScadaDataPoint, SystemComponentStatus, Machine, ReportTemplate, ScheduledTask, SystemLog, UserSettings, EmailLog } from '@/lib/types/database';
-import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, onSnapshot, Unsubscribe, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc, Firestore } from 'firebase/firestore';
+import { ReportTemplate, ScheduledTask, UserSettings } from '@/lib/types/database';
+import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc } from 'firebase/firestore';
 import imageData from '@/app/lib/placeholder-images.json';
 
 
@@ -62,95 +62,6 @@ async function seedReportTemplates() {
 }
 
 
-function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string): Unsubscribe {
-    // This function must run on the client, so it will use the client-side DB.
-    // We import it dynamically to avoid server/client context issues.
-    import('@/lib/firebase/firebase').then(({ db }) => {
-        if (!db) {
-            console.error("Firestore is not initialized. Cannot create listener.");
-            callback([]);
-            return () => {};
-        }
-        const collRef = collection(db, collectionName);
-        const q = orderField ? query(collRef, orderBy(orderField, 'desc')) : query(collRef);
-        
-        return onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => {
-                const docData = doc.data();
-                // Convert any Timestamps to Dates
-                Object.keys(docData).forEach(key => {
-                    if (docData[key] instanceof Timestamp) {
-                        docData[key] = docData[key].toDate();
-                    }
-                });
-                return { id: doc.id, ...docData } as T;
-            });
-            callback(data);
-        }, (error) => {
-            console.error(`Error listening to ${collectionName}:`, error);
-            callback([]);
-        });
-    }).catch(error => {
-        console.error("Failed to load client-side firebase for listener:", error);
-    });
-
-    return () => {}; // Return a dummy unsubscribe function
-}
-
-export function onDashboardStats(callback: (stats: DashboardStats | null) => void): Unsubscribe {
-    // This is a client-side listener
-     import('@/lib/firebase/firebase').then(({ db }) => {
-        if (!db) {
-            callback(null);
-            return () => {};
-        }
-        const statsRef = doc(db, 'dashboard', 'stats');
-        return onSnapshot(statsRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                callback({
-                    ...data,
-                    lastUpdated: (data.lastUpdated as Timestamp).toDate(),
-                } as DashboardStats);
-            } else {
-                callback(null);
-            }
-        }, (error) => {
-            console.error("Error listening to dashboard stats:", error);
-            callback(null);
-        });
-     });
-     return () => {};
-}
-
-export function onSystemComponentStatuses(callback: (statuses: SystemComponentStatus[]) => void): Unsubscribe {
-    return createListener<SystemComponentStatus>('systemStatus', callback);
-}
-
-export function onRecentActivities(callback: (activities: RecentActivity[]) => void, count: number = 10): Unsubscribe {
-    import('@/lib/firebase/firebase').then(({ db }) => {
-        if (!db) {
-            callback([]);
-            return () => {};
-        }
-        const activitiesRef = collection(db, 'recentActivities');
-        const q = query(activitiesRef, orderBy('timestamp', 'desc'), limit(count));
-        
-        return onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                timestamp: (doc.data().timestamp as Timestamp).toDate(),
-            } as RecentActivity));
-            callback(data);
-        }, (error) => {
-            console.error(`Error listening to recent activities:`, error);
-            callback([]);
-        });
-    });
-    return () => {};
-}
-
 // ===== Server-Side Only Functions =====
 // These functions use the Admin SDK and should only be called from Server Actions or Genkit flows.
 
@@ -185,12 +96,12 @@ export async function getScheduledTasksFromDb(): Promise<ScheduledTask[]> {
     });
 }
 
-export async function getMachinesFromDb(): Promise<Machine[]> {
+export async function getMachinesFromDb(): Promise<any[]> {
     const db = await getDb();
     const machinesRef = collection(db, 'machines');
     const q = query(machinesRef, orderBy('name', 'asc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Machine));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 // ===== Settings Service (SERVER-SIDE) =====
@@ -308,19 +219,10 @@ export async function getTemplateById(templateId: string): Promise<ReportTemplat
 }
 
 // ===== Email Service (SERVER-SIDE) =====
-export async function addEmailLogToDb(log: Omit<EmailLog, 'id' | 'timestamp'>) {
+export async function addEmailLogToDb(log: Omit<any, 'id' | 'timestamp'>) {
     const db = await getDb();
     await addDoc(collection(db, 'emailLogs'), {
         ...log,
         timestamp: serverTimestamp(),
     });
-}
-
-// DEPRECATED FUNCTIONS - To be removed after refactoring
-export function onLogs(callback: (logs: SystemLog[]) => void): Unsubscribe {
-    return createListener<SystemLog>('systemLogs', callback, 'timestamp');
-}
-
-export function onEmailLogs(callback: (logs: EmailLog[]) => void): Unsubscribe {
-    return createListener<EmailLog>('emailLogs', callback, 'timestamp');
 }

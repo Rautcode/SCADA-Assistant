@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { onRecentActivities } from '@/services/database-service';
+import { onRecentActivities } from '@/services/client-database-service';
 import type { RecentActivity, UserSettings } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { ScrollArea } from '../ui/scroll-area';
