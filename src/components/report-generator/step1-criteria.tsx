@@ -74,18 +74,18 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
      mode: "onChange",
   });
   
-  const { formState, watch } = form;
+  const { formState, watch, getValues } = form;
   const selectedMachineIds = watch("machineIds");
 
   React.useEffect(() => {
     // This is the single source of truth for propagating state up.
     if (formState.isValid) {
-      onValidated(form.getValues());
+      onValidated(getValues());
     } else {
       // If the form becomes invalid at any point, inform the parent.
       onValidated(null);
     }
-  }, [formState.isValid, form, onValidated]);
+  }, [formState.isValid, getValues, onValidated]);
   
 
   React.useEffect(() => {
