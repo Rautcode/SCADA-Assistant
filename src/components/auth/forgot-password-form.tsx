@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { sendEmail } from "@/ai/flows/send-email-flow";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -39,18 +40,24 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsLoading(true);
     try {
-        // We use the CLIENT-SIDE SDK to send the email, which generates the link
-        // and uses the built-in Firebase email service. This is the standard, secure approach.
-        await sendPasswordResetEmail(auth, values.email);
-        toast({
-            title: "Password Reset Email Sent",
-            description: "If an account exists for this email, you will receive a password reset link from Firebase. Please check your inbox.",
-        });
-        form.reset();
+      // The standard Firebase client SDK generates the secure oobCode (action code)
+      const actionCodeSettings = {
+        url: `${window.location.origin}/login`, // URL to redirect back to
+        handleCodeInApp: true,
+      };
 
+      // We use the CLIENT-SIDE SDK to send the email, which uses the built-in Firebase email service.
+      await sendPasswordResetEmail(auth, values.email, actionCodeSettings);
+
+      toast({
+        title: "Password Reset Email Sent",
+        description:
+          "If an account exists for this email, you will receive a password reset link from Firebase. Please check your inbox.",
+      });
+      form.reset();
     } catch (error: any) {
       console.error("Password reset failed:", error);
-       toast({
+      toast({
         title: "Password Reset Failed",
         description: "An unexpected error occurred. Please try again later.",
         variant: "destructive",
@@ -70,7 +77,11 @@ export function ForgotPasswordForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="e.g., user@example.com" {...field} />
+                <Input
+                  type="email"
+                  placeholder="e.g., user@example.com"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
