@@ -8,9 +8,41 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
-import { generateReport, GenerateReportInputSchema } from './generate-report-flow';
+import { generateReport } from './generate-report-flow';
 import { sendEmail } from './send-email-flow';
 import { getScadaData } from '@/app/actions/scada-actions';
+import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
+import { chartConfigSchema } from '@/components/report-generator/step4-charts';
+import { outputOptionsSchema } from '@/components/report-generator/step5-output';
+
+const ScadaDataPointSchema = z.object({
+  id: z.string(),
+  timestamp: z.date(),
+  machine: z.string(),
+  parameter: z.string(),
+  value: z.union([z.string(), z.number()]),
+  unit: z.string(),
+  included: z.boolean().optional(),
+});
+
+const ReportTemplateSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    category: z.string(),
+    thumbnailUrl: z.string(),
+    lastModified: z.date(),
+});
+
+
+const GenerateReportInputSchema = z.object({
+  criteria: reportCriteriaSchema,
+  template: ReportTemplateSchema,
+  scadaData: z.array(ScadaDataPointSchema),
+  chartOptions: chartConfigSchema,
+  outputOptions: outputOptionsSchema,
+  apiKey: z.string().optional(),
+});
 
 export const runScheduledTasksFlow = ai.defineFlow(
   {
@@ -50,7 +82,7 @@ export const runScheduledTasksFlow = ai.defineFlow(
           throw new Error("System settings are not configured. Cannot run scheduled tasks.");
         }
 
-        const { apiKey, database: dbCreds, dataMapping, notifications } = systemSettings;
+        const { apiKey, database: dbCreds, dataMapping, notifications, email: emailSettings } = systemSettings;
         
         if (!apiKey || !dbCreds || !dataMapping) {
             throw new Error("System settings for API key, database, or data mapping are incomplete.");
@@ -87,10 +119,10 @@ export const runScheduledTasksFlow = ai.defineFlow(
         const reportResult = await generateReport(reportInput);
 
         // If email notifications are enabled for the system, send the report.
-        if (notifications?.email) {
+        if (notifications?.email && emailSettings?.smtpUser) {
             await sendEmail({
                 userId: 'system',
-                to: systemSettings.email?.smtpUser || '', // Send to system admin email
+                to: emailSettings.smtpUser,
                 subject: `Scheduled Report: ${task.name}`,
                 text: `Your scheduled report "${task.name}" is attached.`,
                 html: `<p>Your scheduled report "<strong>${task.name}</strong>" is complete.</p><br/><pre>${reportResult.reportContent}</pre>`,

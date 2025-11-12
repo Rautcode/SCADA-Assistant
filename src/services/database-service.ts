@@ -172,6 +172,9 @@ export async function getSystemSettingsFromDb(): Promise<UserSettings | null> {
             userId: 'system',
             ...data,
             email: data.email || {},
+            notifications: data.notifications || {},
+            database: data.database || {},
+            dataMapping: data.dataMapping || {},
         } as UserSettings;
     }
     return null;
@@ -209,7 +212,7 @@ export async function scheduleNewTaskInDb(task: Omit<ScheduledTask, 'id' | 'stat
 
 export async function getDueTasks(): Promise<ScheduledTask[]> {
     if (!db) throw new Error("Firestore is not initialized.");
-    const now = Timestamp.now();
+    const now = new Date();
     const tasksRef = collection(db, 'scheduledTasks');
     const q = query(
         tasksRef,
@@ -217,7 +220,14 @@ export async function getDueTasks(): Promise<ScheduledTask[]> {
         where('scheduledTime', '<=', now)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduledTask));
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id,
+             ...data,
+             scheduledTime: (data.scheduledTime as Timestamp).toDate(),
+            } as ScheduledTask
+    });
 }
 
 export async function updateTaskStatus(taskId: string, status: ScheduledTask['status'], error?: string) {
@@ -226,6 +236,8 @@ export async function updateTaskStatus(taskId: string, status: ScheduledTask['st
     const updateData: { status: ScheduledTask['status']; error?: string } = { status };
     if (error) {
         updateData.error = error;
+    } else {
+        updateData.error = ''; // Clear error on success
     }
     await updateDoc(taskRef, updateData);
 }
@@ -244,7 +256,12 @@ export async function getTemplateById(templateId: string): Promise<ReportTemplat
     const templateRef = doc(db, 'reportTemplates', templateId);
     const docSnap = await getDoc(templateRef);
     if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as ReportTemplate;
+        const data = docSnap.data();
+        return { 
+            id: docSnap.id,
+            ...data,
+            lastModified: (data.lastModified as Timestamp).toDate(),
+        } as ReportTemplate;
     }
     return null;
 }

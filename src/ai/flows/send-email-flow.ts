@@ -104,7 +104,7 @@ const sendEmailFlow = ai.defineFlow(
       const errorMsg = 'Failed to send email: ' + error.message;
       console.error(errorMsg);
       await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
-      return { success: false, error: errorMsg };
+      return { success: false, error: "Failed to send email. Check SMTP server logs for details." };
     }
   }
 );
