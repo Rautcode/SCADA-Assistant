@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { sendEmail } from "@/ai/flows/send-email-flow";
+import { sendAuthEmail } from "@/ai/flows/auth-email-flow";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),

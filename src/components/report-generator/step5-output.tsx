@@ -148,7 +148,7 @@ export function ReportStep5Output({ onValidated, initialData }: ReportStep5Outpu
                         <Mail className="mr-2 h-5 w-5 text-primary" /> Email Report Immediately
                     </FormLabel>
                     <FormDescription>
-                        Send the generated report via email upon completion.
+                        Send the generated report via email upon completion. (Requires SMTP settings)
                     </FormDescription>
                 </div>
                 <FormControl>

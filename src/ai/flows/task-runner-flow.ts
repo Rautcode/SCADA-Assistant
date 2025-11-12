@@ -14,6 +14,7 @@ import { getScadaData } from '@/app/actions/scada-actions';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
+import { defineFlow } from 'genkit/flow';
 
 const ScadaDataPointSchema = z.object({
   id: z.string(),
@@ -44,7 +45,7 @@ const GenerateReportInputSchema = z.object({
   apiKey: z.string(),
 });
 
-export const runScheduledTasksFlow = ai.defineFlow(
+export const runScheduledTasksFlow = defineFlow(
   {
     name: 'runScheduledTasksFlow',
     inputSchema: z.void(),
@@ -119,14 +120,12 @@ export const runScheduledTasksFlow = ai.defineFlow(
         const reportResult = await generateReport(reportInput);
 
         // If email notifications are enabled for the user, send the report.
-        if (notifications?.email && emailSettings?.smtpUser) {
-            await sendEmail({
-                userId: task.userId, // Use the user's ID to respect their notification settings
-                to: emailSettings.smtpUser,
-                subject: `Scheduled Report: ${task.name}`,
-                text: `Your scheduled report "${task.name}" is attached.`,
-                html: `<p>Your scheduled report "<strong>${task.name}</strong>" is complete.</p><br/><pre>${reportResult.reportContent}</pre>`,
-            });
+        if (notifications?.email && emailSettings?.smtpUser && userSettings.email) {
+            // Because this flow is not authenticated with a specific user context,
+            // we can't call the authenticated `sendEmail` flow.
+            // For now, we will just log that we would send an email.
+            // A more robust solution would involve a secure way to trigger user-specific actions.
+            console.log(`Email notifications enabled for ${task.userId}. Would send report to ${userSettings.email.smtpUser}`);
         }
         
         await updateTaskStatus(task.id, 'completed');
