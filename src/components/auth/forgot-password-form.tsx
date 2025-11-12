@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { sendCustomPasswordResetEmail } from "@/app/actions/auth-actions";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
