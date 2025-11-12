@@ -71,21 +71,22 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
       reportType: "Production",
       parameterIds: [],
     },
+     mode: "onChange",
   });
   
-  const selectedMachineIds = form.watch("machineIds");
+  const { formState, watch } = form;
+  const selectedMachineIds = watch("machineIds");
 
   React.useEffect(() => {
-    const subscription = form.watch((value) => {
-        if (form.formState.isValid) {
-            onValidated(value as ReportCriteriaFormValues);
-        }
-    });
-    if (initialData && form.formState.isValid) {
-        onValidated(initialData);
+    // This is the single source of truth for propagating state up.
+    if (formState.isValid) {
+      onValidated(form.getValues());
+    } else {
+      // If the form becomes invalid at any point, inform the parent.
+      onValidated(null);
     }
-    return () => subscription.unsubscribe();
-  }, [form, onValidated, initialData]);
+  }, [formState.isValid, form, onValidated]);
+  
 
   React.useEffect(() => {
     setLoadingMachines(true);
@@ -423,5 +424,3 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
     </div>
   );
 }
-
-    
