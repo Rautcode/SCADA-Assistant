@@ -22,11 +22,11 @@ import { useToast } from '@/hooks/use-toast';
 import { scheduleNewTask } from '@/app/actions/scheduler-actions';
 import { useAuth } from '../auth/auth-provider';
 
-const NewTaskSchema = z.object({
+// This schema represents what the client sends. It does NOT include the userId.
+const NewTaskClientSchema = z.object({
     name: z.string().min(1, "Task name is required."),
     templateId: z.string().min(1, "A report template must be selected."),
     scheduledTime: z.date(),
-    userId: z.string(), // No validation needed, will be hidden
 });
 
 interface NewTaskDialogProps {
@@ -45,21 +45,14 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         setIsClient(true);
     }, []);
 
-    const form = useForm<z.infer<typeof NewTaskSchema>>({
-        resolver: zodResolver(NewTaskSchema),
+    const form = useForm<z.infer<typeof NewTaskClientSchema>>({
+        resolver: zodResolver(NewTaskClientSchema),
         defaultValues: {
             name: "",
             templateId: "",
             scheduledTime: new Date(),
-            userId: "",
         },
     });
-
-    React.useEffect(() => {
-        if (user) {
-            form.setValue('userId', user.uid);
-        }
-    }, [user, form]);
 
     React.useEffect(() => {
         if (!open) return;
@@ -69,9 +62,9 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         return () => unsubscribe();
     }, [open]);
     
-    async function onSubmit(values: z.infer<typeof NewTaskSchema>) {
+    async function onSubmit(values: z.infer<typeof NewTaskClientSchema>) {
         setIsLoading(true);
-        if (!values.userId) {
+        if (!user) {
             toast({
                 title: "Authentication Error",
                 description: "You must be logged in to schedule a task.",
@@ -82,6 +75,8 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         }
 
         try {
+            // We now send the ISO string directly, and the server action handles the rest.
+            // The userId is no longer sent from the client.
             await scheduleNewTask({
                 ...values,
                 scheduledTime: values.scheduledTime.toISOString(),
