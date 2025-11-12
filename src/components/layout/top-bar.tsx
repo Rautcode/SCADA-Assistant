@@ -102,18 +102,19 @@ export function TopBar() {
   };
 
   const generateBreadcrumbs = () => {
-    if (pathname === '/dashboard' || pathname === '/') {
-      return [];
-    }
-    
     const pathSegments = pathname.split('/').filter(segment => segment);
+    if (pathSegments.length === 0) return [];
+    
     const breadcrumbs = pathSegments.map((segment, index) => {
       const href = `/${pathSegments.slice(0, index + 1).join('/')}`;
       const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-      return { label, href };
+      return { label, href, isCurrent: index === pathSegments.length - 1 };
     });
 
-    return breadcrumbs;
+    return [
+        { label: 'Dashboard', href: '/dashboard', isCurrent: false },
+        ...breadcrumbs
+    ];
   };
 
   const breadcrumbs = generateBreadcrumbs();
@@ -129,32 +130,31 @@ export function TopBar() {
         )}
         
         <div className="flex items-center">
-            <AppLogo href="/dashboard" iconSize={24} textSize="text-lg" />
-            {breadcrumbs.length > 0 && (
-                <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm ml-4">
-                <ol role="list" className="flex items-center space-x-1">
-                    {breadcrumbs.map((crumb, index) => (
-                    <li key={crumb.href}>
-                        <div className="flex items-center">
-                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            <Link
-                                href={crumb.href}
-                                className={cn(
-                                    'ml-1 font-medium',
-                                    index === breadcrumbs.length - 1 
-                                    ? 'text-foreground' 
-                                    : 'text-muted-foreground hover:text-foreground'
-                                )}
-                                aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}
-                            >
-                                {crumb.label}
-                            </Link>
-                        </div>
-                    </li>
-                    ))}
-                </ol>
-                </nav>
-            )}
+            {isMobile || breadcrumbs.length === 0 ? <AppLogo href="/dashboard" iconSize={24} textSize="text-lg" /> : null}
+            
+            <nav aria-label="Breadcrumb" className="hidden md:flex items-center text-sm ml-2">
+            <ol role="list" className="flex items-center space-x-1">
+                {breadcrumbs.map((crumb, index) => (
+                <li key={crumb.href}>
+                    <div className="flex items-center">
+                        {index > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                        <Link
+                            href={crumb.href}
+                            className={cn(
+                                'ml-1 font-medium',
+                                crumb.isCurrent 
+                                ? 'text-foreground' 
+                                : 'text-muted-foreground hover:text-foreground'
+                            )}
+                            aria-current={crumb.isCurrent ? 'page' : undefined}
+                        >
+                            {crumb.label}
+                        </Link>
+                    </div>
+                </li>
+                ))}
+            </ol>
+            </nav>
         </div>
       </div>
 
@@ -272,5 +272,3 @@ export function TopBar() {
     </header>
   );
 }
-
-    

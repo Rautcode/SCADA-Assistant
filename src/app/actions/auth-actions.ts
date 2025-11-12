@@ -2,18 +2,6 @@
 'use server';
 
 import { sendEmail } from "@/ai/flows/send-email-flow";
-import { getAuth } from "firebase-admin/auth";
-import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
-
-// Ensure Firebase admin is initialized
-function getAdminApp(): App {
-    if (getApps().length) {
-        return getApps()[0];
-    }
-    return initializeApp({
-        credential: applicationDefault(),
-    });
-}
 
 // In-memory store for rate limiting password reset requests.
 // In a distributed environment, a shared store like Redis would be more appropriate.
@@ -21,9 +9,10 @@ const resetRequestTimestamps = new Map<string, number>();
 const RATE_LIMIT_PERIOD = 30000; // 30 seconds
 
 /**
- * A server action to generate a password reset link and send it via the custom SMTP service.
+ * A server action that uses the custom SMTP service to send a password reset email.
+ * The reset link is generated on the client and passed to this action.
  */
-export async function sendCustomPasswordResetEmail({ email }: { email: string }): Promise<{ success: boolean; error?: string }> {
+export async function sendCustomPasswordResetEmail({ email, link }: { email: string; link: string }): Promise<{ success: boolean; error?: string }> {
   const now = Date.now();
   const lastRequestTime = resetRequestTimestamps.get(email);
 
@@ -33,21 +22,6 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
     return { success: true };
   }
   
-  let link: string;
-  try {
-    getAdminApp(); // Ensure app is initialized
-    link = await getAuth().generatePasswordResetLink(email);
-  } catch (error: any) {
-    console.error("Error generating password reset link:", error);
-    if (error.code === 'auth/user-not-found') {
-        console.warn(`Password reset attempted for non-existent user: ${email}`);
-        // Don't reveal that the user doesn't exist
-        return { success: true }; 
-    }
-    // Return a generic error to the client
-    return { success: false, error: "An unexpected error occurred while preparing the password reset." };
-  }
-
   const emailHtml = `
     <div style="font-family: sans-serif; padding: 20px; color: #333;">
       <h2>Password Reset Request</h2>
@@ -86,3 +60,4 @@ export async function sendCustomPasswordResetEmail({ email }: { email: string })
     return { success: false, error: "An unknown server error occurred while sending the email." };
   }
 }
+

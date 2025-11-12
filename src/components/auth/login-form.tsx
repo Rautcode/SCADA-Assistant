@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/components/auth/auth-provider';
-import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import Link from "next/link";
 

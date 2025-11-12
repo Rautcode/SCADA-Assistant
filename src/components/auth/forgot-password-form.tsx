@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export function ForgotPasswordForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const auth = getAuth();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -39,30 +41,20 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsLoading(true);
     try {
-      const result = await sendCustomPasswordResetEmail({
-        email: values.email,
-      });
-
-      if (result.success) {
+        // We use the CLIENT-SIDE SDK to send the email, which generates the link
+        // and uses the built-in Firebase email service. This is the standard, secure approach.
+        await sendPasswordResetEmail(auth, values.email);
         toast({
             title: "Password Reset Email Sent",
-            description: "If an account exists for this email, you will receive a password reset link. Please check your inbox.",
+            description: "If an account exists for this email, you will receive a password reset link from Firebase. Please check your inbox.",
         });
         form.reset();
-      } else {
-         // This error is now for SMTP or other real server failures.
-         toast({
-            title: "Password Reset Failed",
-            description: result.error || "Failed to send email. Check SMTP configuration in settings.",
-            variant: "destructive",
-        });
-      }
 
     } catch (error: any) {
       console.error("Password reset failed:", error);
        toast({
         title: "Password Reset Failed",
-        description: error.message || "An unexpected error occurred. Please try again later.",
+        description: "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
