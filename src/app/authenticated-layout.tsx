@@ -37,7 +37,7 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   }
   
   // If we're on an auth page (Login/Register), just render the content directly
-  // without the main app shell.
+  // with the animated wave background.
   if (isAuthPage) {
     return (
       <div className="min-h-dvh bg-background relative">
@@ -49,9 +49,10 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // If the user is authenticated and not on an auth page, render the full app shell.
+  // If the user is authenticated and not on an auth page, render the full app shell
+  // with the new static grid background.
   return (
-    <div className="h-full bg-background">
+    <div className="h-full static-grid-background">
         <AppShell>{children}</AppShell>
     </div>
   );

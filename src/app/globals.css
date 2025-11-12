@@ -167,7 +167,7 @@ main {
   100%{transform:translate(0,0)}
 }
 
-/* Wave background animation */
+/* Wave background animation for auth pages */
 .wave-background {
     position: absolute;
     top: 0;
@@ -176,6 +176,7 @@ main {
     bottom: 0;
     overflow: hidden;
     z-index: 0;
+    background-color: hsl(var(--background));
 }
 
 .wave-background > div {
@@ -222,4 +223,15 @@ main {
         transform: rotate(360deg);
     }
 }
-    
+
+/* Static dot-grid background for main application */
+.static-grid-background {
+  background-image: radial-gradient(hsl(var(--muted-foreground)) 1px, transparent 0);
+  background-size: 30px 30px;
+  background-position: -15px -15px;
+  background-color: hsl(var(--background));
+}
+
+.dark .static-grid-background {
+    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.2) 1px, transparent 0);
+}
