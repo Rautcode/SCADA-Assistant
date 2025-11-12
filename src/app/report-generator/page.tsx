@@ -101,6 +101,9 @@ export default function ReportGeneratorPage() {
   const [step4Data, setStep4Data] = React.useState<z.infer<typeof chartConfigSchema> | null>(null);
   const [step5Data, setStep5Data] = React.useState<z.infer<typeof outputOptionsSchema> | null>(null);
   
+  // State for template categories, derived from Step 2
+  const [templateCategories, setTemplateCategories] = React.useState<string[]>([]);
+  
   const canGoNext = React.useMemo(() => {
     switch (currentStep) {
       case 0: return step1Data !== null;
@@ -200,9 +203,9 @@ export default function ReportGeneratorPage() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        return <ReportStep1Criteria onValidated={setStep1Data} initialData={step1Data} />;
+        return <ReportStep1Criteria onValidated={setStep1Data} initialData={step1Data} templateCategories={templateCategories} />;
       case 1:
-        return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} reportType={step1Data?.reportType} />;
+        return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} reportType={step1Data?.reportType} onCategoriesLoaded={setTemplateCategories} />;
       case 2:
         return <ReportStep3Preview onValidated={setStep3Data} initialData={step3Data} criteria={step1Data} />;
       case 3:
@@ -267,3 +270,5 @@ export default function ReportGeneratorPage() {
     </div>
   );
 }
+
+    

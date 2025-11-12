@@ -2,25 +2,28 @@
 "use client";
 
 import * as React from "react";
+import { Unsubscribe } from "firebase/firestore";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LayoutGrid, List, CheckCircle2, Search } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
-import { getReportTemplates } from "@/app/actions/settings-actions";
 import { Skeleton } from "../ui/skeleton";
 import { categoryIcons } from "@/lib/icon-map";
+import { onReportTemplates } from "@/services/client-database-service";
 
 interface ReportStep2TemplateProps {
   onValidated: (data: { selectedTemplate: ReportTemplate | null }) => void;
   initialData: { selectedTemplate: ReportTemplate | null } | null;
   reportType?: string; // Automatically filter by this type
+  onCategoriesLoaded: (categories: string[]) => void;
 }
 
 export function ReportStep2Template({
   onValidated,
   initialData,
   reportType,
+  onCategoriesLoaded
 }: ReportStep2TemplateProps) {
   const [allTemplates, setAllTemplates] = React.useState<ReportTemplate[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -31,11 +34,14 @@ export function ReportStep2Template({
   // fetch all templates once
   React.useEffect(() => {
     setLoading(true);
-    getReportTemplates().then(templatesData => {
+    const unsub: Unsubscribe = onReportTemplates(templatesData => {
       setAllTemplates(templatesData);
+      const categories = [...new Set(templatesData.map(t => t.category))];
+      onCategoriesLoaded(categories);
       setLoading(false);
     });
-  }, []);
+    return () => unsub();
+  }, [onCategoriesLoaded]);
 
   // Filter templates based on search term and the report type from step 1
   const filteredTemplates = React.useMemo(() => {
@@ -222,3 +228,5 @@ export function ReportStep2Template({
     </div>
   );
 }
+
+    
