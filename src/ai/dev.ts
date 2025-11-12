@@ -6,3 +6,4 @@ import './flows/send-email-flow';
 import './flows/auth-email-flow';
 import './flows/chart-stylist-flow';
 import './flows/task-runner-flow';
+import './flows/scheduler-flow';

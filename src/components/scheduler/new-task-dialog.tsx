@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -19,8 +18,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { scheduleNewTask } from '@/app/actions/scheduler-actions';
 import { useAuth } from '../auth/auth-provider';
+import { scheduleTask } from '@/ai/flows/scheduler-flow';
 
 // This schema represents what the client sends. It does NOT include the userId.
 const NewTaskClientSchema = z.object({
@@ -75,9 +74,8 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         }
 
         try {
-            // We now send the ISO string directly, and the server action handles the rest.
-            // The userId is no longer sent from the client.
-            await scheduleNewTask({
+            // Call the new, secure, authenticated Genkit flow
+            await scheduleTask({
                 ...values,
                 scheduledTime: values.scheduledTime.toISOString(),
             });
