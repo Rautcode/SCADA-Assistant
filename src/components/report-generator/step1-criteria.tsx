@@ -44,7 +44,7 @@ export const reportCriteriaSchema = z.object({
 type ReportCriteriaFormValues = z.infer<typeof reportCriteriaSchema>;
 
 interface ReportStep1CriteriaProps {
-  onValidated: (data: ReportCriteriaFormValues) => void;
+  onValidated: (data: ReportCriteriaFormValues | null) => void;
   initialData: ReportCriteriaFormValues | null;
   templateCategories: string[];
 }
@@ -79,8 +79,6 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
     const subscription = form.watch((value) => {
         if (form.formState.isValid) {
             onValidated(value as ReportCriteriaFormValues);
-        } else {
-            onValidated(null);
         }
     });
     if (initialData && form.formState.isValid) {
