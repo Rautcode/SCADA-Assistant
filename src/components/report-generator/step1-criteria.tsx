@@ -121,20 +121,25 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       
       setLoadingParameters(true);
       setParameterError(null);
+      // Immediately clear old parameters when selection changes
+      setAvailableParameters([]);
       
       try {
         const settings = await getUserSettings({ userId: user.uid });
         const creds = settings?.database;
         const mapping = settings?.dataMapping;
-        if (creds && mapping) {
-          const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds, mapping });
-          setAvailableParameters(tags);
-          if (tags.length === 0) {
-            setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
-          }
-        } else {
-           setParameterError("Database credentials or data mappings are not set. Please configure them in Settings.");
+
+        if (!creds?.server || !creds?.databaseName || !mapping?.table || !mapping.machineColumn || !mapping.parameterColumn) {
+            setParameterError("Database credentials or data mappings are not set. Please configure them in Settings.");
+            return;
         }
+
+        const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds, mapping });
+        setAvailableParameters(tags);
+        if (tags.length === 0) {
+            setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
+        }
+
       } catch (e: any) {
         setParameterError(e.message || "An unexpected error occurred while fetching parameters.");
       } finally {
