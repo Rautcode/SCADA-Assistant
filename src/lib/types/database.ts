@@ -54,13 +54,12 @@ export interface DashboardStats {
     reports: number;
     tasks: number;
     users: number;
-    systemStatus: 'Operational' | 'Degraded' | 'Offline';
     lastUpdated: Date;
   }
   
 export interface SystemComponentStatus {
     name: string;
-    status: 'Connected' | 'Active' | 'Degraded' | 'Idle' | 'Error';
+    status: 'Connected' | 'Active' | 'Degraded' | 'Idle' | 'Error' | 'Operational' | 'Offline';
 }
   
 export interface RecentActivity {
@@ -126,3 +125,5 @@ export interface EmailLog {
 export interface UserSettings extends SettingsFormValues {
     userId: string;
 }
+
+    

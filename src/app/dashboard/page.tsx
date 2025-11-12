@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2, Settings, WifiOff } from 'lucide-react';
+import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2, Settings, WifiOff, Server, Database, BrainCircuit } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import imageData from '@/app/lib/placeholder-images.json';
@@ -138,23 +138,37 @@ const SystemStatusItem: React.FC<{ item?: SystemComponentStatus; loading?: boole
       </div>
     );
   }
+  
+  const componentIcons = {
+    'Database': Database,
+    'Backend': Server,
+    'AI Services': BrainCircuit,
+    'default': Settings
+  };
+  const Icon = componentIcons[item.name as keyof typeof componentIcons] || componentIcons.default;
+
 
   const statusConfig = {
     Connected: { color: "bg-green-500", label: "Connected" },
     Active: { color: "bg-green-500", label: "Active" },
+    Operational: { color: "bg-green-500", label: "Operational" },
     Idle: { color: "bg-green-500", label: "Idle" },
     Degraded: { color: "bg-orange-500", label: "Degraded" },
     Error: { color: "bg-red-500", label: "Error" },
+    Offline: { color: "bg-red-500", label: "Offline" },
   };
 
-  const { color, label } = statusConfig[item.status] || { color: "bg-gray-400", label: "Unknown" };
+  const { color, label } = statusConfig[item.status as keyof typeof statusConfig] || { color: "bg-gray-400", label: "Unknown" };
 
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-muted-foreground">{item.name}</span>
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">{item.name}</span>
+      </div>
       <div className="flex items-center gap-2">
         <span className="relative flex h-3 w-3">
-            <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", color)}></span>
+            <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-75", item.status === "Active" && "animate-ping", color)}></span>
             <span className={cn("relative inline-flex rounded-full h-3 w-3", color)}></span>
         </span>
         <span className="text-sm font-medium text-foreground">{label}</span>
@@ -244,6 +258,14 @@ export default function DashboardPage() {
 
   }, [dbStatus]);
 
+  const overallSystemStatus = React.useMemo(() => {
+    if (!systemStatus || systemStatus.length === 0) return "Operational";
+    if (systemStatus.some(s => s.status === 'Offline' || s.status === 'Error')) return "Offline";
+    if (systemStatus.some(s => s.status === 'Degraded')) return "Degraded";
+    return "Operational";
+  }, [systemStatus]);
+
+
   const isDataLoading = (loading && dbStatus === 'connected') || dbStatus === 'loading';
 
   const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
@@ -292,7 +314,7 @@ export default function DashboardPage() {
             <StatCard title="Active Users" value={stats?.users?.toString() ?? '...'} icon={Users} description="Users currently online" loading={isDataLoading} />
             <StatCard 
               title="System Status" 
-              value={<SystemStatusStat status={stats?.systemStatus} loading={isDataLoading} />} 
+              value={<SystemStatusStat status={overallSystemStatus} loading={isDataLoading} />} 
               icon={CheckCircle2} 
               description="Overall operational status" 
               loading={isDataLoading} 
@@ -353,5 +375,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
