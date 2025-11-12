@@ -1,7 +1,7 @@
 
 import { db } from '@/lib/firebase/firebase';
 import { DashboardStats, RecentActivity, ScadaDataPoint, SystemComponentStatus, Machine, ReportTemplate, ScheduledTask, SystemLog, UserSettings, EmailLog } from '@/lib/types/database';
-import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, onSnapshot, Unsubscribe, Timestamp, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, onSnapshot, Unsubscribe, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc } from 'firebase/firestore';
 import imageData from '@/app/lib/placeholder-images.json';
 
 
@@ -207,6 +207,29 @@ export async function scheduleNewTaskInDb(task: Omit<ScheduledTask, 'id' | 'stat
     });
 }
 
+export async function getDueTasks(): Promise<ScheduledTask[]> {
+    if (!db) throw new Error("Firestore is not initialized.");
+    const now = Timestamp.now();
+    const tasksRef = collection(db, 'scheduledTasks');
+    const q = query(
+        tasksRef,
+        where('status', '==', 'scheduled'),
+        where('scheduledTime', '<=', now)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduledTask));
+}
+
+export async function updateTaskStatus(taskId: string, status: ScheduledTask['status'], error?: string) {
+    if (!db) throw new Error("Firestore is not initialized.");
+    const taskRef = doc(db, 'scheduledTasks', taskId);
+    const updateData: { status: ScheduledTask['status']; error?: string } = { status };
+    if (error) {
+        updateData.error = error;
+    }
+    await updateDoc(taskRef, updateData);
+}
+
 // ===== Template Service =====
 export async function createNewTemplateInDb(template: Omit<ReportTemplate, 'id' | 'lastModified'>) {
     if (!db) throw new Error("Firestore is not initialized.");
@@ -214,6 +237,16 @@ export async function createNewTemplateInDb(template: Omit<ReportTemplate, 'id' 
         ...template,
         lastModified: serverTimestamp(),
     });
+}
+
+export async function getTemplateById(templateId: string): Promise<ReportTemplate | null> {
+    if (!db) throw new Error("Firestore is not initialized.");
+    const templateRef = doc(db, 'reportTemplates', templateId);
+    const docSnap = await getDoc(templateRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as ReportTemplate;
+    }
+    return null;
 }
 
 // ===== Email Service =====

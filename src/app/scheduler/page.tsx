@@ -4,7 +4,7 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings } from 'lucide-react';
+import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
 import { onScheduledTasks, onReportTemplates } from '@/services/database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
 import { categoryIcons } from '@/lib/icon-map';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
@@ -24,6 +25,7 @@ const NewTaskDialog = dynamic(() =>
 
 const statusConfig = {
     scheduled: { icon: Timer, color: "bg-blue-500", label: "Scheduled" },
+    processing: { icon: Loader2, color: "bg-purple-500", label: "Processing" },
     completed: { icon: CheckCircle2, color: "bg-green-500", label: "Completed" },
     failed: { icon: XCircle, color: "bg-red-500", label: "Failed" },
     overdue: { icon: AlertTriangle, color: "bg-yellow-500", label: "Overdue" },
@@ -51,8 +53,16 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
         )
     }
 
-    const { icon: Icon, color, label } = statusConfig[task.status] || statusConfig.scheduled;
+    const effectiveStatus = (task.status === 'scheduled' && new Date(task.scheduledTime) < new Date()) ? 'overdue' : task.status;
+    const { icon: Icon, color, label } = statusConfig[effectiveStatus as keyof typeof statusConfig] || statusConfig.scheduled;
     const TemplateIcon = categoryIcons[template?.category || 'default'] || FileText;
+
+    const StatusBadge = (
+        <Badge className={cn("text-white flex-shrink-0 self-start sm:self-center", color)}>
+            <Icon className={cn("mr-2 h-4 w-4", effectiveStatus === 'processing' && 'animate-spin')} />
+            {label}
+        </Badge>
+    );
 
     return (
         <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -72,10 +82,18 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
                         <p className="text-xs text-muted-foreground">{template?.category || "Uncategorized"}</p>
                     </div>
                 </div>
-                 <Badge className={cn("text-white flex-shrink-0 self-start sm:self-center", color)}>
-                    <Icon className="mr-2 h-4 w-4" />
-                    {label}
-                </Badge>
+                 {task.error ? (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="cursor-help">{StatusBadge}</div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="center" className="max-w-xs">
+                                <p className="text-xs text-destructive-foreground bg-destructive p-2 rounded-md">{task.error}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                 ) : StatusBadge}
             </CardContent>
         </Card>
     );

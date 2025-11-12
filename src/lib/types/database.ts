@@ -102,7 +102,8 @@ export interface ScheduledTask {
     name: string;
     templateId: string;
     scheduledTime: Date;
-    status: 'scheduled' | 'completed' | 'failed' | 'overdue';
+    status: 'scheduled' | 'processing' | 'completed' | 'failed' | 'overdue';
+    error?: string;
 }
 
 export interface SystemLog {
