@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, getDbSchema } from "@/app/actions/scada-actions";
+import { testScadaConnection, getDbSchema, testSmtpConnection } from "@/app/actions/scada-actions";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -82,20 +82,22 @@ export default function SettingsPage() {
     });
 
     const selectedTable = form.watch("dataMapping.table");
-    const dbCredsWatched = form.watch(["database.server", "database.databaseName", "database.user", "database.password"]);
-    const smtpCredsWatched = form.watch(["email.smtpHost", "email.smtpPort", "email.smtpUser", "email.smtpPass"]);
+    const dbCredsWatched = form.watch("database");
+    const smtpCredsWatched = form.watch("email");
 
     React.useEffect(() => {
-        if (!isTestingDbConnection) {
+        if (dbConnectionStatus !== 'untested') {
             setDbConnectionStatus('untested');
         }
-    }, [dbCredsWatched, isTestingDbConnection]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dbCredsWatched]);
 
     React.useEffect(() => {
-        if (!isTestingSmtpConnection) {
+        if (smtpConnectionStatus !== 'untested') {
             setSmtpConnectionStatus('untested');
         }
-    }, [smtpCredsWatched, isTestingSmtpConnection]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [smtpCredsWatched]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -225,7 +227,6 @@ export default function SettingsPage() {
         setSmtpConnectionStatus('testing');
 
         try {
-            const { testSmtpConnection } = await import('@/app/actions/scada-actions');
             const result = await testSmtpConnection({ emailCreds });
             if (result.success) {
                 setSmtpConnectionStatus('success');
@@ -728,3 +729,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
