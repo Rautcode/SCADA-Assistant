@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, Loader2 } from 'lucide-react';
+import { UserCircle2, Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -74,7 +74,7 @@ export default function ProfilePage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-bold">
-            <UserIcon className="mr-3 h-7 w-7 text-primary" />
+            <UserCircle2 className="mr-3 h-7 w-7 text-primary" />
             User Profile
           </CardTitle>
           <CardDescription>

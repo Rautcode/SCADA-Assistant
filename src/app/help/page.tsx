@@ -97,7 +97,7 @@ export default function HelpPage() {
         <Card className="shadow-lg">
           <CardHeader className="text-center">
             <HelpCircle className="mx-auto h-12 w-12 text-primary" />
-            <CardTitle>
+            <CardTitle className="text-3xl">
               How can we help?
             </CardTitle>
             <CardDescription className="max-w-xl mx-auto">

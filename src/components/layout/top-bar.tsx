@@ -104,8 +104,8 @@ export function TopBar() {
   };
 
   const generateBreadcrumbs = () => {
-    if (pathname === '/dashboard') {
-        return [{ label: 'Dashboard', href: '/dashboard' }];
+    if (pathname === '/dashboard' || pathname === '/') {
+      return [{ label: 'Dashboard', href: '/dashboard' }];
     }
     
     const pathSegments = pathname.split('/').filter(segment => segment);
@@ -115,9 +115,7 @@ export function TopBar() {
     pathSegments.forEach(segment => {
       currentPath += `/${segment}`;
       const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-       if (currentPath !== '/dashboard') {
-         breadcrumbs.push({ label, href: currentPath });
-       }
+       breadcrumbs.push({ label, href: currentPath });
     });
 
     return breadcrumbs;

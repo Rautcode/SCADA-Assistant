@@ -53,7 +53,7 @@ export default function EmailSenderPage() {
                             Email Sender
                         </CardTitle>
                         <CardDescription>
-                            Monitor SMTP email activity and manage settings.
+                            A real-time log of all outgoing SMTP emails and settings.
                         </CardDescription>
                     </div>
                      <Button asChild variant="outline">
@@ -63,57 +63,46 @@ export default function EmailSenderPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <Send className="mr-2 h-5 w-5" />
-                                Send History
-                            </CardTitle>
-                            <CardDescription>A real-time log of all outgoing emails.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                                <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[120px]">Status</TableHead>
-                                        <TableHead>Recipient</TableHead>
-                                        <TableHead>Subject</TableHead>
-                                        <TableHead className="hidden md:table-cell">Error</TableHead>
-                                        <TableHead className="w-[220px] text-right">Timestamp</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {loading ? (
-                                        Array.from({ length: 5 }).map((_, i) => (
-                                            <TableRow key={i}>
-                                                <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                                                <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                <TableCell><Skeleton className="h-4 w-3/4" /></TableCell>
-                                                <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-1/2" /></TableCell>
-                                                <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : logs.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">
-                                                No email logs found.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        logs.map(log => (
-                                            <TableRow key={log.id}>
-                                                <TableCell><EmailStatusBadge status={log.status} /></TableCell>
-                                                <TableCell className="font-medium">{log.to}</TableCell>
-                                                <TableCell>{log.subject}</TableCell>
-                                                <TableCell className="text-destructive text-xs hidden md:table-cell">{log.error}</TableCell>
-                                                <TableCell className="text-right text-xs text-muted-foreground">{format(log.timestamp, 'PPpp')}</TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
+                    <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[120px]">Status</TableHead>
+                            <TableHead>Recipient</TableHead>
+                            <TableHead>Subject</TableHead>
+                            <TableHead className="hidden md:table-cell">Error</TableHead>
+                            <TableHead className="w-[220px] text-right">Timestamp</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-3/4" /></TableCell>
+                                    <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-1/2" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : logs.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    No email logs found.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            logs.map(log => (
+                                <TableRow key={log.id}>
+                                    <TableCell><EmailStatusBadge status={log.status} /></TableCell>
+                                    <TableCell className="font-medium">{log.to}</TableCell>
+                                    <TableCell>{log.subject}</TableCell>
+                                    <TableCell className="text-destructive text-xs hidden md:table-cell">{log.error}</TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">{format(log.timestamp, 'PPpp')}</TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
                 </CardContent>
             </Card>
         </div>
