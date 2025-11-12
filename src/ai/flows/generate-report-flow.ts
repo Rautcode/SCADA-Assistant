@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
-
+import { format } from 'date-fns';
 
 // Helper schemas for complex types
 const ScadaDataPointSchema = z.object({
@@ -59,7 +59,8 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
 const reportGenerationPrompt = ai.definePrompt({
   name: 'generateReportPrompt',
-  input: { schema: GenerateReportInputSchema },
+  // The input schema for the prompt itself can be simpler, using strings for dates
+  input: { schema: z.any() }, 
   output: { schema: GenerateReportOutputSchema },
   prompt: `
     You are an expert SCADA System Analyst and technical writer. Your task is to generate a highly structured and professional report based on the provided criteria, data, and output format.
@@ -117,7 +118,27 @@ const generateReportFlow = ai.defineFlow(
   },
   async (input) => {
     console.log('Backend flow started with input:', input);
-    const { apiKey, ...promptInput } = input;
+    const { apiKey, ...restOfInput } = input;
+    
+    // **PRE-PROCESSING STEP:** Convert all date objects to simple strings for the prompt
+    const promptInput = {
+      ...restOfInput,
+      criteria: {
+        ...restOfInput.criteria,
+        dateRange: {
+          from: format(restOfInput.criteria.dateRange.from, 'yyyy-MM-dd'),
+          to: format(restOfInput.criteria.dateRange.to, 'yyyy-MM-dd'),
+        },
+      },
+      scadaData: restOfInput.scadaData.map(d => ({
+        ...d,
+        timestamp: format(d.timestamp, 'yyyy-MM-dd HH:mm:ss')
+      })),
+      template: {
+        ...restOfInput.template,
+        lastModified: format(restOfInput.template.lastModified, 'yyyy-MM-dd'),
+      }
+    };
     
     const modelName = 'googleai/gemini-pro';
 
