@@ -5,9 +5,8 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
-import { onScheduledTasks, onReportTemplates } from '@/services/database-service';
+import { getScheduledTasks, getReportTemplates } from '@/app/actions/settings-actions';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
-import { Unsubscribe } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +16,7 @@ import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
 import { categoryIcons } from '@/lib/icon-map';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '../auth/auth-provider';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
@@ -69,7 +69,7 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
             <CardHeader className="pb-4">
                 <CardTitle className="text-lg">{task.name}</CardTitle>
                 <CardDescription>
-                    Scheduled for: {format(task.scheduledTime, 'PPpp')}
+                    Scheduled for: {format(new Date(task.scheduledTime), 'PPpp')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -106,23 +106,21 @@ export default function SchedulerPage() {
     const [templatesLoading, setTemplatesLoading] = React.useState(true);
     const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = React.useState(false);
     const { status: dbStatus } = useConnection();
+    const { user } = useAuth();
     
     React.useEffect(() => {
-        const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
-            setTasks(tasksData);
+        if (!user) return;
+        setTasksLoading(true);
+        setTemplatesLoading(true);
+        getScheduledTasks().then(tasksData => {
+            setTasks(tasksData.map(t => ({...t, scheduledTime: new Date(t.scheduledTime)})));
             setTasksLoading(false);
         });
-        
-        const unsubTemplates: Unsubscribe = onReportTemplates(templatesData => {
+        getReportTemplates().then(templatesData => {
             setTemplates(templatesData);
             setTemplatesLoading(false);
         });
-
-        return () => {
-            unsubTasks();
-            unsubTemplates();
-        }
-    }, []);
+    }, [user]);
 
     const templatesMap = React.useMemo(() => 
         new Map(templates.map(t => [t.id, t])),

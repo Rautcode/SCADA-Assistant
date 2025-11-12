@@ -229,6 +229,7 @@ export default function DashboardPage() {
     setLoading(true);
     const unsubscribers: Unsubscribe[] = [];
 
+    // Real-time listeners remain for truly dynamic data
     unsubscribers.push(onDashboardStats(statsData => {
         setStats(statsData);
         if (statsData !== undefined) { // Can be null, which is valid

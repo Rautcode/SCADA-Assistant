@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LayoutGrid, List, CheckCircle2, Search } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
-import { onReportTemplates } from "@/services/database-service";
-import { Unsubscribe } from "firebase/firestore";
+import { getReportTemplates } from "@/app/actions/settings-actions";
 import { Skeleton } from "../ui/skeleton";
 import { categoryIcons } from "@/lib/icon-map";
 
@@ -32,11 +31,10 @@ export function ReportStep2Template({
   // fetch all templates once
   React.useEffect(() => {
     setLoading(true);
-    const unsubscribe: Unsubscribe = onReportTemplates((templatesData) => {
+    getReportTemplates().then(templatesData => {
       setAllTemplates(templatesData);
       setLoading(false);
     });
-    return () => unsubscribe();
   }, []);
 
   // Filter templates based on search term and the report type from step 1
@@ -224,5 +222,3 @@ export function ReportStep2Template({
     </div>
   );
 }
-
-    

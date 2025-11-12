@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -12,8 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { ReportTemplate } from '@/lib/types/database';
-import { onReportTemplates } from '@/services/database-service';
-import { Unsubscribe } from 'firebase/firestore';
+import { getReportTemplates } from '@/app/actions/settings-actions';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
@@ -55,10 +55,9 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
 
     React.useEffect(() => {
         if (!open) return;
-        const unsubscribe: Unsubscribe = onReportTemplates((templatesData) => {
+        getReportTemplates().then(templatesData => {
             setTemplates(templatesData);
         });
-        return () => unsubscribe();
     }, [open]);
     
     async function onSubmit(values: z.infer<typeof NewTaskClientSchema>) {

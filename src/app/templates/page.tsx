@@ -9,9 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
-import { onReportTemplates } from "@/services/database-service";
+import { getReportTemplates } from "@/app/actions/settings-actions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Unsubscribe } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { categoryIcons } from "@/lib/icon-map";
 
@@ -94,12 +93,10 @@ export default function TemplatesPage() {
 
   React.useEffect(() => {
     setLoading(true);
-    const unsubscribe: Unsubscribe = onReportTemplates(templatesData => {
-      setTemplates(templatesData);
-      setLoading(false);
+    getReportTemplates().then(templatesData => {
+        setTemplates(templatesData);
+        setLoading(false);
     });
-
-    return () => unsubscribe();
   }, []);
 
   const filteredTemplates = React.useMemo(() => templates.filter(template =>
@@ -200,5 +197,3 @@ export default function TemplatesPage() {
     </div>
   );
 }
-
-    
