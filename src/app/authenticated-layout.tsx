@@ -50,10 +50,13 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   }
 
   // If the user is authenticated and not on an auth page, render the full app shell
-  // with the new static grid background.
+  // with the new static corner wave background.
   return (
-    <div className="h-full static-grid-background">
-        <AppShell>{children}</AppShell>
+    <div className="h-full bg-background relative">
+        <div className="static-wave-background"></div>
+        <div className="relative z-10 h-full">
+            <AppShell>{children}</AppShell>
+        </div>
     </div>
   );
 }

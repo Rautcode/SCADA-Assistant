@@ -203,7 +203,7 @@ main {
 }
 
 .wave-background > div::after {
-    background-color: hsl(var(--secondary) / 0.1);
+    background-color: hsl(var(--secondary) / 0.05);
     animation: wave 18s linear infinite;
     bottom: 12%;
 }
@@ -224,19 +224,45 @@ main {
     }
 }
 
-/* Static blueprint-style grid for main application */
-.static-grid-background {
-  --grid-color-light: hsl(var(--border) / 0.5);
-  --grid-color-dark: hsl(var(--border) / 0.2);
-  background-color: hsl(var(--background));
-  background-image:
-    linear-gradient(var(--grid-color-light) 1px, transparent 1px),
-    linear-gradient(to right, var(--grid-color-light) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* Static corner wave design for main application */
+.static-wave-background {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 50vw;
+  height: 50vh;
+  overflow: hidden;
+  z-index: 0;
 }
 
-.dark .static-grid-background {
-  background-image:
-    linear-gradient(var(--grid-color-dark) 1px, transparent 1px),
-    linear-gradient(to right, var(--grid-color-dark) 1px, transparent 1px);
+.static-wave-background::before,
+.static-wave-background::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.static-wave-background::before {
+  width: 400px;
+  height: 400px;
+  background-color: hsl(var(--primary) / 0.1);
+  bottom: -200px;
+  right: -200px;
+}
+
+.static-wave-background::after {
+  width: 300px;
+  height: 300px;
+  background-color: hsl(var(--secondary) / 0.1);
+  bottom: -100px;
+  right: -100px;
+}
+
+.dark .static-wave-background::before {
+   background-color: hsl(var(--primary) / 0.05);
+}
+
+.dark .static-wave-background::after {
+   background-color: hsl(var(--secondary) / 0.05);
 }
