@@ -110,9 +110,10 @@ export default function ReportGeneratorPage() {
       case 1: return step2Data?.selectedTemplate !== null;
       case 2: return step3Data !== null && step3Data.scadaData.length > 0;
       case 3: return step4Data !== null;
+      case 4: return step5Data !== null;
       default: return true;
     }
-  }, [currentStep, step1Data, step2Data, step3Data, step4Data]);
+  }, [currentStep, step1Data, step2Data, step3Data, step4Data, step5Data]);
 
 
   const handleNext = () => {
@@ -238,7 +239,7 @@ export default function ReportGeneratorPage() {
               Next
             </Button>
           ) : (
-            <Button onClick={handleGenerate} className="bg-secondary hover:bg-secondary/90 text-secondary-foreground" disabled={isGenerating}>
+            <Button onClick={handleGenerate} className="bg-secondary hover:bg-secondary/90 text-secondary-foreground" disabled={isGenerating || !canGoNext}>
               {isGenerating ? 'Generating...' : 'Generate Report'}
             </Button>
           )}

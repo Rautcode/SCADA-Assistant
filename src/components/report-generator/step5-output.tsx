@@ -37,7 +37,7 @@ export const outputOptionsSchema = z.object({
 type OutputOptionsValues = z.infer<typeof outputOptionsSchema>;
 
 interface ReportStep5OutputProps {
-    onValidated: (data: OutputOptionsValues) => void;
+    onValidated: (data: OutputOptionsValues | null) => void;
     initialData: OutputOptionsValues | null;
 }
 
@@ -52,22 +52,22 @@ export function ReportStep5Output({ onValidated, initialData }: ReportStep5Outpu
       recipients: user?.email || "",
       emailMessage: "Please find the attached SCADA report.",
     },
+    mode: "onChange",
   });
   
   React.useEffect(() => {
-    const subscription = form.watch((value) => {
+    const subscription = form.watch(() => {
         if(form.formState.isValid) {
-            onValidated(value as OutputOptionsValues);
+            onValidated(form.getValues());
+        } else {
+            onValidated(null);
         }
     });
-    // Trigger validation on mount
-    if(initialData) {
-        onValidated(initialData);
-    } else {
+     if (form.formState.isValid) {
         onValidated(form.getValues());
-    }
+     }
     return () => subscription.unsubscribe();
-  }, [form, onValidated, initialData]);
+  }, [form, onValidated]);
 
   const emailImmediately = form.watch("emailImmediately");
 

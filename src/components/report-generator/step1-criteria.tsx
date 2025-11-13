@@ -79,7 +79,7 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
 
   React.useEffect(() => {
     // This is the single source of truth for propagating state up.
-    // It runs whenever the form values or validity change.
+    // It runs whenever the form values change.
     const subscription = watch(() => {
       if (formState.isValid) {
         onValidated(getValues());
@@ -89,11 +89,10 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
       }
     });
 
-    // Initial validation check on mount
+    // On initial mount, check if the form is already valid and notify parent.
+    // This solves the "Next button disabled by default" issue.
     if (formState.isValid) {
         onValidated(getValues());
-    } else {
-        onValidated(null);
     }
     
     return () => subscription.unsubscribe();
