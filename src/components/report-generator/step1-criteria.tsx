@@ -29,7 +29,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
-import { onMachines, getReportTemplates } from "@/services/client-database-service";
+import { onMachines, onReportTemplates } from "@/services/client-database-service";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -89,6 +89,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
 
     if (formState.isValid) {
       onValidated(getValues());
+    } else {
+      onValidated(null);
     }
 
     return () => subscription.unsubscribe();
@@ -102,13 +104,14 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       setLoadingMachines(false);
     });
 
-    getReportTemplates().then(templates => {
+    const unsubTemplates: Unsubscribe = onReportTemplates(templates => {
         const categories = [...new Set(templates.map(t => t.category))];
         setTemplateCategories(categories);
     });
 
     return () => {
         unsubMachines();
+        unsubTemplates();
     };
   }, []);
   

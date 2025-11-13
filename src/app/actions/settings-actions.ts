@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from "zod";
-import { settingsSchema, ScheduledTask, Machine } from "@/lib/types/database";
+import { settingsSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
 
 export async function saveUserSettings(input: { userId: string, settings: z.infer<typeof settingsSchema> }): Promise<{ success: boolean; error?: string }> {
