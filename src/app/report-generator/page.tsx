@@ -229,9 +229,9 @@ export default function ReportGeneratorPage() {
         return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} reportType={step1Data?.reportType} />;
       case 2:
         return <ReportStep3Preview onValidated={setStep3Data} initialData={step3Data} criteria={step1Data} />;
-      case 4:
+      case 3:
         return <ReportStep4Charts onValidated={setStep4Data} initialData={step4Data} scadaData={step3Data?.scadaData?.filter(d => d.included)} />;
-      case 5:
+      case 4:
         return <ReportStep5Output onValidated={setStep5Data} initialData={step5Data} />;
       default:
         return null;

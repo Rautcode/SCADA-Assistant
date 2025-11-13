@@ -39,6 +39,32 @@ function createListener<T>(collectionName: string, callback: (data: T[]) => void
     });
 }
 
+// Helper for one-time fetches
+async function fetchData<T>(collectionName: string): Promise<T[]> {
+    if (!db) {
+        console.error("Firestore is not initialized.");
+        return [];
+    }
+    const snapshot = await getDocs(collection(db, collectionName));
+    return snapshot.docs.map(doc => {
+        const docData = doc.data();
+        Object.keys(docData).forEach(key => {
+            if (docData[key] instanceof Timestamp) {
+                docData[key] = docData[key].toDate();
+            }
+        });
+        return { id: doc.id, ...docData } as T;
+    });
+}
+
+// ==================
+// One-Time Fetches
+// ==================
+export const getReportTemplates = () => fetchData<ReportTemplate>('reportTemplates');
+export const getMachines = () => fetchData<Machine>('machines');
+export const getScheduledTasks = () => fetchData<ScheduledTask>('scheduledTasks');
+
+
 // ==================
 // Real-time Listeners
 // ==================
