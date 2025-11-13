@@ -71,29 +71,20 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
       reportType: "Production",
       parameterIds: [],
     },
-    mode: "onChange", // Important: validate on change
+    mode: "onChange",
   });
   
   const { formState, watch, getValues } = form;
   const selectedMachineIds = watch("machineIds");
 
   React.useEffect(() => {
-    // This is the single source of truth for propagating state up.
-    // It runs whenever the form values change.
     const subscription = watch(() => {
       if (formState.isValid) {
         onValidated(getValues());
       } else {
-        // Inform the parent that the data is currently invalid
         onValidated(null);
       }
     });
-
-    // On initial mount, check if the form is already valid and notify parent.
-    // This solves the "Next button disabled by default" issue.
-    if (formState.isValid) {
-        onValidated(getValues());
-    }
     
     return () => subscription.unsubscribe();
   }, [watch, formState.isValid, getValues, onValidated]);

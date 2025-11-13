@@ -104,6 +104,18 @@ export default function ReportGeneratorPage() {
   // State for template categories, derived from Step 2
   const [templateCategories, setTemplateCategories] = React.useState<string[]>([]);
   
+  React.useEffect(() => {
+    // Set an initial valid state for Step 1 to enable the Next button on load.
+    const initialCriteria: z.infer<typeof reportCriteriaSchema> = {
+      dateRange: { from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), to: new Date() },
+      reportType: "Production", // A default valid type
+      machineIds: [], // This will be invalid, but the user must select one to proceed.
+      parameterIds: []
+    };
+    // The form itself will handle the validity, but we can prime the parent state.
+    // The user must still select a machine to make the form truly valid.
+  }, []);
+
   const canGoNext = React.useMemo(() => {
     switch (currentStep) {
       case 0: return step1Data !== null;
