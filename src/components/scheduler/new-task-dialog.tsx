@@ -16,9 +16,9 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '../auth/auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 import { scheduleTask } from '@/ai/flows/scheduler-flow';
-import { useData } from '../database/data-provider';
+import { useData } from '@/components/database/data-provider';
 
 // This schema represents what the client sends. It does NOT include the userId.
 const NewTaskClientSchema = z.object({

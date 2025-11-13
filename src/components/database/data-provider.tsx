@@ -45,6 +45,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             unsubscribers.forEach(unsub => unsub());
             clearTimeout(timer);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const value = {

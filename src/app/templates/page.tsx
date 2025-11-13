@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { categoryIcons } from "@/lib/icon-map";
 import { useData } from "@/components/database/data-provider";
 

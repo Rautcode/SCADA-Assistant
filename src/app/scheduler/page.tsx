@@ -16,7 +16,7 @@ import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
 import { categoryIcons } from '@/lib/icon-map';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAuth } from '../auth/auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 import { Unsubscribe } from 'firebase/firestore';
 import { useData } from '@/components/database/data-provider';
 
