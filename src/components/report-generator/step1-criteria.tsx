@@ -71,7 +71,7 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
       reportType: "Production",
       parameterIds: [],
     },
-     mode: "onChange",
+    mode: "onChange", // Important: validate on change
   });
   
   const { formState, watch, getValues } = form;
@@ -80,13 +80,24 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
   React.useEffect(() => {
     // This is the single source of truth for propagating state up.
     // It runs whenever the form values or validity change.
+    const subscription = watch(() => {
+      if (formState.isValid) {
+        onValidated(getValues());
+      } else {
+        // Inform the parent that the data is currently invalid
+        onValidated(null);
+      }
+    });
+
+    // Initial validation check on mount
     if (formState.isValid) {
-      onValidated(getValues());
+        onValidated(getValues());
     } else {
-      // If the form becomes invalid at any point, inform the parent.
-      onValidated(null);
+        onValidated(null);
     }
-  }, [formState, getValues, onValidated, watch]);
+    
+    return () => subscription.unsubscribe();
+  }, [watch, formState.isValid, getValues, onValidated]);
   
 
   React.useEffect(() => {
