@@ -44,12 +44,12 @@ async function getDb() {
     return app.firestore();
 }
 
-async function seedReportTemplates() {
+async function seedDefaultData() {
     const db = await getDb();
     const templatesRef = collection(db, 'reportTemplates');
-    const snapshot = await getDocs(query(templatesRef, limit(1)));
+    const templatesSnapshot = await getDocs(query(templatesRef, limit(1)));
     
-    if (snapshot.empty) {
+    if (templatesSnapshot.empty) {
         console.log("No report templates found. Seeding default templates...");
         const batch = writeBatch(db);
         defaultTemplates.forEach(template => {
@@ -61,48 +61,12 @@ async function seedReportTemplates() {
     }
 }
 
+// Call seeding function on startup
+seedDefaultData();
+
 
 // ===== Server-Side Only Functions =====
 // These functions use the Admin SDK and should only be called from Server Actions or Genkit flows.
-
-export async function getReportTemplatesFromDb(): Promise<ReportTemplate[]> {
-    await seedReportTemplates(); // Ensure templates exist
-    const db = await getDb();
-    const templatesRef = collection(db, 'reportTemplates');
-    const q = query(templatesRef, orderBy('lastModified', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            lastModified: (data.lastModified as Timestamp).toDate(),
-        } as ReportTemplate;
-    });
-}
-
-export async function getScheduledTasksFromDb(): Promise<ScheduledTask[]> {
-    const db = await getDb();
-    const tasksRef = collection(db, 'scheduledTasks');
-    const q = query(tasksRef, orderBy('scheduledTime', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            scheduledTime: (data.scheduledTime as Timestamp).toDate(),
-        } as ScheduledTask;
-    });
-}
-
-export async function getMachinesFromDb(): Promise<any[]> {
-    const db = await getDb();
-    const machinesRef = collection(db, 'machines');
-    const q = query(machinesRef, orderBy('name', 'asc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
 
 // ===== Settings Service (SERVER-SIDE) =====
 export async function saveUserSettingsToDb(userId: string, settings: Omit<UserSettings, 'userId'>) {

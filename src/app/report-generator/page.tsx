@@ -101,18 +101,15 @@ export default function ReportGeneratorPage() {
   const [step4Data, setStep4Data] = React.useState<z.infer<typeof chartConfigSchema> | null>(null);
   const [step5Data, setStep5Data] = React.useState<z.infer<typeof outputOptionsSchema> | null>(null);
   
-  // State for template categories, derived from Step 2
-  const [templateCategories, setTemplateCategories] = React.useState<string[]>([]);
-  
   React.useEffect(() => {
     // Set an initial valid state for Step 1 to enable the Next button on load.
     const initialCriteria: z.infer<typeof reportCriteriaSchema> = {
       dateRange: { from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), to: new Date() },
-      reportType: "Production", // A default valid type
-      machineIds: [], // This will be invalid, but the user must select one to proceed.
+      reportType: "Production",
+      machineIds: [],
       parameterIds: []
     };
-    setStep1Data(initialCriteria)
+    setStep1Data(initialCriteria);
   }, []);
 
   const canGoNext = React.useMemo(() => {
@@ -227,9 +224,9 @@ export default function ReportGeneratorPage() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        return <ReportStep1Criteria onValidated={setStep1Data} initialData={step1Data} templateCategories={templateCategories} />;
+        return <ReportStep1Criteria onValidated={setStep1Data} initialData={step1Data} />;
       case 1:
-        return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} reportType={step1Data?.reportType} onCategoriesLoaded={setTemplateCategories} />;
+        return <ReportStep2Template onValidated={setStep2Data} initialData={step2Data} reportType={step1Data?.reportType} />;
       case 2:
         return <ReportStep3Preview onValidated={setStep3Data} initialData={step3Data} criteria={step1Data} />;
       case 3:

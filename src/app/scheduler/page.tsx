@@ -5,7 +5,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
-import { getScheduledTasks, getReportTemplates } from '@/app/actions/settings-actions';
+import { getScheduledTasks, getReportTemplates } from '@/services/client-database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';

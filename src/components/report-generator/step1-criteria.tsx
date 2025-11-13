@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
-import { Machine } from "@/lib/types/database";
+import { Machine, ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
 import { getScadaTags } from "@/app/actions/scada-actions";
 import { getUserSettings } from "@/app/actions/settings-actions";
@@ -29,7 +29,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
-import { onMachines } from "@/services/client-database-service";
+import { onMachines, getReportTemplates } from "@/services/client-database-service";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -46,10 +46,9 @@ type ReportCriteriaFormValues = z.infer<typeof reportCriteriaSchema>;
 interface ReportStep1CriteriaProps {
   onValidated: (data: ReportCriteriaFormValues | null) => void;
   initialData: ReportCriteriaFormValues | null;
-  templateCategories: string[];
 }
 
-export function ReportStep1Criteria({ onValidated, initialData, templateCategories }: ReportStep1CriteriaProps) {
+export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1CriteriaProps) {
   const [machineSearch, setMachineSearch] = React.useState("");
   const [allMachines, setAllMachines] = React.useState<Machine[]>([]);
   const [loadingMachines, setLoadingMachines] = React.useState(true);
@@ -59,6 +58,8 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
   const [loadingParameters, setLoadingParameters] = React.useState(false);
   const [parameterError, setParameterError] = React.useState<string | null>(null);
 
+  const [templateCategories, setTemplateCategories] = React.useState<string[]>([]);
+  
   const { user } = useAuth();
   const { status: connectionStatus } = useConnection();
 
@@ -86,6 +87,10 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
         }
     });
 
+    if (formState.isValid) {
+      onValidated(getValues());
+    }
+
     return () => subscription.unsubscribe();
   }, [watch, formState, getValues, onValidated]);
 
@@ -95,6 +100,11 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
     const unsubMachines: Unsubscribe = onMachines(machines => {
       setAllMachines(machines);
       setLoadingMachines(false);
+    });
+
+    getReportTemplates().then(templates => {
+        const categories = [...new Set(templates.map(t => t.category))];
+        setTemplateCategories(categories);
     });
 
     return () => {

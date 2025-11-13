@@ -1,9 +1,9 @@
 
 'use client';
 
-import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
-import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, SystemComponentStatus, SystemLog } from '@/lib/types/database';
+import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, ScheduledTask, SystemComponentStatus, SystemLog } from '@/lib/types/database';
 
 function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, count?: number): Unsubscribe {
     if (!db) {
@@ -38,6 +38,10 @@ function createListener<T>(collectionName: string, callback: (data: T[]) => void
         callback([]);
     });
 }
+
+// ==================
+// Real-time Listeners
+// ==================
 
 export function onDashboardStats(callback: (stats: DashboardStats | null) => void): Unsubscribe {
     if (!db) {
@@ -83,4 +87,36 @@ export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe
 
 export function onReportTemplates(callback: (templates: ReportTemplate[]) => void): Unsubscribe {
     return createListener<ReportTemplate>('reportTemplates', callback, 'lastModified');
+}
+
+// ==================
+// One-time Fetches
+// ==================
+async function fetchData<T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'desc'): Promise<T[]> {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot fetch data.");
+        return [];
+    }
+    const collRef = collection(db, collectionName);
+    const q = orderField ? query(collRef, orderBy(orderField, orderDirection)) : query(collRef);
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert any Timestamps to Dates
+        Object.keys(data).forEach(key => {
+            if (data[key] instanceof Timestamp) {
+                data[key] = data[key].toDate();
+            }
+        });
+        return { id: doc.id, ...data } as T;
+    });
+}
+
+
+export async function getReportTemplates(): Promise<ReportTemplate[]> {
+    return fetchData<ReportTemplate>('reportTemplates', 'lastModified', 'desc');
+}
+
+export async function getScheduledTasks(): Promise<ScheduledTask[]> {
+    return fetchData<ScheduledTask>('scheduledTasks', 'scheduledTime', 'desc');
 }

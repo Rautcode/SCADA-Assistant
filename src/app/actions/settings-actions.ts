@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { settingsSchema, ScheduledTask, Machine } from "@/lib/types/database";
-import { getUserSettingsFromDb, saveUserSettingsToDb, getScheduledTasksFromDb, getMachinesFromDb } from "@/services/database-service";
+import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
 
 export async function saveUserSettings(input: { userId: string, settings: z.infer<typeof settingsSchema> }): Promise<{ success: boolean; error?: string }> {
   try {
@@ -22,22 +22,4 @@ export async function getUserSettings(input: { userId: string }) {
     console.error('Failed to get user settings from DB:', error);
     return null;
   }
-}
-
-export async function getScheduledTasks(): Promise<ScheduledTask[]> {
-    try {
-        return await getScheduledTasksFromDb();
-    } catch(error) {
-        console.error('Failed to get scheduled tasks from DB:', error);
-        return [];
-    }
-}
-
-export async function getMachines(): Promise<Machine[]> {
-    try {
-        return await getMachinesFromDb();
-    } catch(error) {
-        console.error('Failed to get machines from DB:', error);
-        return [];
-    }
 }

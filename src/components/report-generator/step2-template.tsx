@@ -16,14 +16,12 @@ interface ReportStep2TemplateProps {
   onValidated: (data: { selectedTemplate: ReportTemplate | null }) => void;
   initialData: { selectedTemplate: ReportTemplate | null } | null;
   reportType?: string; // Automatically filter by this type
-  onCategoriesLoaded: (categories: string[]) => void;
 }
 
 export function ReportStep2Template({
   onValidated,
   initialData,
   reportType,
-  onCategoriesLoaded
 }: ReportStep2TemplateProps) {
   const [allTemplates, setAllTemplates] = React.useState<ReportTemplate[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -36,12 +34,10 @@ export function ReportStep2Template({
     setLoading(true);
     const unsub: Unsubscribe = onReportTemplates(templatesData => {
       setAllTemplates(templatesData);
-      const categories = [...new Set(templatesData.map(t => t.category))];
-      onCategoriesLoaded(categories);
       setLoading(false);
     });
     return () => unsub();
-  }, [onCategoriesLoaded]);
+  }, []);
 
   // Filter templates based on search term and the report type from step 1
   const filteredTemplates = React.useMemo(() => {
