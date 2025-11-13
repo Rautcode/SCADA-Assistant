@@ -112,15 +112,14 @@ export default function ReportGeneratorPage() {
       machineIds: [], // This will be invalid, but the user must select one to proceed.
       parameterIds: []
     };
-    // The form itself will handle the validity, but we can prime the parent state.
-    // The user must still select a machine to make the form truly valid.
+    setStep1Data(initialCriteria)
   }, []);
 
   const canGoNext = React.useMemo(() => {
     switch (currentStep) {
       case 0: return step1Data !== null;
       case 1: return step2Data?.selectedTemplate !== null;
-      case 2: return step3Data !== null && step3Data.scadaData.length > 0;
+      case 2: return step3Data !== null && step3Data.scadaData.filter(d => d.included).length > 0;
       case 3: return step4Data !== null;
       case 4: return step5Data !== null;
       default: return true;
@@ -132,9 +131,13 @@ export default function ReportGeneratorPage() {
     if (canGoNext && currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+        let description = "Please complete the current step before proceeding.";
+        if (currentStep === 2 && step3Data && step3Data.scadaData.filter(d => d.included).length === 0) {
+            description = "You must include at least one data point to generate a report.";
+        }
         toast({
             title: "Incomplete Step",
-            description: "Please complete the current step before proceeding.",
+            description,
             variant: "destructive"
         })
     }
@@ -211,6 +214,14 @@ export default function ReportGeneratorPage() {
     setStep4Data(null);
     setStep5Data(null);
     setGeneratedReport(null);
+    // Re-initialize step 1 data
+     const initialCriteria: z.infer<typeof reportCriteriaSchema> = {
+      dateRange: { from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), to: new Date() },
+      reportType: "Production",
+      machineIds: [],
+      parameterIds: []
+    };
+    setStep1Data(initialCriteria);
   }
 
   const renderStepContent = () => {
@@ -222,7 +233,7 @@ export default function ReportGeneratorPage() {
       case 2:
         return <ReportStep3Preview onValidated={setStep3Data} initialData={step3Data} criteria={step1Data} />;
       case 3:
-        return <ReportStep4Charts onValidated={setStep4Data} initialData={step4Data} scadaData={step3Data?.scadaData} />;
+        return <ReportStep4Charts onValidated={setStep4Data} initialData={step4Data} scadaData={step3Data?.scadaData?.filter(d => d.included)} />;
       case 4:
         return <ReportStep5Output onValidated={setStep5Data} initialData={step5Data} />;
       default:

@@ -2,8 +2,8 @@
 'use server';
 
 import { z } from "zod";
-import { settingsSchema, ReportTemplate, ScheduledTask, Machine } from "@/lib/types/database";
-import { getUserSettingsFromDb, saveUserSettingsToDb, getReportTemplatesFromDb, getScheduledTasksFromDb, getMachinesFromDb } from "@/services/database-service";
+import { settingsSchema, ScheduledTask, Machine } from "@/lib/types/database";
+import { getUserSettingsFromDb, saveUserSettingsToDb, getScheduledTasksFromDb, getMachinesFromDb } from "@/services/database-service";
 
 export async function saveUserSettings(input: { userId: string, settings: z.infer<typeof settingsSchema> }): Promise<{ success: boolean; error?: string }> {
   try {
@@ -22,15 +22,6 @@ export async function getUserSettings(input: { userId: string }) {
     console.error('Failed to get user settings from DB:', error);
     return null;
   }
-}
-
-export async function getReportTemplates(): Promise<ReportTemplate[]> {
-    try {
-        return await getReportTemplatesFromDb();
-    } catch (error) {
-        console.error('Failed to get report templates from DB:', error);
-        return [];
-    }
 }
 
 export async function getScheduledTasks(): Promise<ScheduledTask[]> {

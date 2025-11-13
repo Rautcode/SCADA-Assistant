@@ -79,16 +79,16 @@ export function ReportStep1Criteria({ onValidated, initialData, templateCategori
 
   React.useEffect(() => {
     const subscription = watch(() => {
-      if (formState.isValid) {
-        onValidated(getValues());
-      } else {
-        onValidated(null);
-      }
+        if (formState.isValid) {
+            onValidated(getValues());
+        } else {
+            onValidated(null);
+        }
     });
-    
+
     return () => subscription.unsubscribe();
-  }, [watch, formState.isValid, getValues, onValidated]);
-  
+  }, [watch, formState, getValues, onValidated]);
+
 
   React.useEffect(() => {
     setLoadingMachines(true);
