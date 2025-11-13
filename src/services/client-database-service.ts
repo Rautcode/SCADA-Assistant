@@ -89,34 +89,6 @@ export function onReportTemplates(callback: (templates: ReportTemplate[]) => voi
     return createListener<ReportTemplate>('reportTemplates', callback, 'lastModified');
 }
 
-// ==================
-// One-time Fetches
-// ==================
-async function fetchData<T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'desc'): Promise<T[]> {
-    if (!db) {
-        console.error("Firestore is not initialized. Cannot fetch data.");
-        return [];
-    }
-    const collRef = collection(db, collectionName);
-    const q = orderField ? query(collRef, orderBy(orderField, orderDirection)) : query(collRef);
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Convert any Timestamps to Dates
-        Object.keys(data).forEach(key => {
-            if (data[key] instanceof Timestamp) {
-                data[key] = data[key].toDate();
-            }
-        });
-        return { id: doc.id, ...data } as T;
-    });
-}
-
-
-export async function getReportTemplates(): Promise<ReportTemplate[]> {
-    return fetchData<ReportTemplate>('reportTemplates', 'lastModified', 'desc');
-}
-
-export async function getScheduledTasks(): Promise<ScheduledTask[]> {
-    return fetchData<ScheduledTask>('scheduledTasks', 'scheduledTime', 'desc');
+export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Unsubscribe {
+    return createListener<ScheduledTask>('scheduledTasks', callback, 'scheduledTime');
 }

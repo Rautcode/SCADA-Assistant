@@ -87,10 +87,9 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
         }
     });
 
+    // This ensures that on initial load, the parent gets the valid default state.
     if (formState.isValid) {
       onValidated(getValues());
-    } else {
-      onValidated(null);
     }
 
     return () => subscription.unsubscribe();

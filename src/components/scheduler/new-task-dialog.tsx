@@ -13,13 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { ReportTemplate } from '@/lib/types/database';
-import { getReportTemplates } from '@/services/client-database-service';
+import { onReportTemplates } from '@/services/client-database-service';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../auth/auth-provider';
 import { scheduleTask } from '@/ai/flows/scheduler-flow';
+import { Unsubscribe } from 'firebase/firestore';
 
 // This schema represents what the client sends. It does NOT include the userId.
 const NewTaskClientSchema = z.object({
@@ -55,9 +56,10 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
 
     React.useEffect(() => {
         if (!open) return;
-        getReportTemplates().then(templatesData => {
+        const unsub: Unsubscribe = onReportTemplates(templatesData => {
             setTemplates(templatesData);
         });
+        return () => unsub();
     }, [open]);
     
     async function onSubmit(values: z.infer<typeof NewTaskClientSchema>) {
@@ -139,8 +141,8 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
-                                     <FormMessage />
-                                </FormItem>
+                                     </FormItem>
+                                <FormMessage />
                             )}
                         />
                          <FormField
