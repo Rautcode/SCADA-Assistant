@@ -12,15 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ReportTemplate } from '@/lib/types/database';
-import { onReportTemplates } from '@/services/client-database-service';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../auth/auth-provider';
 import { scheduleTask } from '@/ai/flows/scheduler-flow';
-import { Unsubscribe } from 'firebase/firestore';
+import { useData } from '../database/data-provider';
 
 // This schema represents what the client sends. It does NOT include the userId.
 const NewTaskClientSchema = z.object({
@@ -37,7 +35,7 @@ interface NewTaskDialogProps {
 export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
     const { toast } = useToast();
     const { user } = useAuth();
-    const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
+    const { templates } = useData();
     const [isLoading, setIsLoading] = React.useState(false);
     const [isClient, setIsClient] = React.useState(false);
 
@@ -54,14 +52,6 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         },
     });
 
-    React.useEffect(() => {
-        if (!open) return;
-        const unsub: Unsubscribe = onReportTemplates(templatesData => {
-            setTemplates(templatesData);
-        });
-        return () => unsub();
-    }, [open]);
-    
     async function onSubmit(values: z.infer<typeof NewTaskClientSchema>) {
         setIsLoading(true);
         if (!user) {

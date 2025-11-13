@@ -5,7 +5,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
-import { onScheduledTasks, onReportTemplates } from '@/services/client-database-service';
+import { onScheduledTasks } from '@/services/client-database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ import { categoryIcons } from '@/lib/icon-map';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '../auth/auth-provider';
 import { Unsubscribe } from 'firebase/firestore';
+import { useData } from '@/components/database/data-provider';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
@@ -102,31 +103,23 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
 
 export default function SchedulerPage() {
     const [tasks, setTasks] = React.useState<ScheduledTask[]>([]);
-    const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
     const [tasksLoading, setTasksLoading] = React.useState(true);
-    const [templatesLoading, setTemplatesLoading] = React.useState(true);
     const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = React.useState(false);
     const { status: dbStatus } = useConnection();
     const { user } = useAuth();
+    const { templates, loading: templatesLoading } = useData();
     
     React.useEffect(() => {
         if (!user) return;
         setTasksLoading(true);
-        setTemplatesLoading(true);
 
         const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
             setTasks(tasksData.map(t => ({...t, scheduledTime: new Date(t.scheduledTime)})));
             setTasksLoading(false);
         });
-
-        const unsubTemplates: Unsubscribe = onReportTemplates(templatesData => {
-            setTemplates(templatesData);
-            setTemplatesLoading(false);
-        });
         
         return () => {
             unsubTasks();
-            unsubTemplates();
         }
     }, [user]);
 

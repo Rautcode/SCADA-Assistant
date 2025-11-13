@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
 import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, ScheduledTask, SystemComponentStatus, SystemLog } from '@/lib/types/database';
 
@@ -38,31 +38,6 @@ function createListener<T>(collectionName: string, callback: (data: T[]) => void
         callback([]);
     });
 }
-
-// Helper for one-time fetches
-async function fetchData<T>(collectionName: string): Promise<T[]> {
-    if (!db) {
-        console.error("Firestore is not initialized.");
-        return [];
-    }
-    const snapshot = await getDocs(collection(db, collectionName));
-    return snapshot.docs.map(doc => {
-        const docData = doc.data();
-        Object.keys(docData).forEach(key => {
-            if (docData[key] instanceof Timestamp) {
-                docData[key] = docData[key].toDate();
-            }
-        });
-        return { id: doc.id, ...docData } as T;
-    });
-}
-
-// ==================
-// One-Time Fetches
-// ==================
-export const getReportTemplates = () => fetchData<ReportTemplate>('reportTemplates');
-export const getMachines = () => fetchData<Machine>('machines');
-export const getScheduledTasks = () => fetchData<ScheduledTask>('scheduledTasks');
 
 
 // ==================
@@ -107,14 +82,15 @@ export function onEmailLogs(callback: (logs: EmailLog[]) => void): Unsubscribe {
     return createListener<EmailLog>('emailLogs', callback, 'timestamp');
 }
 
+export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Unsubscribe {
+    return createListener<ScheduledTask>('scheduledTasks', callback, 'scheduledTime');
+}
+
+// These are now the centralized listeners for shared data.
 export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe {
     return createListener<Machine>('machines', callback, 'name');
 }
 
 export function onReportTemplates(callback: (templates: ReportTemplate[]) => void): Unsubscribe {
     return createListener<ReportTemplate>('reportTemplates', callback, 'lastModified');
-}
-
-export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Unsubscribe {
-    return createListener<ScheduledTask>('scheduledTasks', callback, 'scheduledTime');
 }

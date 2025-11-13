@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import dynamic from 'next/dynamic';
-import { Unsubscribe } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,7 @@ import { ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { categoryIcons } from "@/lib/icon-map";
-import { onReportTemplates } from "@/services/client-database-service";
+import { useData } from "@/components/database/data-provider";
 
 const NewTemplateDialog = dynamic(() =>
   import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
@@ -85,21 +84,11 @@ const TemplateListItem = React.memo(function TemplateListItem({ template, loadin
 });
 
 export default function TemplatesPage() {
-  const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const { templates, loading: templatesLoading } = useData();
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterCategory, setFilterCategory] = React.useState("all");
   const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoading(true);
-    const unsub: Unsubscribe = onReportTemplates(templatesData => {
-        setTemplates(templatesData);
-        setLoading(false);
-    });
-    return () => unsub();
-  }, []);
 
   const filteredTemplates = React.useMemo(() => templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -109,7 +98,7 @@ export default function TemplatesPage() {
   const categories = React.useMemo(() => ["all", ...Array.from(new Set(templates.map(t => t.category)))], [templates]);
 
   const renderContent = () => {
-     if (loading) {
+     if (templatesLoading) {
        const loaderItems = Array.from({ length: 6 });
         if (viewMode === 'grid') {
           return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

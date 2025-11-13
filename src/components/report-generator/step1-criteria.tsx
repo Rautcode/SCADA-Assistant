@@ -8,7 +8,6 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, BarChartBig, Search, AlertTriangle, ChevronsUpDown, Settings } from "lucide-react";
 import Link from 'next/link';
-import { Unsubscribe } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,7 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
-import { Machine } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
 import { getScadaTags } from "@/app/actions/scada-actions";
 import { getUserSettings } from "@/app/actions/settings-actions";
@@ -29,7 +27,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
-import { onMachines, onReportTemplates } from "@/services/client-database-service";
+import { useData } from "@/components/database/data-provider";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -50,15 +48,12 @@ interface ReportStep1CriteriaProps {
 
 export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1CriteriaProps) {
   const [machineSearch, setMachineSearch] = React.useState("");
-  const [allMachines, setAllMachines] = React.useState<Machine[]>([]);
-  const [loadingMachines, setLoadingMachines] = React.useState(true);
+  const { machines, loading: loadingMachines, templates } = useData();
 
   const [parameterSearch, setParameterSearch] = React.useState("");
   const [availableParameters, setAvailableParameters] = React.useState<string[]>([]);
   const [loadingParameters, setLoadingParameters] = React.useState(false);
   const [parameterError, setParameterError] = React.useState<string | null>(null);
-
-  const [templateCategories, setTemplateCategories] = React.useState<string[]>([]);
   
   const { user } = useAuth();
   const { status: connectionStatus } = useConnection();
@@ -86,27 +81,13 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
             onValidated(null);
         }
     });
+    // On initial load, if the data is valid, notify parent immediately.
+    if(formState.isValid) {
+        onValidated(getValues());
+    }
     return () => subscription.unsubscribe();
   }, [watch, formState, getValues, onValidated]);
 
-
-  React.useEffect(() => {
-    setLoadingMachines(true);
-    const unsubMachines: Unsubscribe = onMachines(machines => {
-      setAllMachines(machines);
-      setLoadingMachines(false);
-    });
-
-    const unsubTemplates: Unsubscribe = onReportTemplates(templates => {
-        const categories = [...new Set(templates.map(t => t.category))];
-        setTemplateCategories(categories);
-    });
-
-    return () => {
-        unsubMachines();
-        unsubTemplates();
-    };
-  }, []);
   
   React.useEffect(() => {
     async function fetchTags() {
@@ -158,13 +139,17 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   }, [selectedMachineIds, user, connectionStatus]);
 
 
-  const filteredMachines = allMachines.filter(machine => 
+  const filteredMachines = machines.filter(machine => 
     machine.name.toLowerCase().includes(machineSearch.toLowerCase())
   );
 
   const filteredParameters = availableParameters.filter(param =>
     param.toLowerCase().includes(parameterSearch.toLowerCase())
   );
+
+  const templateCategories = React.useMemo(() => 
+    [...new Set(templates.map(t => t.category))]
+  , [templates]);
   
   const ConnectionError = ({ title, message, isSubtle }: { title: string; message: string, isSubtle?: boolean }) => (
     <div className="p-4">

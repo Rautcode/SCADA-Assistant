@@ -109,9 +109,6 @@ export default function ReportGeneratorPage() {
       machineIds: [],
       parameterIds: []
     };
-    // The machineIds array is empty, which makes the form invalid.
-    // The user must select at least one machine. This state is now handled
-    // correctly by the child component's validation logic.
     setStep1Data(initialCriteria);
   }, []);
 

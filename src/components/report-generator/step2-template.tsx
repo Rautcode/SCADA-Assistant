@@ -2,7 +2,6 @@
 "use client";
 
 import * as React from "react";
-import { Unsubscribe } from "firebase/firestore";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,7 @@ import { LayoutGrid, List, CheckCircle2, Search } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
 import { categoryIcons } from "@/lib/icon-map";
-import { onReportTemplates } from "@/services/client-database-service";
+import { useData } from "@/components/database/data-provider";
 
 interface ReportStep2TemplateProps {
   onValidated: (data: { selectedTemplate: ReportTemplate | null }) => void;
@@ -23,30 +22,19 @@ export function ReportStep2Template({
   initialData,
   reportType,
 }: ReportStep2TemplateProps) {
-  const [allTemplates, setAllTemplates] = React.useState<ReportTemplate[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const { templates, loading } = useData();
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [selectedTemplateId, setSelectedTemplateId] = React.useState<string | null>(initialData?.selectedTemplate?.id || null);
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  // fetch all templates once
-  React.useEffect(() => {
-    setLoading(true);
-    const unsub: Unsubscribe = onReportTemplates(templatesData => {
-      setAllTemplates(templatesData);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
-
   // Filter templates based on search term and the report type from step 1
   const filteredTemplates = React.useMemo(() => {
-    return allTemplates.filter(
+    return templates.filter(
       (template) =>
         template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
         (!reportType || template.category === reportType)
     );
-  }, [allTemplates, searchTerm, reportType]);
+  }, [templates, searchTerm, reportType]);
 
 
   // Auto-select the first template in the filtered list if the current selection is no longer valid
@@ -62,9 +50,9 @@ export function ReportStep2Template({
 
   // sync selection to parent whenever it changes
   React.useEffect(() => {
-    const selectedTemplate = allTemplates.find((t) => t.id === selectedTemplateId) || null;
+    const selectedTemplate = templates.find((t) => t.id === selectedTemplateId) || null;
     onValidated({ selectedTemplate });
-  }, [selectedTemplateId, allTemplates, onValidated]);
+  }, [selectedTemplateId, templates, onValidated]);
 
 
   // --- Render Grid ---
