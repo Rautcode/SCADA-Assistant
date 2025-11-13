@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
-import { Machine, ReportTemplate } from "@/lib/types/database";
+import { Machine } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
 import { getScadaTags } from "@/app/actions/scada-actions";
 import { getUserSettings } from "@/app/actions/settings-actions";
@@ -86,12 +86,6 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
             onValidated(null);
         }
     });
-
-    // This ensures that on initial load, the parent gets the valid default state.
-    if (formState.isValid) {
-      onValidated(getValues());
-    }
-
     return () => subscription.unsubscribe();
   }, [watch, formState, getValues, onValidated]);
 
