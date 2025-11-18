@@ -8,16 +8,16 @@ import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2,
 import Link from 'next/link';
 import Image from 'next/image';
 import imageData from '@/app/lib/placeholder-images.json';
-import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/client-database-service';
+import { onDashboardStats, onRecentActivities, onSystemComponentStatuses, isScadaDbConnected } from '@/services/client-database-service';
 import type { DashboardStats, RecentActivity, SystemComponentStatus } from '@/lib/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { Unsubscribe } from 'firebase/firestore';
 import { iconMap } from '@/lib/icon-map';
-import { useConnection } from '@/components/database/connection-provider';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { ApiKeyNotification } from '@/components/layout/api-key-notification';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface StatCardProps {
   title: string;
@@ -179,19 +179,33 @@ const SystemStatusItem: React.FC<{ item?: SystemComponentStatus; loading?: boole
 
 
 const DatabaseConnectionNotification = () => {
-    const { status, error, loading } = useConnection();
+    const { user, loading: authLoading } = useAuth();
+    const [isConnected, setIsConnected] = React.useState(true);
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    if (status === 'connected' || loading) return null;
+    React.useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            setIsLoading(false);
+            setIsConnected(true); // Don't show for logged out users
+            return;
+        }
 
-    const title = status === 'error' ? 'Database Connection Failed' : 'Database Not Configured';
-    const description = status === 'error' ? error : "Please configure your SCADA database connection to see live data.";
+        setIsLoading(true);
+        isScadaDbConnected().then(result => {
+            setIsConnected(result);
+            setIsLoading(false);
+        })
+    }, [user, authLoading]);
+
+    if (isConnected || isLoading) return null;
 
     return (
         <Alert variant="destructive" className="mb-6 shadow-lg">
             <WifiOff className="h-4 w-4" />
-            <AlertTitle>{title}</AlertTitle>
+            <AlertTitle>Database Not Configured or Unreachable</AlertTitle>
             <AlertDescription>
-                {description}
+                Live dashboard data is unavailable. Please configure your SCADA database connection to see live data.
                 <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 font-semibold text-destructive/80 hover:text-destructive dark:text-destructive-foreground/80 dark:hover:text-destructive-foreground">
                     <Link href="/settings">
                         <Settings className="mr-2 h-4 w-4" /> Go to Settings
@@ -208,7 +222,6 @@ export default function DashboardPage() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [activities, setActivities] = React.useState<RecentActivity[]>([]);
   const [systemStatus, setSystemStatus] = React.useState<SystemComponentStatus[]>([]);
-  const { status: dbStatus } = useConnection();
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -217,22 +230,12 @@ export default function DashboardPage() {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     }));
 
-    if (dbStatus !== 'connected') {
-        setLoading(false);
-        // Reset data if db disconnects
-        setStats(null);
-        setActivities([]);
-        setSystemStatus([]);
-        return;
-    }
-
     setLoading(true);
     const unsubscribers: Unsubscribe[] = [];
 
-    // Real-time listeners remain for truly dynamic data
     unsubscribers.push(onDashboardStats(statsData => {
         setStats(statsData);
-        if (statsData !== undefined) { // Can be null, which is valid
+        if (statsData !== undefined) {
           setLoading(false);
         }
     }));
@@ -245,19 +248,14 @@ export default function DashboardPage() {
         setSystemStatus(statusData);
     }));
 
-    // Fallback timer to stop loading indicator
-    const timer = setTimeout(() => {
-        if (dbStatus !== 'loading') {
-            setLoading(false);
-        }
-    }, 2500);
+    const timer = setTimeout(() => setLoading(false), 2500);
 
     return () => {
         unsubscribers.forEach(unsub => unsub());
         clearTimeout(timer);
     }
 
-  }, [dbStatus]);
+  }, []);
 
   const overallSystemStatus = React.useMemo(() => {
     if (!systemStatus || systemStatus.length === 0) return "Operational";
@@ -267,9 +265,9 @@ export default function DashboardPage() {
   }, [systemStatus]);
 
 
-  const isDataLoading = (loading && dbStatus === 'connected') || dbStatus === 'loading';
+  const isDataLoading = loading && (!stats && activities.length === 0 && systemStatus.length === 0);
 
-  const showEmptyState = !isDataLoading && dbStatus !== 'connected' && !stats && activities.length === 0 && systemStatus.length === 0;
+  const showEmptyState = !isDataLoading && !stats && activities.length === 0 && systemStatus.length === 0;
 
   return (
     <div className="w-full">
@@ -330,11 +328,7 @@ export default function DashboardPage() {
               <CardDescription>Track the latest system and user activities.</CardDescription>
             </CardHeader>
             <CardContent>
-              {showEmptyState ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Connect to the database to see recent activity.</p>
-                  </div>
-              ) : isDataLoading && activities.length === 0 ? (
+              {isDataLoading && activities.length === 0 ? (
                   <ul className="divide-y divide-border -mx-6 px-6">
                       {Array.from({length: 5}).map((_, i) => <ActivityItem key={i} activity={{} as any} loading />)}
                   </ul>
@@ -356,11 +350,7 @@ export default function DashboardPage() {
               <CardDescription>Health overview of critical components.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {showEmptyState ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                      <p>Connect to the database to see system status.</p>
-                  </div>
-              ) :isDataLoading && systemStatus.length === 0 ? (
+              {isDataLoading && systemStatus.length === 0 ? (
                   Array.from({length: 4}).map((_, i) => <SystemStatusItem key={i} loading />)
               ) : systemStatus.length > 0 ? (
                   systemStatus.map((item) => <SystemStatusItem key={item.name} item={item} />)

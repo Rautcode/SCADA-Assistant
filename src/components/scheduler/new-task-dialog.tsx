@@ -18,9 +18,8 @@ import { CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/auth-provider';
 import { scheduleTask } from '@/ai/flows/scheduler-flow';
-import { useData } from '@/components/database/data-provider';
+import { ReportTemplate } from '@/lib/types/database';
 
-// This schema represents what the client sends. It does NOT include the userId.
 const NewTaskClientSchema = z.object({
     name: z.string().min(1, "Task name is required."),
     templateId: z.string().min(1, "A report template must be selected."),
@@ -30,12 +29,12 @@ const NewTaskClientSchema = z.object({
 interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  templates: ReportTemplate[];
 }
 
-export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
+export function NewTaskDialog({ open, onOpenChange, templates }: NewTaskDialogProps) {
     const { toast } = useToast();
     const { user } = useAuth();
-    const { templates } = useData();
     const [isLoading, setIsLoading] = React.useState(false);
     const [isClient, setIsClient] = React.useState(false);
 
@@ -65,7 +64,6 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         }
 
         try {
-            // Call the new, secure, authenticated Genkit flow
             await scheduleTask({
                 ...values,
                 scheduledTime: values.scheduledTime.toISOString(),

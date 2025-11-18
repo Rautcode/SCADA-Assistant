@@ -11,7 +11,8 @@ import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "@/components/ui/skeleton";
 import { categoryIcons } from "@/lib/icon-map";
-import { useData } from "@/components/database/data-provider";
+import { onReportTemplates } from "@/services/client-database-service";
+import { Unsubscribe } from "firebase/firestore";
 
 const NewTemplateDialog = dynamic(() =>
   import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
@@ -83,11 +84,21 @@ const TemplateListItem = React.memo(function TemplateListItem({ template, loadin
 });
 
 export default function TemplatesPage() {
-  const { templates, loading: templatesLoading } = useData();
+  const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterCategory, setFilterCategory] = React.useState("all");
   const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setLoading(true);
+    const unsub: Unsubscribe = onReportTemplates(templatesData => {
+        setTemplates(templatesData);
+        setLoading(false);
+    });
+    return () => unsub();
+  }, []);
 
   const filteredTemplates = React.useMemo(() => templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -97,7 +108,7 @@ export default function TemplatesPage() {
   const categories = React.useMemo(() => ["all", ...Array.from(new Set(templates.map(t => t.category)))], [templates]);
 
   const renderContent = () => {
-     if (templatesLoading) {
+     if (loading) {
        const loaderItems = Array.from({ length: 6 });
         if (viewMode === 'grid') {
           return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

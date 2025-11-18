@@ -5,20 +5,18 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
-import { onScheduledTasks } from '@/services/client-database-service';
+import { onScheduledTasks, onReportTemplates, isScadaDbConnected } from '@/services/client-database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useConnection } from '@/components/database/connection-provider';
 import Link from 'next/link';
 import { categoryIcons } from '@/lib/icon-map';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Unsubscribe } from 'firebase/firestore';
-import { useData } from '@/components/database/data-provider';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
@@ -103,23 +101,33 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
 
 export default function SchedulerPage() {
     const [tasks, setTasks] = React.useState<ScheduledTask[]>([]);
+    const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
     const [tasksLoading, setTasksLoading] = React.useState(true);
+    const [templatesLoading, setTemplatesLoading] = React.useState(true);
     const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = React.useState(false);
-    const { status: dbStatus } = useConnection();
     const { user } = useAuth();
-    const { templates, loading: templatesLoading } = useData();
+    const [dbConnected, setDbConnected] = React.useState(true);
     
     React.useEffect(() => {
         if (!user) return;
         setTasksLoading(true);
+        setTemplatesLoading(true);
+
+        isScadaDbConnected().then(setDbConnected);
 
         const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
             setTasks(tasksData.map(t => ({...t, scheduledTime: new Date(t.scheduledTime)})));
             setTasksLoading(false);
         });
+
+        const unsubTemplates: Unsubscribe = onReportTemplates(templatesData => {
+            setTemplates(templatesData);
+            setTemplatesLoading(false);
+        });
         
         return () => {
             unsubTasks();
+            unsubTemplates();
         }
     }, [user]);
 
@@ -128,7 +136,7 @@ export default function SchedulerPage() {
     [templates]);
     
     const loading = tasksLoading || templatesLoading;
-    const showConnectionMessage = !loading && tasks.length === 0 && dbStatus !== 'connected';
+    const showConnectionMessage = !loading && !dbConnected;
 
     return (
         <div className="w-full">
@@ -189,7 +197,7 @@ export default function SchedulerPage() {
                     </div>
                 </CardContent>
             </Card>
-            {isNewTaskDialogOpen && <NewTaskDialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen} />}
+            {isNewTaskDialogOpen && <NewTaskDialog open={isNewTaskDialogOpen} templates={templates} onOpenChange={setIsNewTaskDialogOpen} />}
         </div>
     );
 }

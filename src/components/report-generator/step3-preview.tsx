@@ -21,8 +21,8 @@ import { getScadaData } from "@/app/actions/scada-actions";
 import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
-import { useConnection } from "../database/connection-provider";
 import { useAuth } from "../auth/auth-provider";
+import { isScadaDbConnected } from "@/services/client-database-service";
 
 type SortKey = keyof Omit<ScadaDataPoint, 'included' | 'id'>;
 
@@ -41,7 +41,6 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   const [currentPage, setCurrentPage] = React.useState(1);
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
-  const { status: connectionStatus } = useConnection();
   const hasFetched = React.useRef(false);
 
 
@@ -50,9 +49,6 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   }, [data, onValidated]);
 
   React.useEffect(() => {
-    // Only fetch if we have criteria and the connection is good.
-    // The `hasFetched` ref prevents re-fetching when navigating back to this step
-    // unless the criteria have changed.
     if (hasFetched.current) return;
 
     async function fetchSettingsAndData() {
@@ -61,14 +57,9 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
             return;
         };
         
-        if (connectionStatus === 'unconfigured') {
-            setError("Database credentials are not configured. Please set them in your user settings.");
-            setLoading(false);
-            return;
-        }
-
-        if (connectionStatus !== 'connected') {
-            setError("Database is not connected. Please check your settings.");
+        const connected = await isScadaDbConnected();
+        if (!connected) {
+            setError("Database is not configured or reachable. Please check your settings.");
             setLoading(false);
             return;
         }
@@ -78,11 +69,8 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         setData([]);
 
         try {
-            // This server action is now self-contained and authenticated.
             const scadaData = await getScadaData({ criteria });
             
-            // When fetching new data, intelligently merge it with any existing selections
-            // from the parent's `initialData` state.
             const enrichedData = scadaData.map(d => {
                 const existingRow = initialData?.scadaData.find(initial => initial.id === d.id);
                 return { ...d, included: existingRow ? existingRow.included : true };
@@ -92,7 +80,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
             if (scadaData.length === 0) {
                 setError("No data was returned from the database. Check your criteria and connection settings.");
             }
-            hasFetched.current = true; // Mark as fetched
+            hasFetched.current = true;
 
         } catch (e: any) {
             console.error("Failed to fetch SCADA data:", e);
@@ -102,7 +90,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         }
     }
     fetchSettingsAndData();
-  }, [criteria, user, initialData, connectionStatus]);
+  }, [criteria, user, initialData]);
 
   const handleIncludeToggle = (id: string) => {
     setData(prevData =>
@@ -161,7 +149,6 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
              <ScrollArea className="rounded-md border h-96">
                 <Table>
                 <TableHeader className="sticky top-0 bg-background z-10">
-                    {/* Simplified header for loading state */}
                     <TableRow>
                         <TableHead className="w-[50px]"><Skeleton className="h-4 w-4" /></TableHead>
                         <TableHead>Timestamp</TableHead>
@@ -312,5 +299,3 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     </div>
   );
 }
-
-    

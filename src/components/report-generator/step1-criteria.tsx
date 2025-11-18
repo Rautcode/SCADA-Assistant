@@ -23,10 +23,11 @@ import { getScadaTags } from "@/app/actions/scada-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
-import { useData } from "@/components/database/data-provider";
 import { useAuth } from "../auth/auth-provider";
+import { onMachines, onReportTemplates, isScadaDbConnected } from "@/services/client-database-service";
+import { Machine, ReportTemplate } from "@/lib/types/database";
+import { Unsubscribe } from "firebase/firestore";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -47,15 +48,37 @@ interface ReportStep1CriteriaProps {
 
 export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1CriteriaProps) {
   const [machineSearch, setMachineSearch] = React.useState("");
-  const { machines, loading: loadingMachines, templates } = useData();
-
+  const [machines, setMachines] = React.useState<Machine[]>([]);
+  const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
+  const [loadingMachines, setLoadingMachines] = React.useState(true);
+  
   const [parameterSearch, setParameterSearch] = React.useState("");
   const [availableParameters, setAvailableParameters] = React.useState<string[]>([]);
   const [loadingParameters, setLoadingParameters] = React.useState(false);
   const [parameterError, setParameterError] = React.useState<string | null>(null);
   
+  const [connectionStatus, setConnectionStatus] = React.useState<'loading' | 'connected' | 'unconfigured'>('loading');
   const { user } = useAuth();
-  const { status: connectionStatus } = useConnection();
+  
+  React.useEffect(() => {
+    const unsubscribers: Unsubscribe[] = [];
+    setLoadingMachines(true);
+
+    isScadaDbConnected().then(connected => {
+      setConnectionStatus(connected ? 'connected' : 'unconfigured');
+    });
+
+    unsubscribers.push(onMachines(machinesData => {
+        setMachines(machinesData);
+        setLoadingMachines(false);
+    }));
+
+    unsubscribers.push(onReportTemplates(templatesData => {
+        setTemplates(templatesData);
+    }));
+
+    return () => unsubscribers.forEach(unsub => unsub());
+  }, []);
 
 
   const form = useForm<ReportCriteriaFormValues>({
@@ -80,7 +103,6 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
             onValidated(null);
         }
     });
-    // On initial load, if the data is valid, notify parent immediately.
     if(formState.isValid) {
         onValidated(getValues());
     }
@@ -90,25 +112,16 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   
   React.useEffect(() => {
     async function fetchTags() {
-      if (!user || !selectedMachineIds || selectedMachineIds.length === 0) {
+      if (!user || !selectedMachineIds || selectedMachineIds.length === 0 || connectionStatus !== 'connected') {
         setAvailableParameters([]);
-        return;
-      }
-
-      if (connectionStatus !== 'connected') {
-        setAvailableParameters([]);
-        setParameterError("Database is not connected. Please configure it in Settings.");
-        setLoadingParameters(false);
         return;
       }
       
       setLoadingParameters(true);
       setParameterError(null);
-      // Immediately clear old parameters when selection changes
       setAvailableParameters([]);
       
       try {
-        // This action is now self-contained and authenticated.
         const tags = await getScadaTags({ machineIds: selectedMachineIds });
         setAvailableParameters(tags);
         if (tags.length === 0) {
@@ -124,7 +137,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
 
     const debounce = setTimeout(() => {
       fetchTags();
-    }, 300); // Add a small debounce
+    }, 300);
 
     return () => clearTimeout(debounce);
   }, [selectedMachineIds, user, connectionStatus]);
@@ -408,5 +421,3 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
   );
 }
-
-    

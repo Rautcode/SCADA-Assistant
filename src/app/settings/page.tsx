@@ -18,14 +18,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { testScadaConnection, getDbSchema, testSmtpConnection } from "@/app/actions/scada-actions";
-import { saveUserSettings } from "@/app/actions/settings-actions";
+import { saveUserSettings, getUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useConnection } from "@/components/database/connection-provider";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getUserSettings } from "../actions/settings-actions";
 import { useAuth } from "../auth/auth-provider";
 
 
@@ -34,7 +32,6 @@ type ConnectionStatus = 'untested' | 'testing' | 'success' | 'error';
 export default function SettingsPage() {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { refetch: refetchDbStatus } = useConnection();
     const [isLoading, setIsLoading] = React.useState(false);
     const [isFetching, setIsFetching] = React.useState(true);
     const { t, setLanguage } = useLocalization();
@@ -90,20 +87,17 @@ export default function SettingsPage() {
         if (dbConnectionStatus !== 'untested') {
             setDbConnectionStatus('untested');
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dbCredsWatched]);
+    }, [dbCredsWatched, dbConnectionStatus]);
 
     React.useEffect(() => {
         if (smtpConnectionStatus !== 'untested') {
             setSmtpConnectionStatus('untested');
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [smtpCredsWatched]);
+    }, [smtpCredsWatched, smtpConnectionStatus]);
 
     React.useEffect(() => {
         if (!user) return;
         setIsFetching(true);
-        // This server action is now authenticated.
         getUserSettings()
             .then(settings => {
                 if (settings) {
@@ -130,7 +124,6 @@ export default function SettingsPage() {
 
         setIsLoading(true);
         try {
-            // The user ID is now handled on the server, so we just pass the settings.
             const result = await saveUserSettings(values);
 
             if (result.success) {
@@ -141,7 +134,6 @@ export default function SettingsPage() {
                 
                 applyTheme(values.theme);
                 setLanguage(values.language);
-                refetchDbStatus();
 
             } else {
                 throw new Error(result.error || "Could not save your settings.");
@@ -158,8 +150,10 @@ export default function SettingsPage() {
         setIsTestingDbConnection(true);
         setDbConnectionStatus('testing');
 
+        // We must save the settings first for the server action to use them.
+        await onSubmit(form.getValues());
+
         try {
-            // This action is now fully authenticated and self-contained.
             const result = await testScadaConnection();
             if (result.success) {
                 setDbConnectionStatus('success');
@@ -190,7 +184,6 @@ export default function SettingsPage() {
     async function handleFetchSchema() {
         setIsFetchingSchema(true);
         try {
-            // This action is now self-contained and authenticated.
             const schema = await getDbSchema();
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
@@ -206,8 +199,9 @@ export default function SettingsPage() {
         setIsTestingSmtpConnection(true);
         setSmtpConnectionStatus('testing');
 
+        // We must save the settings first for the server action to use them.
+        await onSubmit(form.getValues());
         try {
-            // This action is now self-contained and authenticated.
             const result = await testSmtpConnection();
             if (result.success) {
                 setSmtpConnectionStatus('success');

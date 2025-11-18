@@ -4,6 +4,7 @@
 import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
 import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, ScheduledTask, SystemComponentStatus, SystemLog } from '@/lib/types/database';
+import { getUserSettings } from '@/app/actions/settings-actions';
 
 function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, count?: number): Unsubscribe {
     if (!db) {
@@ -86,11 +87,24 @@ export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Un
     return createListener<ScheduledTask>('scheduledTasks', callback, 'scheduledTime');
 }
 
-// These are now the centralized listeners for shared data.
 export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe {
     return createListener<Machine>('machines', callback, 'name');
 }
 
 export function onReportTemplates(callback: (templates: ReportTemplate[]) => void): Unsubscribe {
     return createListener<ReportTemplate>('reportTemplates', callback, 'lastModified');
+}
+
+
+// A one-time check for SCADA DB connectivity
+export async function isScadaDbConnected(): Promise<boolean> {
+    try {
+        const settings = await getUserSettings();
+        if (!settings?.database?.server || !settings?.database?.databaseName) {
+            return false;
+        }
+        return true;
+    } catch {
+        return false;
+    }
 }
