@@ -72,25 +72,19 @@ seedDefaultData();
 export async function saveUserSettingsToDb(userId: string, settings: Omit<UserSettings, 'userId'>) {
     const db = await getDb();
     const settingsRef = doc(db, 'userSettings', userId);
+    // The client sends the entire settings object, which is now nested.
+    // We save it directly under the user's ID.
     await setDoc(settingsRef, settings, { merge: true });
 }
 
 export async function getSystemSettingsFromDb(): Promise<UserSettings | null> {
-    // This is a dedicated function to get system-wide settings, e.g., for system emails.
-    // It fetches from a specific document ID 'system'.
     const db = await getDb();
     const settingsRef = doc(db, 'userSettings', 'system');
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
-        const data = docSnap.data();
-        return {
-            userId: 'system',
-            ...data,
-            email: data.email || {},
-            notifications: data.notifications || {},
-            database: data.database || {},
-            dataMapping: data.dataMapping || {},
-        } as UserSettings;
+        const data = docSnap.data() as UserSettings;
+        // Return the whole document, which is the UserSettings object.
+        return data;
     }
     return null;
 }
@@ -102,16 +96,8 @@ export async function getUserSettingsFromDb(userId: string): Promise<UserSetting
     const settingsRef = doc(db, 'userSettings', userId);
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
-        const data = docSnap.data();
-        // Ensure nested objects exist to prevent client-side errors
-        return { 
-            userId,
-            ...data,
-            database: data.database || {},
-            email: data.email || {},
-            dataMapping: data.dataMapping || {},
-            notifications: data.notifications || {},
-        } as UserSettings;
+        // The document's data is the UserSettings object itself.
+        return docSnap.data() as UserSettings;
     }
     return null;
 }
@@ -190,3 +176,5 @@ export async function addEmailLogToDb(log: Omit<any, 'id' | 'timestamp'>) {
         timestamp: serverTimestamp(),
     });
 }
+
+    

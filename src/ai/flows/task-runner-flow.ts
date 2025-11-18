@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for running scheduled tasks.
@@ -76,6 +77,7 @@ export const runScheduledTasksFlow = defineFlow(
           throw new Error(`Settings not found for user ${task.userId}. Cannot run task.`);
         }
 
+        // Correctly access nested settings
         const { apiKey, database: dbCreds, dataMapping, notifications, email: emailSettings } = userSettings;
         
         if (!apiKey || !dbCreds || !dataMapping) {
@@ -153,3 +155,5 @@ export const runScheduledTasksFlow = defineFlow(
     };
   }
 );
+
+    

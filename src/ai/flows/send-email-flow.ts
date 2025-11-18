@@ -55,18 +55,25 @@ export const sendEmail = defineFlow(
     let smtpSettings: z.infer<typeof emailSettingsSchema> | undefined | null;
     let notificationEnabled = true;
     let fromAddress: string;
+    
+    // The settings object now nests all config under a 'settings' property.
+    // Fetch the correct settings object based on userId.
+    const settingsContainer = userId === 'system' 
+        ? await getSystemSettingsFromDb() 
+        : await getUserSettingsFromDb(userId);
 
-    if (userId === 'system') {
-        const systemSettings = await getSystemSettingsFromDb();
-        smtpSettings = systemSettings?.email;
-        fromAddress = `SCADA Assistant <${smtpSettings?.smtpUser || 'noreply@scada.local'}>`;
-    } else {
-        // User-specific emails respect the user's notification preferences.
-        const userSettings = await getUserSettingsFromDb(userId);
-        smtpSettings = userSettings?.email;
-        notificationEnabled = userSettings?.notifications?.email ?? false;
-        fromAddress = `SCADA Assistant <${smtpSettings?.smtpUser || 'noreply@scada.local'}>`;
+    if (!settingsContainer) {
+        const errorMsg = `Settings not found for user '${userId}'. Cannot send email.`;
+        console.error(errorMsg);
+        await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
+        return { success: false, error: "Could not retrieve user settings." };
     }
+
+    smtpSettings = settingsContainer.email;
+    notificationEnabled = settingsContainer.notifications?.email ?? false;
+
+    // Use a default from address if none is configured
+    fromAddress = `SCADA Assistant <${smtpSettings?.smtpUser || 'noreply@scada.local'}>`;
     
     if (!notificationEnabled) {
         const skipMsg = `Email notifications are disabled for user ${userId}. Skipping email to ${to}.`;
@@ -128,3 +135,5 @@ export const sendEmail = defineFlow(
     }
   }
 );
+
+    
