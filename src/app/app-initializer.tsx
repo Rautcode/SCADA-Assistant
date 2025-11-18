@@ -3,19 +3,37 @@
 import { type ReactNode, useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useLocalization } from '@/components/localization/localization-provider';
-import { getUserSettings } from './actions/scada-actions';
+import { getUserSettings } from './actions/settings-actions';
 
-// This is a new client component to handle client-side effects like fetching settings.
+// This function can be used to apply theme changes dynamically.
+export function applyTheme(theme: string) {
+  const root = window.document.documentElement;
+  root.classList.remove("light", "dark");
+
+  if (theme === "system") {
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    root.classList.add(systemTheme);
+    return;
+  }
+
+  root.classList.add(theme);
+}
+
+
+// This is a client component to handle client-side effects like fetching settings.
 export function AppInitializer({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { setLanguage } = useLocalization();
 
   useEffect(() => {
     if (user) {
-      getUserSettings({ userId: user.uid })
+      getUserSettings()
         .then(settings => {
           if (settings?.language) {
             setLanguage(settings.language);
+          }
+          if (settings?.theme) {
+            applyTheme(settings.theme);
           }
         })
         .catch(error => {
