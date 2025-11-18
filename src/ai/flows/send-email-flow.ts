@@ -11,7 +11,7 @@ import * as nodemailer from 'nodemailer';
 import { addEmailLogToDb, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
 import { emailSettingsSchema } from '@/lib/types/database';
 import { SendEmailInput } from '@/lib/types/flows';
-import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
+import { defineFlow } from 'genkit';
 
 
 // Define an options object for the flow to allow for auth override from backend flows.
@@ -22,11 +22,14 @@ const SendEmailFlowOptionsSchema = z.object({
 
 // This is the primary email sending flow for the entire application.
 // It is now an AUTHENTICATED flow, preventing anonymous access.
-export const sendEmail = defineAuthenticatedFlow(
+export const sendEmail = defineFlow(
   {
     name: 'sendEmailFlow',
     inputSchema: SendEmailInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
+    auth: {
+      required: true,
+    }
   },
   async (input, { auth, flowOptions }) => {
     const { to, subject, text, html } = input;
@@ -125,3 +128,5 @@ export const sendEmail = defineAuthenticatedFlow(
     }
   }
 );
+
+    

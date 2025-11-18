@@ -13,7 +13,7 @@ import { getScadaData } from '@/app/actions/scada-actions';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
-import { defineFlow } from 'genkit/flow';
+import { defineFlow } from 'genkit';
 
 const ScadaDataPointSchema = z.object({
   id: z.string(),
@@ -153,3 +153,5 @@ export const runScheduledTasksFlow = defineFlow(
     };
   }
 );
+
+    

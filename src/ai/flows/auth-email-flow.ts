@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An unauthenticated Genkit flow for sending system-level emails (e.g., password reset).
@@ -8,8 +9,7 @@ import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
 import { AuthEmailInput } from '@/lib/types/flows';
 import { addEmailLogToDb, getSystemSettingsFromDb } from '@/services/database-service';
-import { defineFlow } from 'genkit/flow';
-import { emailSettingsSchema } from '@/lib/types/database';
+import { defineFlow } from 'genkit';
 
 // This is an UNAUTHENTICATED flow. It should only be used for system-level actions
 // like password resets where the user is not logged in.
@@ -86,3 +86,5 @@ export const sendAuthEmail = defineFlow(
     }
   }
 );
+
+    

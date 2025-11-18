@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
+import { defineFlow } from 'genkit';
 import { getUserSettingsFromDb } from '@/services/database-service';
 
 
@@ -50,11 +50,14 @@ Return your suggestions in the specified output format.`,
 });
 
 // This is now an AUTHENTICATED flow.
-const suggestChartStyleFlow = defineAuthenticatedFlow(
+const suggestChartStyleFlow = defineFlow(
   {
     name: 'suggestChartStyleFlow',
     inputSchema: SuggestChartStyleInputSchema,
     outputSchema: ChartStyleSuggestionSchema,
+    auth: {
+      required: true,
+    }
   },
   async ({ promptText }, { auth }) => {
     
@@ -83,3 +86,5 @@ const suggestChartStyleFlow = defineAuthenticatedFlow(
     return output;
   }
 );
+
+    

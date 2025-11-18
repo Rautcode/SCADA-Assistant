@@ -7,7 +7,7 @@ import nodemailer from 'nodemailer';
 import { reportCriteriaSchema } from "@/components/report-generator/step1-criteria";
 import { z } from "zod";
 import { dataMappingSchema, emailSettingsSchema } from "@/lib/types/database";
-import { auth } from "@/auth"; // <-- Import auth from next-auth
+import { getAuthenticatedUser } from '@genkit-ai/next/lib/auth';
 import { getUserSettingsFromDb } from "@/services/database-service";
 
 
@@ -61,11 +61,11 @@ type GetScadaDataInput = {
     criteria: z.infer<typeof reportCriteriaSchema>;
 }
 export async function getScadaData({ criteria }: GetScadaDataInput): Promise<ScadaDataPoint[]> {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
         throw new Error("User is not authenticated.");
     }
-    const userId = session.user.id;
+    const userId = user.uid;
 
     console.log(`Fetching SCADA data for user ${userId} with criteria:`, criteria);
 
@@ -185,11 +185,11 @@ type GetScadaTagsInput = {
     machineIds: string[];
 }
 export async function getScadaTags({ machineIds }: GetScadaTagsInput): Promise<string[]> {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
         throw new Error("User is not authenticated.");
     }
-    const userId = session.user.id;
+    const userId = user.uid;
 
     console.log(`Fetching SCADA tags for user ${userId}, machines:`, machineIds);
     if (!machineIds || machineIds.length === 0) {
@@ -263,11 +263,11 @@ export async function getScadaTags({ machineIds }: GetScadaTagsInput): Promise<s
 // Server Action to get DB schema
 // This action is now fully self-contained and authenticated.
 export async function getDbSchema(): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
         throw new Error("User is not authenticated.");
     }
-    const userId = session.user.id;
+    const userId = user.uid;
 
     console.log(`Fetching DB schema for user ${userId}...`);
 
@@ -316,11 +316,11 @@ export async function getDbSchema(): Promise<{ tables: string[], columns: { [key
 // Server Action to test SCADA connection
 // This action is now fully self-contained and authenticated.
 export async function testScadaConnection(): Promise<{ success: boolean, error?: string }> {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
         return { success: false, error: "User is not authenticated." };
     }
-    const userId = session.user.id;
+    const userId = user.uid;
 
     console.log(`Testing SCADA DB connection for user ${userId}...`);
 
@@ -364,11 +364,11 @@ export async function testScadaConnection(): Promise<{ success: boolean, error?:
 // Server Action to test SMTP connection
 // This action is now fully self-contained and authenticated.
 export async function testSmtpConnection(): Promise<{ success: boolean, error?: string }> {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
         return { success: false, error: "User is not authenticated." };
     }
-    const userId = session.user.id;
+    const userId = user.uid;
 
     console.log(`Testing SMTP connection for user ${userId}...`);
 
@@ -404,5 +404,7 @@ export async function testSmtpConnection(): Promise<{ success: boolean, error?: 
         return { success: false, error: "SMTP connection failed. Check credentials and firewall rules." };
     }
 }
-
       
+    
+
+    

@@ -1,10 +1,11 @@
+
 'use server';
 /**
  * @fileOverview A secure, authenticated Genkit flow for scheduling new tasks.
  */
 
 import { z } from 'zod';
-import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
+import { defineFlow } from 'genkit';
 import { scheduleNewTaskInDb } from '@/services/database-service';
 
 // Schema for client-side input. It does not include userId.
@@ -22,11 +23,14 @@ export async function scheduleTask(input: ScheduleTaskInput): Promise<void> {
 
 // This is an AUTHENTICATED flow.
 // It uses the secure `auth` context to get the user's ID.
-export const scheduleTaskFlow = defineAuthenticatedFlow(
+export const scheduleTaskFlow = defineFlow(
   {
     name: 'scheduleTaskFlow',
     inputSchema: ScheduleTaskInputSchema,
     outputSchema: z.void(),
+    auth: {
+      required: true,
+    }
   },
   async (input, { auth }) => {
     // The userId is from the secure, verified `auth` context, not from client input.
@@ -42,3 +46,5 @@ export const scheduleTaskFlow = defineAuthenticatedFlow(
     await scheduleNewTaskInDb(taskWithUser);
   }
 );
+
+    
