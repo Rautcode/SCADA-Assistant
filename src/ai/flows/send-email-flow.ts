@@ -56,21 +56,21 @@ export const sendEmail = defineFlow(
     let notificationEnabled = true;
     let fromAddress: string;
     
-    // The settings object now nests all config under a 'settings' property.
     // Fetch the correct settings object based on userId.
-    const settingsContainer = userId === 'system' 
+    const userSettings = userId === 'system' 
         ? await getSystemSettingsFromDb() 
         : await getUserSettingsFromDb(userId);
 
-    if (!settingsContainer) {
+    if (!userSettings) {
         const errorMsg = `Settings not found for user '${userId}'. Cannot send email.`;
         console.error(errorMsg);
         await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
         return { success: false, error: "Could not retrieve user settings." };
     }
 
-    smtpSettings = settingsContainer.email;
-    notificationEnabled = settingsContainer.notifications?.email ?? false;
+    // Correctly access nested settings
+    smtpSettings = userSettings.email;
+    notificationEnabled = userSettings.notifications?.email ?? false;
 
     // Use a default from address if none is configured
     fromAddress = `SCADA Assistant <${smtpSettings?.smtpUser || 'noreply@scada.local'}>`;
@@ -135,5 +135,3 @@ export const sendEmail = defineFlow(
     }
   }
 );
-
-    

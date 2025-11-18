@@ -351,5 +351,3 @@ export async function testSmtpConnection({ emailCreds }: { emailCreds: SmtpCrede
         return { success: false, error: "SMTP connection failed. Check credentials and firewall rules." };
     }
 }
-
-    

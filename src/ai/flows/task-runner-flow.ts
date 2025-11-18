@@ -120,10 +120,10 @@ export const runScheduledTasksFlow = defineFlow(
         const reportResult = await generateReport(reportInput);
 
         // If email notifications are enabled for the user, send the report.
-        if (notifications?.email && emailSettings?.smtpUser && userSettings.email?.smtpUser) {
+        if (notifications?.email && emailSettings?.smtpUser) {
             const emailResult = await sendEmail(
                 {
-                    to: userSettings.email.smtpUser,
+                    to: emailSettings.smtpUser,
                     subject: `Your Scheduled Report: "${task.name}"`,
                     text: `Attached is your automated report: ${task.name}.\n\n${reportResult.reportContent}`,
                     html: `<p>Attached is your automated report: <strong>${task.name}</strong>.</p><hr/><pre>${reportResult.reportContent}</pre>`,
@@ -155,5 +155,3 @@ export const runScheduledTasksFlow = defineFlow(
     };
   }
 );
-
-    

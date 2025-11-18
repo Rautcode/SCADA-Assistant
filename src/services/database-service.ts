@@ -72,8 +72,7 @@ seedDefaultData();
 export async function saveUserSettingsToDb(userId: string, settings: Omit<UserSettings, 'userId'>) {
     const db = await getDb();
     const settingsRef = doc(db, 'userSettings', userId);
-    // The client sends the entire settings object, which is now nested.
-    // We save it directly under the user's ID.
+    // The client sends the entire settings object. We persist it directly.
     await setDoc(settingsRef, settings, { merge: true });
 }
 
@@ -82,9 +81,8 @@ export async function getSystemSettingsFromDb(): Promise<UserSettings | null> {
     const settingsRef = doc(db, 'userSettings', 'system');
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
-        const data = docSnap.data() as UserSettings;
-        // Return the whole document, which is the UserSettings object.
-        return data;
+        // Correctly return the nested settings object.
+        return docSnap.data() as UserSettings;
     }
     return null;
 }
@@ -96,7 +94,7 @@ export async function getUserSettingsFromDb(userId: string): Promise<UserSetting
     const settingsRef = doc(db, 'userSettings', userId);
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
-        // The document's data is the UserSettings object itself.
+        // Correctly return the nested settings object.
         return docSnap.data() as UserSettings;
     }
     return null;
@@ -176,5 +174,3 @@ export async function addEmailLogToDb(log: Omit<any, 'id' | 'timestamp'>) {
         timestamp: serverTimestamp(),
     });
 }
-
-    
