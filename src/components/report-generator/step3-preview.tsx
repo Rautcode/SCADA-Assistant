@@ -68,6 +68,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         }
 
         if (connectionStatus !== 'connected') {
+            setError("Database is not connected. Please check your settings.");
             setLoading(false);
             return;
         }
@@ -311,3 +312,5 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     </div>
   );
 }
+
+    
