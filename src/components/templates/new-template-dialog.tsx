@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createNewTemplate } from '@/ai/flows/template-flow';
 import imageData from '@/app/lib/placeholder-images.json';
+import { useAuth } from '../auth/auth-provider';
 
 const NewTemplateSchema = z.object({
     name: z.string().min(1, "Template name is required."),
@@ -28,6 +29,7 @@ interface NewTemplateDialogProps {
 export function NewTemplateDialog({ open, onOpenChange }: NewTemplateDialogProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = React.useState(false);
+    const { user } = useAuth();
 
     const form = useForm<z.infer<typeof NewTemplateSchema>>({
         resolver: zodResolver(NewTemplateSchema),
@@ -41,6 +43,17 @@ export function NewTemplateDialog({ open, onOpenChange }: NewTemplateDialogProps
     
     async function onSubmit(values: z.infer<typeof NewTemplateSchema>) {
         setIsLoading(true);
+
+        if (!user) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be logged in to create a template.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
+
         try {
             await createNewTemplate(values);
             toast({
@@ -53,7 +66,7 @@ export function NewTemplateDialog({ open, onOpenChange }: NewTemplateDialogProps
             console.error("Failed to create template:", error);
             toast({
                 title: "Creation Failed",
-                description: "An error occurred while creating the template.",
+                description: "An error occurred while creating the template. You may need to log in again.",
                 variant: "destructive",
             });
         } finally {

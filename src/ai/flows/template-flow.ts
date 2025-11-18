@@ -1,11 +1,11 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for creating new report templates.
+ * @fileOverview An authenticated Genkit flow for creating new report templates.
  */
 
-import { ai } from '@/ai/genkit';
 import { createNewTemplateInDb } from '@/services/database-service';
+import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
 import { z } from 'genkit';
 
 const NewTemplateSchema = z.object({
@@ -20,7 +20,8 @@ export async function createNewTemplate(template: NewTemplate) {
     return createNewTemplateFlow(template);
 }
 
-const createNewTemplateFlow = ai.defineFlow(
+// This flow is now authenticated to prevent anonymous database writes.
+const createNewTemplateFlow = defineAuthenticatedFlow(
     {
         name: 'createNewTemplateFlow',
         inputSchema: NewTemplateSchema,

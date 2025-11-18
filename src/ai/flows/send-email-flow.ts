@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A secure, robust Genkit flow for sending emails.
+ * @fileOverview A secure, robust, and AUTHENTICATED Genkit flow for sending emails.
  * It can be called by an authenticated user from the client, or by another
  * trusted backend flow (like the task runner) with an auth override.
  */
@@ -11,8 +11,7 @@ import * as nodemailer from 'nodemailer';
 import { addEmailLogToDb, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
 import { emailSettingsSchema } from '@/lib/types/database';
 import { SendEmailInput } from '@/lib/types/flows';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
-import { defineFlow } from 'genkit/flow';
+import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
 
 
 // Define an options object for the flow to allow for auth override from backend flows.
@@ -22,14 +21,14 @@ const SendEmailFlowOptionsSchema = z.object({
 
 
 // This is the primary email sending flow for the entire application.
-export const sendEmail = defineFlow(
+// It is now an AUTHENTICATED flow, preventing anonymous access.
+export const sendEmail = defineAuthenticatedFlow(
   {
     name: 'sendEmailFlow',
     inputSchema: SendEmailInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
-    // The second argument to a flow is an options object.
   },
-  async (input, flowOptions) => {
+  async (input, { auth, flowOptions }) => {
     const { to, subject, text, html } = input;
     
     // Parse the flow options to check for an auth override.
@@ -39,16 +38,12 @@ export const sendEmail = defineFlow(
 
     if (options.authOverride) {
       // If an auth override is provided, this flow is being called by a trusted backend service.
-      // We use the provided UID (e.g., 'system' or a user's ID for a scheduled task).
+      // We use the provided UID (e.g., a user's ID for a scheduled task).
       userId = options.authOverride.uid;
       console.log(`sendEmailFlow running with auth override for user: ${userId}`);
     } else {
       // If no override, this is a standard client-side request.
-      // We securely get the authenticated user's ID.
-      const auth = await getAuthenticatedUser();
-      if (!auth) {
-        return { success: false, error: "User is not authenticated." };
-      }
+      // We securely get the authenticated user's ID from the context.
       userId = auth.uid;
     }
 
@@ -56,10 +51,7 @@ export const sendEmail = defineFlow(
     let notificationEnabled = true;
     let fromAddress: string;
     
-    // Fetch the correct settings object based on userId.
-    const userSettings = userId === 'system' 
-        ? await getSystemSettingsFromDb() 
-        : await getUserSettingsFromDb(userId);
+    const userSettings = await getUserSettingsFromDb(userId);
 
     if (!userSettings) {
         const errorMsg = `Settings not found for user '${userId}'. Cannot send email.`;
@@ -86,9 +78,7 @@ export const sendEmail = defineFlow(
       const errorMsg = `SMTP settings are not configured for user '${userId}'. Cannot send email.`;
       console.error(errorMsg);
       await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
-      const clientError = userId === 'system' 
-        ? "System email notifications are not configured."
-        : "Your SMTP settings are not configured. Please configure them in Settings.";
+      const clientError = "Your SMTP settings are not configured. Please configure them in Settings.";
       return { success: false, error: clientError };
     }
 
