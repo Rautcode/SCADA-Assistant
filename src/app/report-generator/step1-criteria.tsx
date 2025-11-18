@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, ListFilter, BarChartBig, Search, AlertTriangle, ChevronsUpDown, Settings } from "lucide-react";
+import { Calendar as CalendarIcon, BarChartBig, Search, AlertTriangle, ChevronsUpDown, Settings } from "lucide-react";
 import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
@@ -18,16 +18,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
-import { Machine, ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "../ui/skeleton";
 import { getScadaTags } from "@/app/actions/scada-actions";
-import { getUserSettings, getReportTemplates, getMachines } from "@/app/actions/settings-actions";
-import { useAuth } from "../auth/auth-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
+import { useData } from "@/components/database/data-provider";
+import { useSession } from "next-auth/react";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -42,23 +41,20 @@ export const reportCriteriaSchema = z.object({
 type ReportCriteriaFormValues = z.infer<typeof reportCriteriaSchema>;
 
 interface ReportStep1CriteriaProps {
-  onValidated: (data: ReportCriteriaFormValues) => void;
+  onValidated: (data: ReportCriteriaFormValues | null) => void;
   initialData: ReportCriteriaFormValues | null;
 }
 
 export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1CriteriaProps) {
   const [machineSearch, setMachineSearch] = React.useState("");
-  const [allMachines, setAllMachines] = React.useState<Machine[]>([]);
-  const [loadingMachines, setLoadingMachines] = React.useState(true);
+  const { machines, loading: loadingMachines, templates } = useData();
 
   const [parameterSearch, setParameterSearch] = React.useState("");
   const [availableParameters, setAvailableParameters] = React.useState<string[]>([]);
   const [loadingParameters, setLoadingParameters] = React.useState(false);
   const [parameterError, setParameterError] = React.useState<string | null>(null);
-
-  const [reportTemplates, setReportTemplates] = React.useState<ReportTemplate[]>([]);
   
-  const { user } = useAuth();
+  const { data: session } = useSession();
   const { status: connectionStatus } = useConnection();
 
 
@@ -70,36 +66,31 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       reportType: "Production",
       parameterIds: [],
     },
+    mode: "onChange",
   });
   
-  const selectedMachineIds = form.watch("machineIds");
+  const { formState, watch, getValues } = form;
+  const selectedMachineIds = watch("machineIds");
 
   React.useEffect(() => {
-    const subscription = form.watch((value) => {
-        if (form.formState.isValid) {
-            onValidated(value as ReportCriteriaFormValues);
+    const subscription = watch(() => {
+        if (formState.isValid) {
+            onValidated(getValues());
+        } else {
+            onValidated(null);
         }
     });
-    if (initialData) {
-        onValidated(initialData);
+    // On initial load, if the data is valid, notify parent immediately.
+    if(formState.isValid) {
+        onValidated(getValues());
     }
     return () => subscription.unsubscribe();
-  }, [form, onValidated, initialData]);
+  }, [watch, formState, getValues, onValidated]);
 
-  React.useEffect(() => {
-    setLoadingMachines(true);
-    getMachines().then(machines => {
-        setAllMachines(machines);
-        setLoadingMachines(false);
-    });
-    getReportTemplates().then(templates => {
-        setReportTemplates(templates);
-    });
-  }, []);
   
   React.useEffect(() => {
     async function fetchTags() {
-      if (!user || !selectedMachineIds || selectedMachineIds.length === 0) {
+      if (!session || !selectedMachineIds || selectedMachineIds.length === 0) {
         setAvailableParameters([]);
         return;
       }
@@ -117,16 +108,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       setAvailableParameters([]);
       
       try {
-        const settings = await getUserSettings({ userId: user.uid });
-        const creds = settings?.database;
-        const mapping = settings?.dataMapping;
-
-        if (!creds?.server || !creds?.databaseName || !mapping?.table || !mapping.machineColumn || !mapping.parameterColumn) {
-            setParameterError("Database credentials or data mappings are not set. Please configure them in Settings.");
-            return;
-        }
-
-        const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds, mapping });
+        // This action is now self-contained and authenticated.
+        const tags = await getScadaTags({ machineIds: selectedMachineIds });
         setAvailableParameters(tags);
         if (tags.length === 0) {
             setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
@@ -144,10 +127,10 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     }, 300); // Add a small debounce
 
     return () => clearTimeout(debounce);
-  }, [selectedMachineIds, user, connectionStatus]);
+  }, [selectedMachineIds, session, connectionStatus]);
 
 
-  const filteredMachines = allMachines.filter(machine => 
+  const filteredMachines = machines.filter(machine => 
     machine.name.toLowerCase().includes(machineSearch.toLowerCase())
   );
 
@@ -156,8 +139,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   );
 
   const templateCategories = React.useMemo(() => 
-    [...new Set(reportTemplates.map(t => t.category))]
-  , [reportTemplates]);
+    [...new Set(templates.map(t => t.category))]
+  , [templates]);
   
   const ConnectionError = ({ title, message, isSubtle }: { title: string; message: string, isSubtle?: boolean }) => (
     <div className="p-4">
@@ -425,3 +408,5 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
   );
 }
+
+      

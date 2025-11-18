@@ -2,10 +2,9 @@
 "use client";
 
 import * as React from 'react';
-import { useAuth } from '@/components/auth/auth-provider';
 import { getUserSettings } from '@/app/actions/settings-actions';
 import { testScadaConnection } from '@/app/actions/scada-actions';
-import type { ScadaDbCredentials } from '@/app/actions/scada-actions';
+import { useAuth } from '../auth/auth-provider';
 
 type ConnectionStatus = 'loading' | 'connected' | 'error' | 'unconfigured';
 
@@ -19,17 +18,21 @@ interface ConnectionContextType {
 const ConnectionContext = React.createContext<ConnectionContextType | undefined>(undefined);
 
 export function ConnectionProvider({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [status, setStatus] = React.useState<ConnectionStatus>('loading');
     const [error, setError] = React.useState<string | null>(null);
     const [loading, setLoading] = React.useState(true);
 
     const testConnection = React.useCallback(async () => {
-        if (!user) {
-            // If there's no user, we are not strictly unconfigured, but we can't connect.
-            // 'loading' is a safe state until user status is resolved.
+        if (authLoading) {
             setStatus('loading');
             setLoading(true);
+            return;
+        }
+        if (!user) {
+            setStatus('unconfigured');
+            setLoading(false);
+            setError("User not authenticated.");
             return;
         }
 
@@ -38,24 +41,17 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
         setError(null);
 
         try {
-            const settings = await getUserSettings({ userId: user.uid });
-            const dbSettings = settings?.database;
+            // This action is authenticated and fetches settings securely on the server
+            const settings = await getUserSettings();
 
-            if (!dbSettings?.server || !dbSettings?.databaseName) {
+            if (!settings?.database?.server || !settings?.database?.databaseName) {
                 setStatus('unconfigured');
                 setError("Database server or name not configured.");
                 return;
             }
-            
-            // Explicitly create the credentials object to pass to the server action
-            const dbCreds: ScadaDbCredentials = {
-                server: dbSettings.server,
-                databaseName: dbSettings.databaseName,
-                user: dbSettings.user,
-                password: dbSettings.password,
-            };
 
-            const result = await testScadaConnection({ dbCreds });
+            // This action is also authenticated and uses the settings from the DB.
+            const result = await testScadaConnection();
 
             if (result.success) {
                 setStatus('connected');
@@ -70,7 +66,7 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, authLoading]);
 
     React.useEffect(() => {
         testConnection();

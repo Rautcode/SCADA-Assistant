@@ -16,16 +16,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { testScadaConnection, getDbSchema, testSmtpConnection } from "@/app/actions/scada-actions";
-import { getUserSettings, saveUserSettings } from "@/app/actions/settings-actions";
+import { saveUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useConnection } from "@/components/database/connection-provider";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getUserSettings } from "../actions/settings-actions";
+import { useAuth } from "../auth/auth-provider";
 
 
 type ConnectionStatus = 'untested' | 'testing' | 'success' | 'error';
@@ -102,7 +103,8 @@ export default function SettingsPage() {
     React.useEffect(() => {
         if (!user) return;
         setIsFetching(true);
-        getUserSettings({ userId: user.uid })
+        // This server action is now authenticated.
+        getUserSettings()
             .then(settings => {
                 if (settings) {
                     form.reset(settings);
@@ -128,7 +130,8 @@ export default function SettingsPage() {
 
         setIsLoading(true);
         try {
-            const result = await saveUserSettings({ userId: user.uid, settings: values });
+            // The user ID is now handled on the server, so we just pass the settings.
+            const result = await saveUserSettings(values);
 
             if (result.success) {
                 toast({
@@ -152,21 +155,12 @@ export default function SettingsPage() {
     }
     
     async function handleTestDbConnection() {
-        const dbCreds = form.getValues('database');
-        if (!dbCreds?.server || !dbCreds?.databaseName) {
-            toast({
-                title: "Missing Information",
-                description: "Please provide a server address and database name.",
-                variant: "destructive"
-            });
-            return;
-        }
-
         setIsTestingDbConnection(true);
         setDbConnectionStatus('testing');
 
         try {
-            const result = await testScadaConnection({ dbCreds });
+            // This action is now fully authenticated and self-contained.
+            const result = await testScadaConnection();
             if (result.success) {
                 setDbConnectionStatus('success');
                 toast({
@@ -194,14 +188,10 @@ export default function SettingsPage() {
     }
     
     async function handleFetchSchema() {
-        const dbCreds = form.getValues('database');
-        if (!dbCreds?.server || !dbCreds?.databaseName) {
-            toast({ title: "Missing Credentials", description: "Please enter and save database credentials first.", variant: "destructive" });
-            return;
-        }
         setIsFetchingSchema(true);
         try {
-            const schema = await getDbSchema({ dbCreds });
+            // This action is now self-contained and authenticated.
+            const schema = await getDbSchema();
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
@@ -213,21 +203,12 @@ export default function SettingsPage() {
     }
 
     async function handleTestSmtpConnection() {
-        const emailCreds = form.getValues('email');
-        if (!emailCreds?.smtpHost || !emailCreds?.smtpPort || !emailCreds?.smtpUser) {
-            toast({
-                title: "Missing Information",
-                description: "Please provide SMTP host, port, and user.",
-                variant: "destructive"
-            });
-            return;
-        }
-
         setIsTestingSmtpConnection(true);
         setSmtpConnectionStatus('testing');
 
         try {
-            const result = await testSmtpConnection({ emailCreds });
+            // This action is now self-contained and authenticated.
+            const result = await testSmtpConnection();
             if (result.success) {
                 setSmtpConnectionStatus('success');
                 toast({
@@ -729,5 +710,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    

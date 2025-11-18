@@ -22,7 +22,7 @@ import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
 import { useConnection } from "../database/connection-provider";
-import { useAuth } from "../auth/auth-provider";
+import { useSession } from "next-auth/react";
 
 type SortKey = keyof Omit<ScadaDataPoint, 'included' | 'id'>;
 
@@ -40,7 +40,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = React.useState(1);
   const [error, setError] = React.useState<string | null>(null);
-  const { user } = useAuth();
+  const { data: session } = useSession();
   const { status: connectionStatus } = useConnection();
   const hasFetched = React.useRef(false);
 
@@ -56,7 +56,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     if (hasFetched.current) return;
 
     async function fetchSettingsAndData() {
-        if (!user || !criteria) {
+        if (!session || !criteria) {
             setLoading(false);
             return;
         };
@@ -101,7 +101,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         }
     }
     fetchSettingsAndData();
-  }, [criteria, user, initialData, connectionStatus]);
+  }, [criteria, session, initialData, connectionStatus]);
 
   const handleIncludeToggle = (id: string) => {
     setData(prevData =>
@@ -311,3 +311,5 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     </div>
   );
 }
+
+      

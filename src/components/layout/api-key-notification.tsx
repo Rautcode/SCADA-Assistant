@@ -6,23 +6,27 @@ import Link from 'next/link';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { KeyRound, Settings } from 'lucide-react';
-import { useAuth } from '../auth/auth-provider';
 import { getUserSettings } from '@/app/actions/settings-actions';
 import { Skeleton } from '../ui/skeleton';
+import { useAuth } from '../auth/auth-provider';
 
 export function ApiKeyNotification() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [apiKey, setApiKey] = React.useState<string | undefined>(undefined);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
+        if (authLoading) {
+            return;
+        }
         if (!user) {
             setLoading(false);
             return;
         }
         
         setLoading(true);
-        getUserSettings({ userId: user.uid })
+        // This server action is authenticated.
+        getUserSettings()
             .then(settings => {
                 setApiKey(settings?.apiKey);
             })
@@ -33,9 +37,9 @@ export function ApiKeyNotification() {
                 setLoading(false);
             });
             
-    }, [user]);
+    }, [user, authLoading]);
 
-    if (loading) {
+    if (loading || authLoading) {
         return <Skeleton className="h-24 w-full mb-6" />;
     }
 

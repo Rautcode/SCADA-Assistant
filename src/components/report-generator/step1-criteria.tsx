@@ -20,14 +20,13 @@ import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
 import { getScadaTags } from "@/app/actions/scada-actions";
-import { getUserSettings } from "@/app/actions/settings-actions";
-import { useAuth } from "../auth/auth-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
 import { useData } from "@/components/database/data-provider";
+import { useAuth } from "../auth/auth-provider";
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -109,16 +108,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       setAvailableParameters([]);
       
       try {
-        const settings = await getUserSettings({ userId: user.uid });
-        const creds = settings?.database;
-        const mapping = settings?.dataMapping;
-
-        if (!creds?.server || !creds?.databaseName || !mapping?.table || !mapping.machineColumn || !mapping.parameterColumn) {
-            setParameterError("Database credentials or data mappings are not set. Please configure them in Settings.");
-            return;
-        }
-
-        const tags = await getScadaTags({ machineIds: selectedMachineIds, dbCreds: creds, mapping });
+        // This action is now self-contained and authenticated.
+        const tags = await getScadaTags({ machineIds: selectedMachineIds });
         setAvailableParameters(tags);
         if (tags.length === 0) {
             setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");

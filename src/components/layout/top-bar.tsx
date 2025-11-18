@@ -19,7 +19,6 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { useSidebar } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '../auth/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { onRecentActivities } from '@/services/client-database-service';
 import type { RecentActivity, UserSettings } from '@/lib/types/database';
@@ -30,6 +29,7 @@ import { getUserSettings } from '@/app/actions/settings-actions';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppLogo } from './app-logo';
+import { useAuth } from '../auth/auth-provider';
 
 const NOTIFICATION_COUNT = 30;
 
@@ -53,7 +53,7 @@ export function TopBar() {
     if (!user) return;
 
     // Fetch user settings to check notification preferences
-    getUserSettings({ userId: user.uid }).then(setUserSettings);
+    getUserSettings().then(setUserSettings as any);
 
     const unsubscribe: Unsubscribe = onRecentActivities((activities) => {
       // Filter for activities that should appear as notifications (e.g., alerts, warnings)
