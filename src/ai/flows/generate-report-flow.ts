@@ -12,9 +12,11 @@ import { reportCriteriaSchema } from '@/components/report-generator/step1-criter
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { format } from 'date-fns';
-import { googleAI } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/google-genai';
 import { sendEmail } from './send-email-flow';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
+import { defineAuthenticatedFlow, getAuthenticatedUser } from '@genkit-ai/next/auth';
+import { getUserSettingsFromDb } from '@/services/database-service';
+
 
 // Helper schemas for complex types
 const ScadaDataPointSchema = z.object({
@@ -37,13 +39,13 @@ const ReportTemplateSchema = z.object({
 });
 
 
+// Input no longer contains the API key
 const GenerateReportInputSchema = z.object({
   criteria: reportCriteriaSchema,
   template: ReportTemplateSchema,
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
-  apiKey: z.string(), // API key is now mandatory
 });
 type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -113,23 +115,19 @@ const reportGenerationPrompt = ai.definePrompt({
   `,
 });
 
-const generateReportFlow = ai.defineFlow(
+// This is now an AUTHENTICATED flow
+const generateReportFlow = defineAuthenticatedFlow(
   {
     name: 'generateReportFlow',
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
   },
-  async (input) => {
+  async (input, { auth }) => {
     console.log('Backend flow started with input:', input);
     
-    // Securely get authenticated user
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-        throw new Error("User must be authenticated to generate a report.");
-    }
     const userId = auth.uid;
 
-    const { apiKey, outputOptions, ...restOfInput } = input;
+    const { outputOptions, ...restOfInput } = input;
     
     // **PRE-PROCESSING STEP:** Convert all date objects to simple strings for the prompt
     const promptInput = {
@@ -152,8 +150,14 @@ const generateReportFlow = ai.defineFlow(
       }
     };
     
+    // Securely get user settings from the database on the server.
+    const userSettings = await getUserSettingsFromDb(userId);
+    if (!userSettings?.apiKey) {
+      throw new Error("User API key is not configured.");
+    }
+    
     // Dynamically create a client with the user's API key
-    const dynamicClient = googleAI({ apiKey });
+    const dynamicClient = googleAI({ apiKey: userSettings.apiKey });
 
     const { output } = await ai.generate({
       prompt: reportGenerationPrompt.prompt,

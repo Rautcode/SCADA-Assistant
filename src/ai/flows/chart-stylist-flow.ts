@@ -9,7 +9,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/google-genai';
+import { defineAuthenticatedFlow } from '@genkit-ai/next/auth';
+import { getUserSettingsFromDb } from '@/services/database-service';
+
 
 const ChartStyleSuggestionSchema = z.object({
   chartType: z.enum(['bar', 'line', 'pie']).describe("The suggested type of chart."),
@@ -19,9 +22,9 @@ const ChartStyleSuggestionSchema = z.object({
 
 export type ChartStyleSuggestion = z.infer<typeof ChartStyleSuggestionSchema>;
 
+// The input no longer contains the API key.
 const SuggestChartStyleInputSchema = z.object({
     promptText: z.string(),
-    apiKey: z.string(), // API key is now mandatory for this user-specific flow
 });
 type SuggestChartStyleInput = z.infer<typeof SuggestChartStyleInputSchema>;
 
@@ -46,16 +49,23 @@ Based on this prompt, your task is to:
 Return your suggestions in the specified output format.`,
 });
 
-const suggestChartStyleFlow = ai.defineFlow(
+// This is now an AUTHENTICATED flow.
+const suggestChartStyleFlow = defineAuthenticatedFlow(
   {
     name: 'suggestChartStyleFlow',
     inputSchema: SuggestChartStyleInputSchema,
     outputSchema: ChartStyleSuggestionSchema,
   },
-  async ({ promptText, apiKey }) => {
+  async ({ promptText }, { auth }) => {
     
-    // Dynamically create a client with the user's API key
-    const dynamicClient = googleAI({ apiKey });
+    // Securely get user settings from the database on the server.
+    const userSettings = await getUserSettingsFromDb(auth.uid);
+    if (!userSettings?.apiKey) {
+        throw new Error("User API key is not configured.");
+    }
+    
+    // Dynamically create a client with the user's API key.
+    const dynamicClient = googleAI({ apiKey: userSettings.apiKey });
     
     const { output } = await ai.generate({
         prompt: stylingPrompt.prompt,

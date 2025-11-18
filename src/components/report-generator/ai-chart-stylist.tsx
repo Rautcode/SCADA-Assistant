@@ -7,7 +7,6 @@ import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { suggestChartStyle, ChartStyleSuggestion } from "@/ai/flows/chart-stylist-flow";
 import { useAuth } from "../auth/auth-provider";
-import { getUserSettings } from "@/app/actions/settings-actions";
 
 interface AiChartStylistProps {
     onStyleApply: (style: ChartStyleSuggestion) => void;
@@ -35,13 +34,8 @@ export function AiChartStylist({ onStyleApply }: AiChartStylistProps) {
 
         setIsLoading(true);
         try {
-            const settings = await getUserSettings({ userId: user.uid });
-            if (!settings?.apiKey) {
-                toast({ title: "API Key Missing", description: "Please set your Gemini API key in the settings.", variant: "destructive" });
-                setIsLoading(false);
-                return;
-            }
-            const suggestion = await suggestChartStyle({ promptText: prompt, apiKey: settings.apiKey });
+            // The API key is no longer sent from the client.
+            const suggestion = await suggestChartStyle({ promptText: prompt });
             onStyleApply(suggestion);
             toast({
                 title: "Style Applied",

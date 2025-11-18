@@ -35,13 +35,13 @@ const ReportTemplateSchema = z.object({
 });
 
 
+// Input no longer contains the API key
 const GenerateReportInputSchema = z.object({
   criteria: reportCriteriaSchema,
   template: ReportTemplateSchema,
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
-  apiKey: z.string(),
 });
 
 export const runScheduledTasksFlow = defineFlow(
@@ -76,11 +76,8 @@ export const runScheduledTasksFlow = defineFlow(
         if (!userSettings) {
           throw new Error(`Settings not found for user ${task.userId}. Cannot run task.`);
         }
-
-        // Correctly access nested settings
-        const { apiKey, database: dbCreds, dataMapping, notifications, email: emailSettings } = userSettings;
         
-        if (!apiKey || !dbCreds || !dataMapping) {
+        if (!userSettings.apiKey || !userSettings.database || !userSettings.dataMapping) {
             throw new Error(`User ${task.userId} has incomplete settings for API key, database, or data mapping.`);
         }
         
@@ -97,9 +94,9 @@ export const runScheduledTasksFlow = defineFlow(
             parameterIds: [],
         };
         
-        const scadaData = await getScadaData({ criteria, dbCreds, mapping: dataMapping });
+        const scadaData = await getScadaData({ criteria, dbCreds: userSettings.database, mapping: userSettings.dataMapping });
         
-        const reportInput = {
+        const reportInput: z.infer<typeof GenerateReportInputSchema> = {
             criteria,
             template,
             scadaData,
@@ -114,16 +111,17 @@ export const runScheduledTasksFlow = defineFlow(
                 format: 'pdf',
                 fileName: `${task.name.replace(/\s/g, '_')}_${new Date().toISOString()}`
             },
-            apiKey,
-        } as z.infer<typeof GenerateReportInputSchema>;
+        };
         
-        const reportResult = await generateReport(reportInput);
+        // The generateReport flow is now authenticated. We need to run it with the user's auth context.
+        // As this is a backend-only flow, we pass the auth object directly.
+        const reportResult = await generateReport(reportInput, { auth: { uid: task.userId, custom: {} } });
 
         // If email notifications are enabled for the user, send the report.
-        if (notifications?.email && emailSettings?.smtpUser) {
+        if (userSettings.notifications?.email && userSettings.email?.smtpUser) {
             const emailResult = await sendEmail(
                 {
-                    to: emailSettings.smtpUser,
+                    to: userSettings.email.smtpUser,
                     subject: `Your Scheduled Report: "${task.name}"`,
                     text: `Attached is your automated report: ${task.name}.\n\n${reportResult.reportContent}`,
                     html: `<p>Attached is your automated report: <strong>${task.name}</strong>.</p><hr/><pre>${reportResult.reportContent}</pre>`,

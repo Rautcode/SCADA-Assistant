@@ -18,7 +18,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { z } from 'zod';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/auth/auth-provider';
-import { getUserSettings } from '../actions/settings-actions';
 import { downloadFile } from '@/lib/utils';
 import { Download } from 'lucide-react';
 
@@ -66,7 +65,6 @@ export const GenerateReportInputSchema = z.object({
   scadaData: z.array(ScadaDataPointSchema),
   chartOptions: chartConfigSchema,
   outputOptions: outputOptionsSchema,
-  apiKey: z.string(),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -167,20 +165,12 @@ export default function ReportGeneratorPage() {
     });
 
     try {
-        const settings = await getUserSettings({ userId: user.uid });
-        if (!settings?.apiKey) {
-            toast({ title: "API Key Missing", description: "Please set your Gemini API key in the settings.", variant: "destructive" });
-            setIsGenerating(false);
-            return;
-        }
-        
         const reportInput: GenerateReportInput = {
             criteria: step1Data,
             template: step2Data.selectedTemplate,
             scadaData: step3Data.scadaData.filter(d => d.included),
             chartOptions: step4Data,
             outputOptions: step5Data,
-            apiKey: settings.apiKey,
         };
         const result = await generateReport(reportInput);
         setGeneratedReport(result);
