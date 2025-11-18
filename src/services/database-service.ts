@@ -1,8 +1,9 @@
 
 import { initAdmin } from '@/lib/firebase/admin';
-import { ReportTemplate, ScheduledTask, UserSettings } from '@/lib/types/database';
+import { ReportTemplate, ScheduledTask, UserSettings, settingsSchema } from '@/lib/types/database';
 import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc } from 'firebase/firestore';
 import imageData from '@/app/lib/placeholder-images.json';
+import { z } from 'zod';
 
 
 // --- Seeding Function for Default Templates ---
@@ -69,25 +70,25 @@ seedDefaultData();
 // These functions use the Admin SDK and should only be called from Server Actions or Genkit flows.
 
 // ===== Settings Service (SERVER-SIDE) =====
-export async function saveUserSettingsToDb(userId: string, settings: Omit<UserSettings, 'userId'>) {
+export async function saveUserSettingsToDb(userId: string, settings: z.infer<typeof settingsSchema>) {
     const db = await getDb();
     const settingsRef = doc(db, 'userSettings', userId);
     // The client sends the entire settings object. We persist it directly.
     await setDoc(settingsRef, settings, { merge: true });
 }
 
-export async function getSystemSettingsFromDb(): Promise<UserSettings | null> {
+export async function getSystemSettingsFromDb(): Promise<z.infer<typeof settingsSchema> | null> {
     const db = await getDb();
     const settingsRef = doc(db, 'userSettings', 'system');
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
         // Correctly return the nested settings object.
-        return docSnap.data() as UserSettings;
+        return docSnap.data() as z.infer<typeof settingsSchema>;
     }
     return null;
 }
 
-export async function getUserSettingsFromDb(userId: string): Promise<UserSettings | null> {
+export async function getUserSettingsFromDb(userId: string): Promise<z.infer<typeof settingsSchema> | null> {
     if (userId === 'system') return getSystemSettingsFromDb();
 
     const db = await getDb();
@@ -95,7 +96,7 @@ export async function getUserSettingsFromDb(userId: string): Promise<UserSetting
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
         // Correctly return the nested settings object.
-        return docSnap.data() as UserSettings;
+        return docSnap.data() as z.infer<typeof settingsSchema>;
     }
     return null;
 }
