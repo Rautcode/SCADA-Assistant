@@ -109,7 +109,7 @@ export async function getScadaData({ criteria }: { criteria: z.infer<typeof repo
             database: dbCreds.databaseName,
             options: {
                 encrypt: true, 
-                trustServerCertificate: true 
+                trustServerCertificate: false // Enforce strict certificate validation
             }
         };
 
@@ -224,7 +224,10 @@ export async function getScadaTags({ machineIds }: { machineIds: string[] }): Pr
             password: dbCreds.password || undefined,
             server: dbCreds.server,
             database: dbCreds.databaseName,
-            options: { encrypt: true, trustServerCertificate: true }
+            options: { 
+                encrypt: true, 
+                trustServerCertificate: false // Enforce strict certificate validation
+            }
         };
 
         pool = await sql.connect(dbConfig);
@@ -292,7 +295,11 @@ export async function getDbSchema(): Promise<{ tables: string[], columns: { [key
         password: dbCreds.password || undefined,
         server: dbCreds.server,
         database: dbCreds.databaseName,
-        options: { encrypt: true, trustServerCertificate: true, connectionTimeout: 10000 }
+        options: { 
+            encrypt: true, 
+            trustServerCertificate: false, // Enforce strict certificate validation
+            connectionTimeout: 10000 
+        }
     };
     
     let pool: sql.ConnectionPool | undefined;
@@ -348,7 +355,7 @@ export async function testScadaConnection(): Promise<{ success: boolean, error?:
             database: dbCreds.databaseName,
             options: {
                 encrypt: true, 
-                trustServerCertificate: true,
+                trustServerCertificate: false, // Enforce strict certificate validation
                 connectionTimeout: 5000 // 5 second timeout
             }
         };
@@ -397,7 +404,7 @@ export async function testSmtpConnection(): Promise<{ success: boolean, error?: 
             },
             connectionTimeout: 10000, // 10 second timeout
             tls: {
-                rejectUnauthorized: true,
+                rejectUnauthorized: true, // Enforce strict certificate validation
             }
         });
 

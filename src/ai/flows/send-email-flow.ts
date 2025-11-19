@@ -94,7 +94,7 @@ export const sendEmail = defineFlow(
         pass: smtpSettings.smtpPass,
       },
        tls: {
-          rejectUnauthorized: true
+          rejectUnauthorized: true // Enforce strict certificate validation
       }
     });
 
