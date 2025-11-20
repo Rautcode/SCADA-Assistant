@@ -12,26 +12,11 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   sendPasswordResetEmail,
-  getIdToken,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
 import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction, SendPasswordResetFunction } from '@/lib/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// This function will be called to wrap fetch requests with the auth token.
-export const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const user = auth.currentUser;
-    if (user) {
-        const token = await getIdToken(user);
-        options.headers = {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`,
-        };
-    }
-    return fetch(url, options);
-};
-
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -87,5 +72,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
