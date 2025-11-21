@@ -2,7 +2,7 @@
 'use client';
 
 import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
+import { db, auth } from '@/lib/firebase/firebase'; // Direct import of client-side db and auth
 import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, ScheduledTask, SystemComponentStatus, SystemLog } from '@/lib/types/database';
 import { getUserSettings } from '@/app/actions/settings-actions';
 
@@ -89,6 +89,7 @@ export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Un
 
 export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe {
     // Seeding default machines if the collection is empty
+    if (!db) return () => {};
     const machineRef = collection(db, 'machines');
     getDocs(query(machineRef, limit(1))).then(snapshot => {
         if (snapshot.empty) {
@@ -109,7 +110,9 @@ export function onReportTemplates(callback: (templates: ReportTemplate[]) => voi
 // A one-time check for SCADA DB connectivity
 export async function isScadaDbConnected(): Promise<boolean> {
     try {
-        const settings = await getUserSettings();
+        if (!auth.currentUser) return false;
+        const authToken = await auth.currentUser.getIdToken();
+        const settings = await getUserSettings({ authToken });
         if (!settings?.database?.server || !settings?.database?.databaseName) {
             return false;
         }

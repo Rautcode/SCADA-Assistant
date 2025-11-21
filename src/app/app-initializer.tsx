@@ -28,19 +28,20 @@ export function AppInitializer({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      // No longer needs to pass authToken, as server action will get it from context
-      getUserSettings()
-        .then(settings => {
-          if (settings?.language) {
-            setLanguage(settings.language);
-          }
-          if (settings?.theme) {
-            applyTheme(settings.theme);
-          }
-        })
-        .catch(error => {
-          console.warn("Could not fetch user settings on load:", error);
-        });
+      user.getIdToken().then(authToken => {
+        getUserSettings({ authToken })
+          .then(settings => {
+            if (settings?.language) {
+              setLanguage(settings.language);
+            }
+            if (settings?.theme) {
+              applyTheme(settings.theme);
+            }
+          })
+          .catch(error => {
+            console.warn("Could not fetch user settings on load:", error);
+          });
+      });
     }
   }, [user, setLanguage]);
 

@@ -106,7 +106,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       setAvailableParameters([]);
       
       try {
-        const tags = await getScadaTags({ machineIds: selectedMachineIds });
+        const authToken = await user.getIdToken();
+        const tags = await getScadaTags({ machineIds: selectedMachineIds, authToken });
         setAvailableParameters(tags);
         if (tags.length === 0) {
             setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
@@ -408,3 +409,5 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
   );
 }
+
+    

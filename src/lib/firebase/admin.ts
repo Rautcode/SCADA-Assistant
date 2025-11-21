@@ -5,8 +5,8 @@ import * as admin from 'firebase-admin';
 let app: admin.app.App | undefined;
 
 function initializeAdminApp(): admin.app.App {
-  if (app) {
-    return app;
+  if (admin.apps.length) {
+    return admin.app();
   }
   
   // This environment variable should be set in your deployment environment.
@@ -14,7 +14,7 @@ function initializeAdminApp(): admin.app.App {
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (!serviceAccountKey) {
-    throw new Error("Firebase service account key is not configured in environment variables.");
+    throw new Error("Firebase service account key is not configured in environment variables. Please set FIREBASE_SERVICE_ACCOUNT_KEY.");
   }
   
   try {
@@ -32,3 +32,5 @@ function initializeAdminApp(): admin.app.App {
 export function getAdminApp() {
     return initializeAdminApp();
 }
+
+    
