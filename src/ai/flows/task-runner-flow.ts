@@ -9,12 +9,11 @@ import { z } from 'zod';
 import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb } from '@/services/database-service';
 import { generateReport } from './generate-report-flow';
 import { sendEmail } from './send-email-flow';
-import { getScadaData } from '@/app/actions/scada-actions';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { ai } from '../genkit';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
+import { getScadaData } from '@/app/actions/scada-actions';
 
 const ScadaDataPointSchema = z.object({
   id: z.string(),
@@ -95,20 +94,28 @@ export const runScheduledTasksFlow = ai.defineFlow(
             parameterIds: [],
         };
         
-        // This is tricky. A server action calling another server action.
-        // We can't easily pass the auth context. We need a way to run `getScadaData` as a specific user.
-        // The simplest way is to make `getScadaData` accept the user's credentials, which is what it used to do.
-        // However, `getScadaData` now gets the user from the header, which is not available here.
-        
-        // For now, let's assume `getScadaData` is refactored to be callable by other backend services.
-        // This is a temporary solution for the purpose of this example.
-        // In a real app, `getScadaData` would need a way to run under a specific user's identity.
-        // A better approach would be to refactor getScadaData into a helper that accepts userSettings and call that from both the action and this flow.
+        // This is a tricky part. We need to call `getScadaData` which expects an `authToken`.
+        // Since this flow is run by a backend scheduler, there's no user session.
+        // The most secure way to handle this is to have a system-level identity or,
+        // for this app's architecture, we accept that the scheduler runs with the
+        // permissions of the user who created the task.
+        // We will need to find a way to get a token for that user, or temporarily
+        // bypass the auth check in `getScadaData` for internal calls.
 
-        // Replicating the logic from getScadaData here temporarily. THIS IS NOT IDEAL.
+        // A robust solution would be to use a service account for backend tasks.
+        // A simpler, but less secure, approach for this app would be to add a
+        // special "internal" flag to `getScadaData` to bypass auth, but that's not ideal.
+        
+        // The best approach given the current setup is to acknowledge this is a limitation.
+        // For this to work, we'd need to refactor `getScadaData` significantly.
+        // Let's assume for now that we can't get a valid token and the action will fail.
+        // To make progress, we'll replicate the data-fetching logic here.
+        // THIS IS A TEMPORARY WORKAROUND.
+        
+        let scadaData: any[];
+
         const { default: sql } = await import('mssql');
         let pool;
-        let scadaData: any[];
         try {
             pool = await sql.connect({
                 user: userSettings.database.user || undefined,
@@ -123,7 +130,7 @@ export const runScheduledTasksFlow = ai.defineFlow(
             const result = await pool.request()
                 .input('startDate', sql.DateTime, criteria.dateRange.from)
                 .input('endDate', sql.DateTime, criteria.dateRange.to)
-                .query(`SELECT [TagName], [TimeStamp], [TagValue], [ServerName] FROM [${userSettings.dataMapping.table}] WHERE [TimeStamp] BETWEEN @startDate AND @endDate`);
+                .query(`SELECT [TagName], [TimeStamp], [TagValue], [ServerName] FROM [${userSettings.dataMapping.table}] WHERE [TimeStamp] BETWEEN @startDate AND @endDate AND [ServerName] IN ('${criteria.machineIds.join("','")}')`);
             
             scadaData = result.recordset.map((row: any) => ({
                 id: `${row.TagName}-${row.TimeStamp.toISOString()}`,

@@ -7,7 +7,23 @@ import { reportCriteriaSchema } from "@/components/report-generator/step1-criter
 import { z } from "zod";
 import { dataMappingSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb } from "@/services/database-service";
-import { getAuthenticatedUser } from "@genkit-ai/next/auth";
+import { getAdminApp } from "@/lib/firebase/admin";
+
+
+async function getVerifiedUid(authToken: string | undefined): Promise<string> {
+    if (!authToken) {
+        throw new Error("Auth token is missing.");
+    }
+    try {
+        const adminApp = getAdminApp();
+        const decodedToken = await adminApp.auth().verifyIdToken(authToken);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        throw new Error("User is not authenticated.");
+    }
+}
+
 
 // Helper to validate column mappings against the actual schema
 async function validateMapping(pool: sql.ConnectionPool, mapping: z.infer<typeof dataMappingSchema>): Promise<void> {
@@ -44,12 +60,8 @@ async function validateMapping(pool: sql.ConnectionPool, mapping: z.infer<typeof
 
 
 // Server Action to get SCADA data
-export async function getScadaData({ criteria }: { criteria: z.infer<typeof reportCriteriaSchema> }): Promise<ScadaDataPoint[]> {
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-      throw new Error("User is not authenticated.");
-    }
-    const userId = auth.uid;
+export async function getScadaData({ criteria, authToken }: { criteria: z.infer<typeof reportCriteriaSchema>, authToken: string }): Promise<ScadaDataPoint[]> {
+    const userId = await getVerifiedUid(authToken);
     console.log(`Fetching SCADA data for user ${userId} with criteria:`, criteria);
 
     const userSettings = await getUserSettingsFromDb(userId);
@@ -163,12 +175,8 @@ export async function getScadaData({ criteria }: { criteria: z.infer<typeof repo
 
 
 // Server Action to get SCADA tags
-export async function getScadaTags({ machineIds }: { machineIds: string[] }): Promise<string[]> {
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-      throw new Error("User is not authenticated.");
-    }
-    const userId = auth.uid;
+export async function getScadaTags({ machineIds, authToken }: { machineIds: string[], authToken: string }): Promise<string[]> {
+    const userId = await getVerifiedUid(authToken);
 
     console.log(`Fetching SCADA tags for user ${userId}, machines:`, machineIds);
     if (!machineIds || machineIds.length === 0) {
@@ -241,5 +249,3 @@ export async function getScadaTags({ machineIds }: { machineIds: string[] }): Pr
         }
     }
 }
-
-    

@@ -69,7 +69,8 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         setData([]);
 
         try {
-            const scadaData = await getScadaData({ criteria });
+            const authToken = await user.getIdToken();
+            const scadaData = await getScadaData({ criteria, authToken });
             
             const enrichedData = scadaData.map(d => {
                 const existingRow = initialData?.scadaData.find(initial => initial.id === d.id);
@@ -299,5 +300,3 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
     </div>
   );
 }
-
-    
