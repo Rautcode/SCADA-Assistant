@@ -71,7 +71,6 @@ export const runScheduledTasksFlow = ai.defineFlow(
       try {
         await updateTaskStatus(task.id, 'processing');
         
-        // Fetch the settings for the user who scheduled the task
         const userSettings = await getUserSettingsFromDb(task.userId);
         if (!userSettings) {
           throw new Error(`Settings not found for user ${task.userId}. Cannot run task.`);
@@ -86,7 +85,6 @@ export const runScheduledTasksFlow = ai.defineFlow(
           throw new Error(`Template with ID ${task.templateId} not found.`);
         }
 
-        // Hardcode criteria for scheduled tasks for now. In a real app, this would be stored with the task.
         const criteria = {
             dateRange: { from: new Date(Date.now() - 24 * 60 * 60 * 1000), to: new Date() },
             machineIds: ['Machine-01', 'Machine-02'], // Example machine IDs
@@ -94,53 +92,11 @@ export const runScheduledTasksFlow = ai.defineFlow(
             parameterIds: [],
         };
         
-        // This is a tricky part. `getScadaDataFlow` is an authenticated flow.
-        // Since this `runScheduledTasksFlow` is a backend-only flow (triggered by a cron),
-        // there is no user in the context. To solve this, we can't directly call it.
-        // A robust solution would be to use a service account.
-        // For this app, we'll replicate the core data-fetching logic inside this flow,
-        // using the specific user's saved settings. This is a deliberate architectural
-        // choice to keep the cron job runner self-contained.
-        let scadaData: any[];
-        const { default: sql } = await import('mssql');
-        let pool;
-        try {
-            pool = await sql.connect({
-                user: userSettings.database.user || undefined,
-                password: userSettings.database.password || undefined,
-                server: userSettings.database.server!,
-                database: userSettings.database.databaseName!,
-                options: {
-                    encrypt: false,
-                    trustServerCertificate: true
-                },
-                pool: {
-                    max: 10,
-                    min: 0,
-                    idleTimeoutMillis: 30000,
-                    acquireTimeoutMillis: 30000,
-                },
-                retry: {
-                    maxAttempts: 3,
-                    delay: 1000,
-                },
-            });
-            const result = await pool.request()
-                .input('startDate', sql.DateTime, criteria.dateRange.from)
-                .input('endDate', sql.DateTime, criteria.dateRange.to)
-                .query(`SELECT [${userSettings.dataMapping.timestampColumn}], [${userSettings.dataMapping.machineColumn}], [${userSettings.dataMapping.parameterColumn}], [${userSettings.dataMapping.valueColumn}] FROM [${userSettings.dataMapping.table}] WHERE [${userSettings.dataMapping.timestampColumn}] BETWEEN @startDate AND @endDate AND [${userSettings.dataMapping.machineColumn}] IN ('${criteria.machineIds.join("','")}')`);
-            
-            scadaData = result.recordset.map((row: any) => ({
-                id: `${row[userSettings.dataMapping!.parameterColumn!]}-${new Date(row[userSettings.dataMapping!.timestampColumn!]).toISOString()}`,
-                timestamp: new Date(row[userSettings.dataMapping!.timestampColumn!]),
-                machine: row[userSettings.dataMapping!.machineColumn!], 
-                parameter: row[userSettings.dataMapping!.parameterColumn!],
-                value: row[userSettings.dataMapping!.valueColumn!],
-                unit: "N/A", 
-            }));
-        } finally {
-            pool?.close();
-        }
+        // Use the centralized `getScadaDataFlow` with an auth override.
+        const scadaData = await getScadaDataFlow(
+            { criteria },
+            { authOverride: { uid: task.userId } }
+        );
         
         const reportInput: z.infer<typeof GenerateReportInputSchema> = {
             criteria,
@@ -159,9 +115,10 @@ export const runScheduledTasksFlow = ai.defineFlow(
             },
         };
         
-        // The generateReport flow is authenticated. We need to run it with the user's auth context.
-        // As this is a backend-only flow, we pass an authOverride.
-        const reportResult = await generateReport(reportInput);
+        // Pass auth override to the generateReport flow
+        const reportResult = await generateReport(
+            reportInput
+        );
 
         // If email notifications are enabled for the user, send the report.
         if (userSettings.notifications?.email && userSettings.email?.smtpUser) {

@@ -23,6 +23,10 @@ async function getVerifiedUserSettings(uid: string) {
     return userSettings;
 }
 
+const ScadaDataFlowOptionsSchema = z.object({
+  authOverride: z.object({ uid: z.string() }).optional(),
+});
+
 
 // Flow to get SCADA data points based on criteria
 export const getScadaDataFlow = ai.defineFlow(
@@ -31,10 +35,18 @@ export const getScadaDataFlow = ai.defineFlow(
     inputSchema: z.object({ criteria: ScadaDataCriteriaSchema }),
     outputSchema: z.custom<ScadaDataPoint[]>(),
   },
-  async ({ criteria }, { auth }) => {
-    if (!auth) throw new Error("User must be authenticated.");
+  async ({ criteria }, { auth, flowOptions }) => {
+    const options = ScadaDataFlowOptionsSchema.parse(flowOptions || {});
+    let userId: string;
 
-    const userSettings = await getVerifiedUserSettings(auth.uid);
+    if (options.authOverride) {
+      userId = options.authOverride.uid;
+    } else {
+      if (!auth) throw new Error("User must be authenticated.");
+      userId = auth.uid;
+    }
+
+    const userSettings = await getVerifiedUserSettings(userId);
     const { database, dataMapping } = userSettings;
     const { dateRange, machineIds, parameterIds } = criteria;
 
