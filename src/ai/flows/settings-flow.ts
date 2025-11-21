@@ -81,7 +81,18 @@ export const testScadaConnectionFlow = ai.defineFlow(
       });
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: `Connection failed: ${error.message}` };
+        console.error("SQL Connection Error:", error);
+        let detailedError = "An unknown error occurred.";
+        if (error.code === 'ELOGIN') {
+            detailedError = "Login failed. Please check the username and password.";
+        } else if (error.code === 'ETIMEOUT') {
+            detailedError = `Connection timed out. The server at '${dbConfig.server}' could not be reached. Please check the server address and ensure it is accessible.`;
+        } else if (error.code === 'ENOCONN') {
+             detailedError = `Could not connect to the server at '${dbConfig.server}'. Please verify the server address and ensure the SQL Server is running.`;
+        } else if (error.message) {
+            detailedError = error.message;
+        }
+        return { success: false, error: `Connection failed: ${detailedError}` };
     } finally {
       pool?.close();
     }
@@ -145,8 +156,8 @@ export const getDbSchemaFlow = ai.defineFlow(
       pool = await sql.connect({
         user: dbConfig.user || undefined,
         password: dbConfig.password || undefined,
-        server: dbConfig.server,
-        database: dbConfig.databaseName,
+        server: dbConfig.server!,
+        database: dbConfig.databaseName!,
         options: { encrypt: false, trustServerCertificate: true }
       });
       
