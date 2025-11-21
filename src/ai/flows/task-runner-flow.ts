@@ -113,7 +113,17 @@ export const runScheduledTasksFlow = ai.defineFlow(
                 options: {
                     encrypt: false,
                     trustServerCertificate: true
-                }
+                },
+                pool: {
+                    max: 10,
+                    min: 0,
+                    idleTimeoutMillis: 30000,
+                    acquireTimeoutMillis: 30000,
+                },
+                retry: {
+                    maxAttempts: 3,
+                    delay: 1000,
+                },
             });
             const result = await pool.request()
                 .input('startDate', sql.DateTime, criteria.dateRange.from)

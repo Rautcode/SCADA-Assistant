@@ -78,6 +78,16 @@ export const testScadaConnectionFlow = ai.defineFlow(
         options: { encrypt: false, trustServerCertificate: true },
         connectionTimeout: 5000,
         requestTimeout: 5000,
+        pool: {
+            max: 10,
+            min: 0,
+            idleTimeoutMillis: 30000,
+            acquireTimeoutMillis: 30000,
+        },
+        retry: {
+            maxAttempts: 3,
+            delay: 1000,
+        },
       });
       return { success: true };
     } catch (error: any) {
@@ -158,7 +168,17 @@ export const getDbSchemaFlow = ai.defineFlow(
         password: dbConfig.password || undefined,
         server: dbConfig.server!,
         database: dbConfig.databaseName!,
-        options: { encrypt: false, trustServerCertificate: true }
+        options: { encrypt: false, trustServerCertificate: true },
+        pool: {
+            max: 10,
+            min: 0,
+            idleTimeoutMillis: 30000,
+            acquireTimeoutMillis: 30000,
+        },
+        retry: {
+            maxAttempts: 3,
+            delay: 1000,
+        },
       });
       
       const tablesResult = await pool.request().query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'");
