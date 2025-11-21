@@ -1,5 +1,5 @@
 
-"use client";
+'use client';
 
 import * as React from 'react';
 import { Bell, CalendarDays, ChevronRight, LogOut, Settings, User, PanelLeft, AlertTriangle } from 'lucide-react';
@@ -279,5 +279,3 @@ export function TopBar() {
     </header>
   );
 }
-
-    
