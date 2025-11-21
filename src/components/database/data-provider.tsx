@@ -23,15 +23,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
 
         const unsubscribers: Unsubscribe[] = [];
+        let machineDataLoaded = false;
+        let templateDataLoaded = false;
+
+        const checkLoadingDone = () => {
+            if (machineDataLoaded && templateDataLoaded) {
+                setLoading(false);
+            }
+        };
 
         unsubscribers.push(onMachines(machinesData => {
             setMachines(machinesData);
-            setLoading(false);
+            machineDataLoaded = true;
+            checkLoadingDone();
         }));
 
         unsubscribers.push(onReportTemplates(templatesData => {
             setTemplates(templatesData);
-            setLoading(false);
+            templateDataLoaded = true;
+            checkLoadingDone();
         }));
 
         // Fallback to stop loading indicator

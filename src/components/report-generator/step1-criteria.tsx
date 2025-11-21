@@ -25,9 +25,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { categoryIcons } from "@/lib/icon-map";
 import { useAuth } from "../auth/auth-provider";
-import { onMachines, onReportTemplates, isScadaDbConnected } from "@/services/client-database-service";
-import { Machine, ReportTemplate } from "@/lib/types/database";
-import { Unsubscribe } from "firebase/firestore";
+import { isScadaDbConnected } from "@/services/client-database-service";
+import { useData } from "@/components/database/data-provider";
+
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -48,10 +48,8 @@ interface ReportStep1CriteriaProps {
 
 export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1CriteriaProps) {
   const [machineSearch, setMachineSearch] = React.useState("");
-  const [machines, setMachines] = React.useState<Machine[]>([]);
-  const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
-  const [loadingMachines, setLoadingMachines] = React.useState(true);
-  
+  const { machines, loading: loadingMachines, templates } = useData();
+
   const [parameterSearch, setParameterSearch] = React.useState("");
   const [availableParameters, setAvailableParameters] = React.useState<string[]>([]);
   const [loadingParameters, setLoadingParameters] = React.useState(false);
@@ -61,23 +59,9 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   const { user } = useAuth();
   
   React.useEffect(() => {
-    const unsubscribers: Unsubscribe[] = [];
-    setLoadingMachines(true);
-
     isScadaDbConnected().then(connected => {
       setConnectionStatus(connected ? 'connected' : 'unconfigured');
     });
-
-    unsubscribers.push(onMachines(machinesData => {
-        setMachines(machinesData);
-        setLoadingMachines(false);
-    }));
-
-    unsubscribers.push(onReportTemplates(templatesData => {
-        setTemplates(templatesData);
-    }));
-
-    return () => unsubscribers.forEach(unsub => unsub());
   }, []);
 
 
@@ -172,6 +156,18 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
 );
 
+  if (loadingMachines) {
+      return (
+          <div className="space-y-8 p-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-1/4" />
+                <Skeleton className="h-48 w-full" />
+              </div>
+          </div>
+      )
+  }
 
   return (
     <div className="w-full">
@@ -280,16 +276,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
                           />
                         </div>
                         <ScrollArea className="h-40 w-full rounded-md border p-2">
-                          {loadingMachines ? (
-                            <div className="space-y-2 p-2">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className="flex items-center space-x-2">
-                                  <Skeleton className="h-4 w-4" />
-                                  <Skeleton className="h-4 w-[200px]" />
-                                </div>
-                              ))}
-                            </div>
-                          ) : filteredMachines.length > 0 ? filteredMachines.map((machine) => (
+                          {filteredMachines.length > 0 ? filteredMachines.map((machine) => (
                             <FormField
                               key={machine.id}
                               control={form.control}
