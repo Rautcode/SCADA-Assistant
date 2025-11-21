@@ -25,18 +25,17 @@ export function ApiKeyNotification() {
         }
         
         setLoading(true);
-        user.getIdToken().then(authToken => {
-            getUserSettings({ authToken })
-                .then(settings => {
-                    setApiKey(settings?.apiKey);
-                })
-                .catch(err => {
-                    console.error("Failed to get API key for notification:", err);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        });
+        // This server action is now authenticated on the backend automatically
+        getUserSettings()
+            .then(settings => {
+                setApiKey(settings?.apiKey);
+            })
+            .catch(err => {
+                console.error("Failed to get API key for notification:", err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
             
     }, [user, authLoading]);
 
@@ -63,5 +62,3 @@ export function ApiKeyNotification() {
         </Alert>
     );
 }
-
-    

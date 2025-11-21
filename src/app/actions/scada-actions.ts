@@ -7,24 +7,21 @@ import { reportCriteriaSchema } from "@/components/report-generator/step1-criter
 import { z } from "zod";
 import { dataMappingSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb } from "@/services/database-service";
-import * as admin from 'firebase-admin';
-import { getAdminApp } from "@/lib/firebase/admin";
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
-async function getVerifiedUid(authToken: string): Promise<string> {
-    try {
-        getAdminApp(); // Ensure admin app is initialized
-        const decodedToken = await admin.auth().verifyIdToken(authToken);
-        return decodedToken.uid;
-    } catch (error) {
-        console.error("Error verifying auth token:", error);
+
+async function getVerifiedUid(): Promise<string> {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
         throw new Error("User is not authenticated.");
     }
+    return auth.uid;
 }
 
 
 // Server Action to get SCADA data
-export async function getScadaData({ criteria, authToken }: { criteria: z.infer<typeof reportCriteriaSchema>, authToken: string }): Promise<ScadaDataPoint[]> {
-    const userId = await getVerifiedUid(authToken);
+export async function getScadaData({ criteria }: { criteria: z.infer<typeof reportCriteriaSchema> }): Promise<ScadaDataPoint[]> {
+    const userId = await getVerifiedUid();
     console.log(`Fetching SCADA data for user ${userId} with criteria:`, criteria);
 
     const userSettings = await getUserSettingsFromDb(userId);
@@ -138,8 +135,8 @@ export async function getScadaData({ criteria, authToken }: { criteria: z.infer<
 
 
 // Server Action to get SCADA tags
-export async function getScadaTags({ machineIds, authToken }: { machineIds: string[], authToken: string }): Promise<string[]> {
-    const userId = await getVerifiedUid(authToken);
+export async function getScadaTags({ machineIds }: { machineIds: string[] }): Promise<string[]> {
+    const userId = await getVerifiedUid();
 
     console.log(`Fetching SCADA tags for user ${userId}, machines:`, machineIds);
     if (!machineIds || machineIds.length === 0) {
@@ -245,5 +242,3 @@ async function validateMapping(pool: sql.ConnectionPool, mapping: z.infer<typeof
         throw new Error(`The following columns could not be found in table "${mapping.table}": ${missingCols.join(', ')}. Please check your Data Mapping settings.`);
     }
 }
-
-    

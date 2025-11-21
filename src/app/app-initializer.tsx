@@ -28,20 +28,19 @@ export function AppInitializer({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      user.getIdToken().then(authToken => {
-        getUserSettings({ authToken })
-          .then(settings => {
-            if (settings?.language) {
-              setLanguage(settings.language);
-            }
-            if (settings?.theme) {
-              applyTheme(settings.theme);
-            }
-          })
-          .catch(error => {
-            console.warn("Could not fetch user settings on load:", error);
-          });
-      });
+      // Auth token is no longer needed; authentication is handled on the server.
+      getUserSettings()
+        .then(settings => {
+          if (settings?.language) {
+            setLanguage(settings.language);
+          }
+          if (settings?.theme) {
+            applyTheme(settings.theme);
+          }
+        })
+        .catch(error => {
+          console.warn("Could not fetch user settings on load:", error);
+        });
     }
   }, [user, setLanguage]);
 
