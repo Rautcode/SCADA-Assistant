@@ -109,7 +109,7 @@ export async function getScadaData({ criteria }: { criteria: z.infer<typeof repo
             database: dbCreds.databaseName,
             options: {
                 encrypt: true, 
-                trustServerCertificate: false // Enforce strict certificate validation
+                trustServerCertificate: true // Allow self-signed certificates
             }
         };
 
@@ -226,7 +226,7 @@ export async function getScadaTags({ machineIds }: { machineIds: string[] }): Pr
             database: dbCreds.databaseName,
             options: { 
                 encrypt: true, 
-                trustServerCertificate: false // Enforce strict certificate validation
+                trustServerCertificate: true // Allow self-signed certificates
             }
         };
 
@@ -297,7 +297,7 @@ export async function getDbSchema(): Promise<{ tables: string[], columns: { [key
         database: dbCreds.databaseName,
         options: { 
             encrypt: true, 
-            trustServerCertificate: false, // Enforce strict certificate validation
+            trustServerCertificate: true, // Allow self-signed certificates
             connectionTimeout: 10000 
         }
     };
@@ -355,7 +355,7 @@ export async function testScadaConnection(): Promise<{ success: boolean, error?:
             database: dbCreds.databaseName,
             options: {
                 encrypt: true, 
-                trustServerCertificate: false, // Enforce strict certificate validation
+                trustServerCertificate: true, // Allow self-signed certificates
                 connectionTimeout: 5000 // 5 second timeout
             }
         };
