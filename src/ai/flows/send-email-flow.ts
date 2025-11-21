@@ -100,7 +100,7 @@ export const sendEmail = ai.defineFlow(
         pass: smtpSettings.smtpPass,
       },
        tls: {
-          rejectUnauthorized: true
+          rejectUnauthorized: false
       }
     });
 

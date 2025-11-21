@@ -1,11 +1,10 @@
 
 'use client';
 
-import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
 import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, ScheduledTask, SystemComponentStatus, SystemLog } from '@/lib/types/database';
 import { getUserSettings } from '@/app/actions/settings-actions';
-import { getAuth } from 'firebase/auth';
 
 function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, count?: number): Unsubscribe {
     if (!db) {
@@ -110,12 +109,7 @@ export function onReportTemplates(callback: (templates: ReportTemplate[]) => voi
 // A one-time check for SCADA DB connectivity
 export async function isScadaDbConnected(): Promise<boolean> {
     try {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) return false;
-
-        const authToken = await user.getIdToken();
-        const settings = await getUserSettings({ authToken });
+        const settings = await getUserSettings();
         if (!settings?.database?.server || !settings?.database?.databaseName) {
             return false;
         }
