@@ -88,17 +88,6 @@ export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Un
 }
 
 export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe {
-    // Seeding default machines if the collection is empty
-    if (!db) return () => {};
-    const machineRef = collection(db, 'machines');
-    getDocs(query(machineRef, limit(1))).then(snapshot => {
-        if (snapshot.empty) {
-            console.log("Seeding default machines...");
-            addDoc(machineRef, { name: 'Machine-01', location: 'Factory A' });
-            addDoc(machineRef, { name: 'Machine-02', location: 'Factory A' });
-            addDoc(machineRef, { name: 'Packaging-Line-01', location: 'Factory B' });
-        }
-    });
     return createListener<Machine>('machines', callback, 'name');
 }
 

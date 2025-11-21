@@ -40,6 +40,13 @@ const defaultTemplates: Omit<ReportTemplate, 'id' | 'lastModified'>[] = [
     }
 ];
 
+const defaultMachines = [
+    { name: 'Machine-01', location: 'Factory A' },
+    { name: 'Machine-02', location: 'Factory A' },
+    { name: 'Packaging-Line-01', location: 'Factory B' },
+];
+
+
 async function getDb() {
     const app = getAdminApp();
     return app.firestore();
@@ -47,18 +54,36 @@ async function getDb() {
 
 async function seedDefaultData() {
     const db = await getDb();
+    const batch = writeBatch(db);
+    let writes = 0;
+
+    // Seed Templates
     const templatesRef = collection(db, 'reportTemplates');
     const templatesSnapshot = await getDocs(query(templatesRef, limit(1)));
-    
     if (templatesSnapshot.empty) {
         console.log("No report templates found. Seeding default templates...");
-        const batch = writeBatch(db);
         defaultTemplates.forEach(template => {
             const docRef = doc(templatesRef);
             batch.set(docRef, { ...template, lastModified: serverTimestamp() });
+            writes++;
         });
+    }
+
+    // Seed Machines
+    const machinesRef = collection(db, 'machines');
+    const machinesSnapshot = await getDocs(query(machinesRef, limit(1)));
+    if (machinesSnapshot.empty) {
+        console.log("No machines found. Seeding default machines...");
+        defaultMachines.forEach(machine => {
+            const docRef = doc(machinesRef);
+            batch.set(docRef, machine);
+            writes++;
+        });
+    }
+
+    if (writes > 0) {
         await batch.commit();
-        console.log("Default templates seeded successfully.");
+        console.log("Default data seeded successfully.");
     }
 }
 
