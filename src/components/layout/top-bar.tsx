@@ -53,7 +53,10 @@ export function TopBar() {
     if (!user) return;
 
     // Fetch user settings to check notification preferences
-    getUserSettings().then(setUserSettings as any);
+    user.getIdToken().then(authToken => {
+        getUserSettings({ authToken }).then(setUserSettings as any);
+    });
+    
 
     const unsubscribe: Unsubscribe = onRecentActivities((activities) => {
       // Filter for activities that should appear as notifications (e.g., alerts, warnings)
@@ -276,3 +279,5 @@ export function TopBar() {
     </header>
   );
 }
+
+    

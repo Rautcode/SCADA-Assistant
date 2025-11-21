@@ -4,31 +4,36 @@
 import { z } from "zod";
 import { settingsSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
-import { getAuthenticatedUser } from "@genkit-ai/next/auth";
+import * as admin from 'firebase-admin';
+import { initAdmin } from '@/lib/firebase/admin';
 import sql from 'mssql';
 import nodemailer from 'nodemailer';
 
+// Helper to get the authenticated user's UID from a bearer token
+async function getAuthenticatedUserUid(token: string | undefined): Promise<string> {
+    if (!token) {
+        throw new Error("User is not authenticated.");
+    }
+    await initAdmin();
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        throw new Error("User is not authenticated.");
+    }
+}
+
 
 // This function is called by client components to get the current user's settings.
-// It is secure because it uses the server-side auth session to identify the user.
-export async function getUserSettings() {
-  const auth = await getAuthenticatedUser();
-  if (!auth) {
-    // Return null or throw an error if the user is not authenticated.
-    // Returning null is often safer for client-side consumption.
-    return null;
-  }
-  const userId = auth.uid;
+export async function getUserSettings({ authToken }: { authToken: string }) {
+  const userId = await getAuthenticatedUserUid(authToken);
   const settings = await getUserSettingsFromDb(userId);
   return settings;
 }
 
-export async function saveUserSettings(settings: z.infer<typeof settingsSchema>): Promise<{ success: boolean; error?: string }> {
-  const auth = await getAuthenticatedUser();
-  if (!auth) {
-    return { success: false, error: "User is not authenticated." };
-  }
-  const userId = auth.uid;
+export async function saveUserSettings({ settings, authToken }: { settings: z.infer<typeof settingsSchema>, authToken: string }): Promise<{ success: boolean; error?: string }> {
+  const userId = await getAuthenticatedUserUid(authToken);
 
   try {
     await saveUserSettingsToDb(userId, settings);
@@ -40,12 +45,8 @@ export async function saveUserSettings(settings: z.infer<typeof settingsSchema>)
 }
 
 
-export async function getDbSchema(): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-        throw new Error("User is not authenticated.");
-    }
-    const userId = auth.uid;
+export async function getDbSchema({ authToken }: { authToken: string }): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
+    const userId = await getAuthenticatedUserUid(authToken);
 
     console.log(`Fetching DB schema for user ${userId}...`);
 
@@ -95,12 +96,8 @@ export async function getDbSchema(): Promise<{ tables: string[], columns: { [key
 }
 
 
-export async function testScadaConnection(): Promise<{ success: boolean, error?: string }> {
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-        return { success: false, error: "User is not authenticated." };
-    }
-    const userId = auth.uid;
+export async function testScadaConnection({ authToken }: { authToken: string }): Promise<{ success: boolean, error?: string }> {
+    const userId = await getAuthenticatedUserUid(authToken);
     const userSettings = await getUserSettingsFromDb(userId);
     const dbCreds = userSettings?.database;
 
@@ -127,12 +124,8 @@ export async function testScadaConnection(): Promise<{ success: boolean, error?:
     }
 }
 
-export async function testSmtpConnection(): Promise<{ success: boolean; error?: string; }> {
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-        return { success: false, error: "User is not authenticated." };
-    }
-    const userId = auth.uid;
+export async function testSmtpConnection({ authToken }: { authToken: string }): Promise<{ success: boolean; error?: string; }> {
+    const userId = await getAuthenticatedUserUid(authToken);
 
     const userSettings = await getUserSettingsFromDb(userId);
     const smtpSettings = userSettings?.email;
@@ -161,3 +154,5 @@ export async function testSmtpConnection(): Promise<{ success: boolean; error?: 
       return { success: false, error: error.message };
     }
 }
+
+    

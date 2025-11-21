@@ -25,17 +25,18 @@ export function ApiKeyNotification() {
         }
         
         setLoading(true);
-        // This server action is authenticated.
-        getUserSettings()
-            .then(settings => {
-                setApiKey(settings?.apiKey);
-            })
-            .catch(err => {
-                console.error("Failed to get API key for notification:", err);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+        user.getIdToken().then(authToken => {
+            getUserSettings({ authToken })
+                .then(settings => {
+                    setApiKey(settings?.apiKey);
+                })
+                .catch(err => {
+                    console.error("Failed to get API key for notification:", err);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        });
             
     }, [user, authLoading]);
 
@@ -62,3 +63,5 @@ export function ApiKeyNotification() {
         </Alert>
     );
 }
+
+    

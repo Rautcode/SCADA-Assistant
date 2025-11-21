@@ -106,7 +106,8 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       setAvailableParameters([]);
       
       try {
-        const tags = await getScadaTags({ machineIds: selectedMachineIds });
+        const authToken = await user.getIdToken();
+        const tags = await getScadaTags({ machineIds: selectedMachineIds, authToken });
         setAvailableParameters(tags);
         if (tags.length === 0) {
             setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");
@@ -156,6 +157,18 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
 );
 
+  if (loadingMachines) {
+      return (
+          <div className="space-y-8 p-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-1/4" />
+                <Skeleton className="h-48 w-full" />
+              </div>
+          </div>
+      )
+  }
 
   return (
     <div className="w-full">
@@ -264,16 +277,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
                           />
                         </div>
                         <ScrollArea className="h-40 w-full rounded-md border p-2">
-                          {loadingMachines ? (
-                            <div className="space-y-2 p-2">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className="flex items-center space-x-2">
-                                  <Skeleton className="h-4 w-4" />
-                                  <Skeleton className="h-4 w-[200px]" />
-                                </div>
-                              ))}
-                            </div>
-                          ) : filteredMachines.length > 0 ? filteredMachines.map((machine) => (
+                          {filteredMachines.length > 0 ? filteredMachines.map((machine) => (
                             <FormField
                               key={machine.id}
                               control={form.control}
@@ -405,3 +409,5 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
   );
 }
+
+    

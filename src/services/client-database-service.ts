@@ -1,10 +1,11 @@
 
 'use client';
 
-import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, doc, Timestamp, Unsubscribe, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase'; // Direct import of client-side db
 import { DashboardStats, EmailLog, Machine, RecentActivity, ReportTemplate, ScheduledTask, SystemComponentStatus, SystemLog } from '@/lib/types/database';
 import { getUserSettings } from '@/app/actions/settings-actions';
+import { getAuth } from 'firebase/auth';
 
 function createListener<T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, count?: number): Unsubscribe {
     if (!db) {
@@ -88,6 +89,16 @@ export function onScheduledTasks(callback: (tasks: ScheduledTask[]) => void): Un
 }
 
 export function onMachines(callback: (machines: Machine[]) => void): Unsubscribe {
+    // Seeding default machines if the collection is empty
+    const machineRef = collection(db, 'machines');
+    getDocs(query(machineRef, limit(1))).then(snapshot => {
+        if (snapshot.empty) {
+            console.log("Seeding default machines...");
+            addDoc(machineRef, { name: 'Machine-01', location: 'Factory A' });
+            addDoc(machineRef, { name: 'Machine-02', location: 'Factory A' });
+            addDoc(machineRef, { name: 'Packaging-Line-01', location: 'Factory B' });
+        }
+    });
     return createListener<Machine>('machines', callback, 'name');
 }
 
@@ -99,7 +110,12 @@ export function onReportTemplates(callback: (templates: ReportTemplate[]) => voi
 // A one-time check for SCADA DB connectivity
 export async function isScadaDbConnected(): Promise<boolean> {
     try {
-        const settings = await getUserSettings();
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) return false;
+
+        const authToken = await user.getIdToken();
+        const settings = await getUserSettings({ authToken });
         if (!settings?.database?.server || !settings?.database?.databaseName) {
             return false;
         }
@@ -108,3 +124,5 @@ export async function isScadaDbConnected(): Promise<boolean> {
         return false;
     }
 }
+
+    

@@ -136,9 +136,6 @@ export async function updateTaskStatus(taskId: string, status: ScheduledTask['st
     const updateData: { status: ScheduledTask['status']; error?: string } = { status };
     if (error) {
         updateData.error = error;
-    } else {
-        // Firestore requires us to explicitly delete the field if we want to remove it
-        updateData.error = ''; 
     }
     await updateDoc(taskRef, updateData);
 }
@@ -175,3 +172,5 @@ export async function addEmailLogToDb(log: Omit<any, 'id' | 'timestamp'>) {
         timestamp: serverTimestamp(),
     });
 }
+
+    
