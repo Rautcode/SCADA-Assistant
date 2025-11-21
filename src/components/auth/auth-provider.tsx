@@ -15,6 +15,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
 import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction, SendPasswordResetFunction } from '@/lib/types/auth';
+import { fetchWithAuth } from '@/lib/firebase/fetch-with-auth';
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -23,12 +25,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const originalFetch = window.fetch;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
+
+      if (user) {
+        // When user logs in, override global fetch
+        window.fetch = fetchWithAuth(originalFetch);
+      } else {
+        // When user logs out, restore original fetch
+        window.fetch = originalFetch;
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+        unsubscribe();
+        window.fetch = originalFetch; // Cleanup on unmount
+    }
   }, []);
 
   const login: LoginFunction = async (email, password, rememberMe) => {
