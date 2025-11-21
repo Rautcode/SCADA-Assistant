@@ -14,8 +14,8 @@ export async function initAdmin() {
     // In a real app, you might want to throw an error or handle this differently.
     // For this context, we will log a warning and proceed without admin features if the key is missing.
     console.warn("Firebase service account key is not configured in environment variables. Server-side admin features will be disabled.");
+    // Return a mock object that won't throw when `auth()` is called, but whose methods will fail.
     return {
-        // Return a mock object that won't throw when `auth()` is called, but whose methods will fail.
         auth: () => ({
             verifyIdToken: () => Promise.reject(new Error("Admin SDK not initialized."))
         })
@@ -33,3 +33,5 @@ export async function initAdmin() {
     throw new Error("Could not initialize Firebase Admin SDK. Service account key may be malformed.");
   }
 }
+
+    

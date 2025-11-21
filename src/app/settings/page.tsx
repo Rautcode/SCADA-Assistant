@@ -99,23 +99,21 @@ export default function SettingsPage() {
     React.useEffect(() => {
         if (!user) return;
         setIsFetching(true);
-        user.getIdToken().then(authToken => {
-            getUserSettings({ authToken })
-                .then(settings => {
-                    if (settings) {
-                        form.reset(settings);
-                    }
-                })
-                .catch(err => {
-                     console.error("Failed to fetch settings:", err);
-                     toast({ 
-                        title: "Error: Could not fetch your settings.", 
-                        description: "The application could not retrieve your saved settings. Please check your network connection.", 
-                        variant: "destructive",
-                    });
-                })
-                .finally(() => setIsFetching(false));
-        });
+        getUserSettings()
+            .then(settings => {
+                if (settings) {
+                    form.reset(settings);
+                }
+            })
+            .catch(err => {
+                 console.error("Failed to fetch settings:", err);
+                 toast({ 
+                    title: "Error: Could not fetch your settings.", 
+                    description: "The application could not retrieve your saved settings. Please check your network connection.", 
+                    variant: "destructive",
+                });
+            })
+            .finally(() => setIsFetching(false));
     }, [user, form, toast]);
 
     async function onSubmit(values: SettingsFormValues) {
@@ -126,8 +124,7 @@ export default function SettingsPage() {
 
         setIsLoading(true);
         try {
-            const authToken = await user.getIdToken();
-            const result = await saveUserSettings({ settings: values, authToken });
+            const result = await saveUserSettings({ settings: values });
 
             if (result.success) {
                 toast({
@@ -159,8 +156,7 @@ export default function SettingsPage() {
         await onSubmit(form.getValues());
 
         try {
-            const authToken = await user.getIdToken();
-            const result = await testScadaConnection({ authToken });
+            const result = await testScadaConnection();
             if (result.success) {
                 setDbConnectionStatus('success');
                 toast({
@@ -191,8 +187,7 @@ export default function SettingsPage() {
         if (!user) return;
         setIsFetchingSchema(true);
         try {
-            const authToken = await user.getIdToken();
-            const schema = await getDbSchema({ authToken });
+            const schema = await getDbSchema();
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
@@ -211,8 +206,7 @@ export default function SettingsPage() {
         // We must save the settings first for the server action to use them.
         await onSubmit(form.getValues());
         try {
-            const authToken = await user.getIdToken();
-            const result = await testSmtpConnection({ authToken });
+            const result = await testSmtpConnection();
             if (result.success) {
                 setSmtpConnectionStatus('success');
                 toast({
