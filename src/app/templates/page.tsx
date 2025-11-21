@@ -11,8 +11,7 @@ import { LayoutGrid, List, PlusCircle, Search, FileText } from "lucide-react";
 import { ReportTemplate } from "@/lib/types/database";
 import { Skeleton } from "@/components/ui/skeleton";
 import { categoryIcons } from "@/lib/icon-map";
-import { onReportTemplates } from "@/services/client-database-service";
-import { Unsubscribe } from "firebase/firestore";
+import { useData } from "@/components/database/data-provider";
 
 const NewTemplateDialog = dynamic(() =>
   import('@/components/templates/new-template-dialog').then((mod) => mod.NewTemplateDialog),
@@ -84,21 +83,11 @@ const TemplateListItem = React.memo(function TemplateListItem({ template, loadin
 });
 
 export default function TemplatesPage() {
-  const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const { templates, loading } = useData();
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterCategory, setFilterCategory] = React.useState("all");
   const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoading(true);
-    const unsub: Unsubscribe = onReportTemplates(templatesData => {
-        setTemplates(templatesData);
-        setLoading(false);
-    });
-    return () => unsub();
-  }, []);
 
   const filteredTemplates = React.useMemo(() => templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) &&

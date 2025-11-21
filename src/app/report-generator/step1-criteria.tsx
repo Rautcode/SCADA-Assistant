@@ -23,10 +23,11 @@ import { getScadaTags } from "@/app/actions/scada-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { useConnection } from "../database/connection-provider";
 import { categoryIcons } from "@/lib/icon-map";
+import { useAuth } from "../auth/auth-provider";
+import { isScadaDbConnected } from "@/services/client-database-service";
 import { useData } from "@/components/database/data-provider";
-import { useSession } from "next-auth/react";
+
 
 export const reportCriteriaSchema = z.object({
   dateRange: z.object({
@@ -54,8 +55,14 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   const [loadingParameters, setLoadingParameters] = React.useState(false);
   const [parameterError, setParameterError] = React.useState<string | null>(null);
   
-  const { data: session } = useSession();
-  const { status: connectionStatus } = useConnection();
+  const [connectionStatus, setConnectionStatus] = React.useState<'loading' | 'connected' | 'unconfigured'>('loading');
+  const { user } = useAuth();
+  
+  React.useEffect(() => {
+    isScadaDbConnected().then(connected => {
+      setConnectionStatus(connected ? 'connected' : 'unconfigured');
+    });
+  }, []);
 
 
   const form = useForm<ReportCriteriaFormValues>({
@@ -80,7 +87,6 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
             onValidated(null);
         }
     });
-    // On initial load, if the data is valid, notify parent immediately.
     if(formState.isValid) {
         onValidated(getValues());
     }
@@ -90,25 +96,16 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   
   React.useEffect(() => {
     async function fetchTags() {
-      if (!session || !selectedMachineIds || selectedMachineIds.length === 0) {
+      if (!user || !selectedMachineIds || selectedMachineIds.length === 0 || connectionStatus !== 'connected') {
         setAvailableParameters([]);
-        return;
-      }
-
-      if (connectionStatus !== 'connected') {
-        setAvailableParameters([]);
-        setParameterError("Database is not connected. Please configure it in Settings.");
-        setLoadingParameters(false);
         return;
       }
       
       setLoadingParameters(true);
       setParameterError(null);
-      // Immediately clear old parameters when selection changes
       setAvailableParameters([]);
       
       try {
-        // This action is now self-contained and authenticated.
         const tags = await getScadaTags({ machineIds: selectedMachineIds });
         setAvailableParameters(tags);
         if (tags.length === 0) {
@@ -124,10 +121,10 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
 
     const debounce = setTimeout(() => {
       fetchTags();
-    }, 300); // Add a small debounce
+    }, 300);
 
     return () => clearTimeout(debounce);
-  }, [selectedMachineIds, session, connectionStatus]);
+  }, [selectedMachineIds, user, connectionStatus]);
 
 
   const filteredMachines = machines.filter(machine => 
@@ -408,5 +405,3 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     </div>
   );
 }
-
-      
