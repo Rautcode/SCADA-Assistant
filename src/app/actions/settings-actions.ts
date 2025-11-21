@@ -6,25 +6,17 @@ import { settingsSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
 import sql from 'mssql';
 import nodemailer from 'nodemailer';
-import { getAuthenticatedUser } from "@genkit-ai/next/auth";
-
-async function getVerifiedUid(): Promise<string> {
-    const auth = await getAuthenticatedUser();
-    if (!auth) {
-        throw new Error("User is not authenticated.");
-    }
-    return auth.uid;
-}
+import { getVerifiedUid } from "./auth-helpers";
 
 
-export async function getUserSettings() {
-  const userId = await getVerifiedUid();
+export async function getUserSettings({ authToken }: { authToken: string }) {
+  const userId = await getVerifiedUid(authToken);
   const settings = await getUserSettingsFromDb(userId);
   return settings;
 }
 
-export async function saveUserSettings({ settings }: { settings: z.infer<typeof settingsSchema> }): Promise<{ success: boolean; error?: string }> {
-  const userId = await getVerifiedUid();
+export async function saveUserSettings({ settings, authToken }: { settings: z.infer<typeof settingsSchema>, authToken: string }): Promise<{ success: boolean; error?: string }> {
+  const userId = await getVerifiedUid(authToken);
 
   try {
     await saveUserSettingsToDb(userId, settings);
@@ -35,8 +27,8 @@ export async function saveUserSettings({ settings }: { settings: z.infer<typeof 
   }
 }
 
-export async function getDbSchema(): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
-    const userId = await getVerifiedUid();
+export async function getDbSchema({ authToken }: { authToken: string }): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
+    const userId = await getVerifiedUid(authToken);
 
     console.log(`Fetching DB schema for user ${userId}...`);
 
@@ -85,8 +77,8 @@ export async function getDbSchema(): Promise<{ tables: string[], columns: { [key
     }
 }
 
-export async function testScadaConnection(): Promise<{ success: boolean, error?: string }> {
-    const userId = await getVerifiedUid();
+export async function testScadaConnection({ authToken }: { authToken: string }): Promise<{ success: boolean, error?: string }> {
+    const userId = await getVerifiedUid(authToken);
     const userSettings = await getUserSettingsFromDb(userId);
     const dbCreds = userSettings?.database;
 
@@ -113,8 +105,8 @@ export async function testScadaConnection(): Promise<{ success: boolean, error?:
     }
 }
 
-export async function testSmtpConnection(): Promise<{ success: boolean; error?: string; }> {
-    const userId = await getVerifiedUid();
+export async function testSmtpConnection({ authToken }: { authToken: string }): Promise<{ success: boolean; error?: string; }> {
+    const userId = await getVerifiedUid(authToken);
 
     const userSettings = await getUserSettingsFromDb(userId);
     const smtpSettings = userSettings?.email;

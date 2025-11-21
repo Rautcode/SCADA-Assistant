@@ -111,8 +111,8 @@ export function onReportTemplates(callback: (templates: ReportTemplate[]) => voi
 export async function isScadaDbConnected(): Promise<boolean> {
     try {
         if (!auth.currentUser) return false;
-        // Server action is authenticated automatically
-        const settings = await getUserSettings();
+        const authToken = await auth.currentUser.getIdToken();
+        const settings = await getUserSettings({ authToken });
         if (!settings?.database?.server || !settings?.database?.databaseName) {
             return false;
         }
