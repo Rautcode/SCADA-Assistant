@@ -61,6 +61,14 @@ export const getScadaDataFlow = ai.defineFlow(
           encrypt: false,
           trustServerCertificate: true,
         },
+        connectionTimeout: 15000,
+        requestTimeout: 15000,
+        pool: {
+            max: 10,
+            min: 0,
+            idleTimeoutMillis: 30000,
+            acquireTimeoutMillis: 30000,
+        },
       });
 
       let query = `SELECT [${dataMapping.timestampColumn}], [${dataMapping.machineColumn}], [${dataMapping.parameterColumn}], [${dataMapping.valueColumn}] FROM [${dataMapping.table}] WHERE [${dataMapping.timestampColumn}] BETWEEN @startDate AND @endDate`;
@@ -119,6 +127,14 @@ export const getScadaTagsFlow = ai.defineFlow(
         options: {
           encrypt: false,
           trustServerCertificate: true,
+        },
+        connectionTimeout: 15000,
+        requestTimeout: 15000,
+        pool: {
+            max: 10,
+            min: 0,
+            idleTimeoutMillis: 30000,
+            acquireTimeoutMillis: 30000,
         },
       });
 

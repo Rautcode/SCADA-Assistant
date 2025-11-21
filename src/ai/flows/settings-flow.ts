@@ -84,10 +84,6 @@ export const testScadaConnectionFlow = ai.defineFlow(
             idleTimeoutMillis: 30000,
             acquireTimeoutMillis: 30000,
         },
-        retry: {
-            maxAttempts: 3,
-            delay: 1000,
-        },
       });
       return { success: true };
     } catch (error: any) {
@@ -169,15 +165,13 @@ export const getDbSchemaFlow = ai.defineFlow(
         server: dbConfig.server!,
         database: dbConfig.databaseName!,
         options: { encrypt: false, trustServerCertificate: true },
+        connectionTimeout: 15000,
+        requestTimeout: 15000,
         pool: {
             max: 10,
             min: 0,
             idleTimeoutMillis: 30000,
             acquireTimeoutMillis: 30000,
-        },
-        retry: {
-            maxAttempts: 3,
-            delay: 1000,
         },
       });
       
