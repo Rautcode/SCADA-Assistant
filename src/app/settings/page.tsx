@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useAuth } from "../auth/auth-provider";
+import { useAuth } from "@/components/auth/auth-provider";
 
 
 type ConnectionStatus = 'untested' | 'testing' | 'success' | 'error';
