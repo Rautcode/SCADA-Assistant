@@ -174,7 +174,7 @@ export default function ReportGeneratorPage() {
         };
         const result = await generateReport(reportInput);
         setGeneratedReport(result);
-    } catch (error) {
+    } catch (error) => {
         console.error("Report generation failed:", error);
         toast({
             title: "Generation Failed",
@@ -281,5 +281,3 @@ export default function ReportGeneratorPage() {
     </div>
   );
 }
-
-    
