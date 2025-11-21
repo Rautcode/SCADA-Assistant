@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
-import { getScadaTags } from "@/app/actions/scada-actions";
+import { getScadaTagsFlow } from "@/ai/flows/scada-flow";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -106,8 +106,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
       setAvailableParameters([]);
       
       try {
-        const authToken = await user.getIdToken();
-        const tags = await getScadaTags({ machineIds: selectedMachineIds, authToken });
+        const tags = await getScadaTagsFlow({ machineIds: selectedMachineIds });
         setAvailableParameters(tags);
         if (tags.length === 0) {
             setParameterError("No parameters (tags) found for the selected machines. This may be due to the machine selection or a database issue.");

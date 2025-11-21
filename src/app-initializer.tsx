@@ -28,24 +28,21 @@ export function AppInitializer({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      user.getIdToken().then(authToken => {
-        getUserSettings({ authToken })
-          .then(settings => {
-            if (settings?.language) {
-              setLanguage(settings.language);
-            }
-            if (settings?.theme) {
-              applyTheme(settings.theme);
-            }
-          })
-          .catch(error => {
-            console.warn("Could not fetch user settings on load:", error);
-          });
-      });
+      // No longer need to pass authToken
+      getUserSettings()
+        .then(settings => {
+          if (settings?.language) {
+            setLanguage(settings.language);
+          }
+          if (settings?.theme) {
+            applyTheme(settings.theme);
+          }
+        })
+        .catch(error => {
+          console.warn("Could not fetch user settings on load:", error);
+        });
     }
   }, [user, setLanguage]);
 
   return <>{children}</>;
 }
-
-    

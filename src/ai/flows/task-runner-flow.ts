@@ -13,7 +13,7 @@ import { reportCriteriaSchema } from '@/components/report-generator/step1-criter
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { ai } from '../genkit';
-import { getScadaData } from '@/app/actions/scada-actions';
+import { getScadaDataFlow } from './scada-flow';
 
 const ScadaDataPointSchema = z.object({
   id: z.string(),
@@ -94,26 +94,14 @@ export const runScheduledTasksFlow = ai.defineFlow(
             parameterIds: [],
         };
         
-        // This is a tricky part. We need to call `getScadaData` which expects an `authToken`.
-        // Since this flow is run by a backend scheduler, there's no user session.
-        // The most secure way to handle this is to have a system-level identity or,
-        // for this app's architecture, we accept that the scheduler runs with the
-        // permissions of the user who created the task.
-        // We will need to find a way to get a token for that user, or temporarily
-        // bypass the auth check in `getScadaData` for internal calls.
-
-        // A robust solution would be to use a service account for backend tasks.
-        // A simpler, but less secure, approach for this app would be to add a
-        // special "internal" flag to `getScadaData` to bypass auth, but that's not ideal.
-        
-        // The best approach given the current setup is to acknowledge this is a limitation.
-        // For this to work, we'd need to refactor `getScadaData` significantly.
-        // Let's assume for now that we can't get a valid token and the action will fail.
-        // To make progress, we'll replicate the data-fetching logic here.
-        // THIS IS A TEMPORARY WORKAROUND.
-        
+        // This is a tricky part. `getScadaDataFlow` is an authenticated flow.
+        // Since this `runScheduledTasksFlow` is a backend-only flow (triggered by a cron),
+        // there is no user in the context. To solve this, we can't directly call it.
+        // A robust solution would be to use a service account.
+        // For this app, we'll replicate the core data-fetching logic inside this flow,
+        // using the specific user's saved settings. This is a deliberate architectural
+        // choice to keep the cron job runner self-contained.
         let scadaData: any[];
-
         const { default: sql } = await import('mssql');
         let pool;
         try {
@@ -130,14 +118,14 @@ export const runScheduledTasksFlow = ai.defineFlow(
             const result = await pool.request()
                 .input('startDate', sql.DateTime, criteria.dateRange.from)
                 .input('endDate', sql.DateTime, criteria.dateRange.to)
-                .query(`SELECT [TagName], [TimeStamp], [TagValue], [ServerName] FROM [${userSettings.dataMapping.table}] WHERE [TimeStamp] BETWEEN @startDate AND @endDate AND [ServerName] IN ('${criteria.machineIds.join("','")}')`);
+                .query(`SELECT [${userSettings.dataMapping.timestampColumn}], [${userSettings.dataMapping.machineColumn}], [${userSettings.dataMapping.parameterColumn}], [${userSettings.dataMapping.valueColumn}] FROM [${userSettings.dataMapping.table}] WHERE [${userSettings.dataMapping.timestampColumn}] BETWEEN @startDate AND @endDate AND [${userSettings.dataMapping.machineColumn}] IN ('${criteria.machineIds.join("','")}')`);
             
             scadaData = result.recordset.map((row: any) => ({
-                id: `${row.TagName}-${row.TimeStamp.toISOString()}`,
-                timestamp: new Date(row.TimeStamp),
-                machine: row.ServerName, 
-                parameter: row.TagName,
-                value: row.TagValue,
+                id: `${row[userSettings.dataMapping!.parameterColumn!]}-${new Date(row[userSettings.dataMapping!.timestampColumn!]).toISOString()}`,
+                timestamp: new Date(row[userSettings.dataMapping!.timestampColumn!]),
+                machine: row[userSettings.dataMapping!.machineColumn!], 
+                parameter: row[userSettings.dataMapping!.parameterColumn!],
+                value: row[userSettings.dataMapping!.valueColumn!],
                 unit: "N/A", 
             }));
         } finally {

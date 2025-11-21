@@ -12,7 +12,6 @@ import { addEmailLogToDb, getUserSettingsFromDb, getSystemSettingsFromDb } from 
 import { emailSettingsSchema } from '@/lib/types/database';
 import { SendEmailInput } from '@/lib/types/flows';
 import { ai } from '../genkit';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 
 // Define an options object for the flow to allow for auth override from backend flows.
@@ -28,12 +27,8 @@ export const sendEmail = ai.defineFlow(
     name: 'sendEmailFlow',
     inputSchema: SendEmailInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
-    auth: (auth) => {
-        // Allow if auth is present OR if an authOverride will be provided in flowOptions
-        // The logic inside the flow will handle the final check.
-    }
   },
-  async (input, { flowOptions }) => {
+  async (input, { flowOptions, auth }) => {
     const { to, subject, text, html } = input;
     
     // Parse the flow options to check for an auth override.
@@ -49,7 +44,6 @@ export const sendEmail = ai.defineFlow(
     } else {
       // If no override, this is a standard client-side request.
       // We securely get the authenticated user's ID from the context.
-      const auth = await getAuthenticatedUser();
       if (!auth) {
           throw new Error("User must be authenticated and no auth override was provided.");
       }

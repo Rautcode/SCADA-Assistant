@@ -9,10 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
+import { googleAI } from '@genkit-ai/googleai';
 import { getUserSettingsFromDb } from '@/services/database-service';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
-
 
 const ChartStyleSuggestionSchema = z.object({
   chartType: z.enum(['bar', 'line', 'pie']).describe("The suggested type of chart."),
@@ -55,14 +53,8 @@ const suggestChartStyleFlow = ai.defineFlow(
     name: 'suggestChartStyleFlow',
     inputSchema: SuggestChartStyleInputSchema,
     outputSchema: ChartStyleSuggestionSchema,
-    auth: (auth) => {
-        if (!auth) {
-            throw new Error("User must be authenticated.");
-        }
-    }
   },
-  async ({ promptText }) => {
-    const auth = await getAuthenticatedUser();
+  async ({ promptText }, { auth }) => {
      if (!auth) {
         throw new Error("User must be authenticated.");
     }

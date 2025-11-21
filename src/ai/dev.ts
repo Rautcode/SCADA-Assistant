@@ -7,3 +7,5 @@ import './flows/auth-email-flow';
 import './flows/chart-stylist-flow';
 import './flows/task-runner-flow';
 import './flows/scheduler-flow';
+import './flows/settings-flow';
+import './flows/scada-flow';

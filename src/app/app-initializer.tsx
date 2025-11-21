@@ -4,7 +4,7 @@
 import { type ReactNode, useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useLocalization } from '@/components/localization/localization-provider';
-import { getUserSettings } from './actions/settings-actions';
+import { getUserSettingsFlow } from '@/ai/flows/settings-flow';
 
 // This function can be used to apply theme changes dynamically.
 export function applyTheme(theme: string) {
@@ -28,20 +28,19 @@ export function AppInitializer({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      user.getIdToken().then(authToken => {
-        getUserSettings({ authToken })
-          .then(settings => {
-            if (settings?.language) {
-              setLanguage(settings.language);
-            }
-            if (settings?.theme) {
-              applyTheme(settings.theme);
-            }
-          })
-          .catch(error => {
-            console.warn("Could not fetch user settings on load:", error);
-          });
-      });
+      // No longer need to pass authToken
+      getUserSettingsFlow()
+        .then(settings => {
+          if (settings?.language) {
+            setLanguage(settings.language);
+          }
+          if (settings?.theme) {
+            applyTheme(settings.theme);
+          }
+        })
+        .catch(error => {
+          console.warn("Could not fetch user settings on load:", error);
+        });
     }
   }, [user, setLanguage]);
 

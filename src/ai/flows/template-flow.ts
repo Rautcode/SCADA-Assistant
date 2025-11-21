@@ -7,7 +7,6 @@
 import { createNewTemplateInDb } from '@/services/database-service';
 import { ai } from '../genkit';
 import { z } from 'genkit';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 const NewTemplateSchema = z.object({
     name: z.string().min(1, "Template name is required."),
@@ -27,14 +26,12 @@ const createNewTemplateFlow = ai.defineFlow(
         name: 'createNewTemplateFlow',
         inputSchema: NewTemplateSchema,
         outputSchema: z.void(),
-        auth: (auth) => {
-            if (!auth) {
-                throw new Error("User must be authenticated.");
-            }
-        }
     },
-    async (template) => {
-        // This call is now secure because the flow has the 'auth' property.
+    async (template, { auth }) => {
+        if (!auth) {
+            throw new Error("User must be authenticated.");
+        }
+        // This call is now secure because the flow will throw if auth is missing.
         await createNewTemplateInDb(template);
     }
 );

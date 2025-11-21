@@ -25,7 +25,7 @@ import type { RecentActivity, UserSettings } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
 import { ScrollArea } from '../ui/scroll-area';
 import { iconMap } from '@/lib/icon-map';
-import { getUserSettings } from '@/app/actions/settings-actions';
+import { getUserSettingsFlow } from '@/ai/flows/settings-flow';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppLogo } from './app-logo';
@@ -53,9 +53,7 @@ export function TopBar() {
     if (!user) return;
 
     // Fetch user settings to check notification preferences
-    user.getIdToken().then(authToken => {
-        getUserSettings({ authToken }).then(setUserSettings as any);
-    });
+    getUserSettingsFlow().then(setUserSettings as any);
     
 
     const unsubscribe: Unsubscribe = onRecentActivities((activities) => {

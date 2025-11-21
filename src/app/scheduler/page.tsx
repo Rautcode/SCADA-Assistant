@@ -17,7 +17,7 @@ import { categoryIcons } from '@/lib/icon-map';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '../auth/auth-provider';
 import { Unsubscribe } from 'firebase/firestore';
-import { useData } from '../components/database/data-provider';
+import { useData } from '../database/data-provider';
 import { isScadaDbConnected } from '@/services/client-database-service';
 
 const NewTaskDialog = dynamic(() =>

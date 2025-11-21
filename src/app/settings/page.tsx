@@ -6,7 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail, Map, Workflow } from 'lucide-react';
 import type { SettingsFormValues } from "@/lib/types/database";
-import { settingsSchema } from "@/lib/types/database";
+import {
+    getUserSettingsFlow,
+    saveUserSettingsFlow,
+    getDbSchemaFlow,
+    testScadaConnectionFlow,
+    testSmtpConnectionFlow,
+    SettingsSchema
+} from '@/ai/flows/settings-flow';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -17,7 +24,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, getDbSchema, testSmtpConnection, saveUserSettings, getUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/components/localization/localization-provider";
@@ -45,7 +51,7 @@ export default function SettingsPage() {
     const [isFetchingSchema, setIsFetchingSchema] = React.useState(false);
     
     const form = useForm<SettingsFormValues>({
-        resolver: zodResolver(settingsSchema),
+        resolver: zodResolver(SettingsSchema),
         defaultValues: {
             theme: "system",
             language: "en",
@@ -101,8 +107,7 @@ export default function SettingsPage() {
         setIsFetching(true);
         async function fetchSettings() {
             try {
-                const authToken = await user.getIdToken();
-                const settings = await getUserSettings({ authToken });
+                const settings = await getUserSettingsFlow();
                 if (settings) {
                     form.reset(settings);
                 }
@@ -121,15 +126,9 @@ export default function SettingsPage() {
     }, [user, form, toast]);
 
     async function onSubmit(values: SettingsFormValues) {
-        if (!user) {
-            toast({ title: "Not Authenticated", description: "You must be logged in to save settings.", variant: "destructive" });
-            return;
-        }
-
         setIsLoading(true);
         try {
-            const authToken = await user.getIdToken();
-            const result = await saveUserSettings({ settings: values, authToken });
+            const result = await saveUserSettingsFlow(values);
 
             if (result.success) {
                 toast({
@@ -152,8 +151,6 @@ export default function SettingsPage() {
     }
     
     async function handleTestDbConnection() {
-        if (!user) return;
-
         setIsTestingDbConnection(true);
         setDbConnectionStatus('testing');
 
@@ -161,8 +158,7 @@ export default function SettingsPage() {
         await onSubmit(form.getValues());
 
         try {
-            const authToken = await user.getIdToken();
-            const result = await testScadaConnection({ authToken });
+            const result = await testScadaConnectionFlow();
             if (result.success) {
                 setDbConnectionStatus('success');
                 toast({
@@ -190,11 +186,9 @@ export default function SettingsPage() {
     }
     
     async function handleFetchSchema() {
-        if (!user) return;
         setIsFetchingSchema(true);
         try {
-            const authToken = await user.getIdToken();
-            const schema = await getDbSchema({ authToken });
+            const schema = await getDbSchemaFlow();
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
@@ -206,15 +200,13 @@ export default function SettingsPage() {
     }
 
     async function handleTestSmtpConnection() {
-        if (!user) return;
         setIsTestingSmtpConnection(true);
         setSmtpConnectionStatus('testing');
 
         // We must save the settings first for the server action to use them.
         await onSubmit(form.getValues());
         try {
-            const authToken = await user.getIdToken();
-            const result = await testSmtpConnection({ authToken });
+            const result = await testSmtpConnectionFlow();
             if (result.success) {
                 setSmtpConnectionStatus('success');
                 toast({

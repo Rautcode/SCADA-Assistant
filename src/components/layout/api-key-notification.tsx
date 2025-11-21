@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { KeyRound, Settings } from 'lucide-react';
-import { getUserSettings } from '@/app/actions/settings-actions';
+import { getUserSettingsFlow } from '@/ai/flows/settings-flow';
 import { Skeleton } from '../ui/skeleton';
 import { useAuth } from '../auth/auth-provider';
 
@@ -25,18 +25,16 @@ export function ApiKeyNotification() {
         }
         
         setLoading(true);
-        user.getIdToken().then(authToken => {
-            getUserSettings({ authToken })
-                .then(settings => {
-                    setApiKey(settings?.apiKey);
-                })
-                .catch(err => {
-                    console.error("Failed to get API key for notification:", err);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        });
+        getUserSettingsFlow()
+            .then(settings => {
+                setApiKey(settings?.apiKey);
+            })
+            .catch(err => {
+                console.error("Failed to get API key for notification:", err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
             
     }, [user, authLoading]);
 

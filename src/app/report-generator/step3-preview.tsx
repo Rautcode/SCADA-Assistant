@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown, Search, AlertCircle, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScadaDataPoint } from "@/lib/types/database";
-import { getScadaData } from "@/app/actions/scada-actions";
+import { getScadaDataFlow } from "@/ai/flows/scada-flow";
 import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
@@ -69,8 +69,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         setData([]);
 
         try {
-            const authToken = await user.getIdToken();
-            const scadaData = await getScadaData({ criteria, authToken });
+            const scadaData = await getScadaDataFlow({ criteria });
             
             const enrichedData = scadaData.map(d => {
                 const existingRow = initialData?.scadaData.find(initial => initial.id === d.id);

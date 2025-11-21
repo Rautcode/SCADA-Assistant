@@ -140,7 +140,7 @@ export default function ReportGeneratorPage() {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(currentStep - 1);
     }
   };
 

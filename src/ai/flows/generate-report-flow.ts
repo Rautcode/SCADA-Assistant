@@ -12,11 +12,9 @@ import { reportCriteriaSchema } from '@/components/report-generator/step1-criter
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { format } from 'date-fns';
-import { googleAI } from '@genkit-ai/google-genai';
+import { googleAI } from '@genkit-ai/googleai';
 import { sendEmail } from './send-email-flow';
 import { getUserSettingsFromDb } from '@/services/database-service';
-import { getAuthenticatedUser } from '@genkit-ai/next/auth';
-
 
 // Helper schemas for complex types
 const ScadaDataPointSchema = z.object({
@@ -121,16 +119,10 @@ const generateReportFlow = ai.defineFlow(
     name: 'generateReportFlow',
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
-    auth: (auth) => {
-        if (!auth) {
-            throw new Error("User must be authenticated.");
-        }
-    }
   },
-  async (input) => {
+  async (input, { auth }) => {
     console.log('Backend flow started with input:', input);
     
-    const auth = await getAuthenticatedUser();
     if (!auth) {
         throw new Error("User must be authenticated.");
     }
