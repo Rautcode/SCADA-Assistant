@@ -8,15 +8,18 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 
 interface FirebaseContextType {
-  app: FirebaseApp | null;
-  auth: Auth | null;
-  db: Firestore | null;
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
 
 export function FirebaseProvider({ children }: { children: ReactNode }) {
-  // The initialized app, auth, and db are imported from firebase.ts
+  if (!app || !auth || !db) {
+    return <>{children}</>;
+  }
+  
   const value = { app, auth, db };
 
   return (

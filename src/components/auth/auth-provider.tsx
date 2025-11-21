@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -12,24 +13,29 @@ import {
   browserSessionPersistence,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase/firebase';
 import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction, SendPasswordResetFunction } from '@/lib/types/auth';
+import { useFirebase } from '@/lib/firebase/provider';
 
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const { auth } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+        setLoading(false);
+        return;
+    };
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   const login: LoginFunction = async (email, password, rememberMe) => {
     if (!auth) {
@@ -41,15 +47,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const register: RegisterFunction = (email, password) => {
+     if (!auth) {
+        throw new Error("Firebase Auth is not initialized.");
+    }
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
   const logout = () => {
+     if (!auth) {
+        throw new Error("Firebase Auth is not initialized.");
+    }
     return signOut(auth);
   };
 
   const sendPasswordReset: SendPasswordResetFunction = (email) => {
-    // This now calls the standard firebase email function if needed, but our primary flow will use the custom action.
+     if (!auth) {
+        throw new Error("Firebase Auth is not initialized.");
+    }
     return sendPasswordResetEmail(auth, email);
   };
 
