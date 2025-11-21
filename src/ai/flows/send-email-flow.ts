@@ -29,9 +29,8 @@ export const sendEmail = ai.defineFlow(
     inputSchema: SendEmailInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
     auth: (auth) => {
-        if (!auth) {
-            throw new Error("User must be authenticated.");
-        }
+        // Allow if auth is present OR if an authOverride will be provided in flowOptions
+        // The logic inside the flow will handle the final check.
     }
   },
   async (input, { flowOptions }) => {
@@ -52,7 +51,7 @@ export const sendEmail = ai.defineFlow(
       // We securely get the authenticated user's ID from the context.
       const auth = await getAuthenticatedUser();
       if (!auth) {
-          throw new Error("User must be authenticated.");
+          throw new Error("User must be authenticated and no auth override was provided.");
       }
       userId = auth.uid;
     }
@@ -101,7 +100,7 @@ export const sendEmail = ai.defineFlow(
         pass: smtpSettings.smtpPass,
       },
        tls: {
-          rejectUnauthorized: true // Enforce strict certificate validation
+          rejectUnauthorized: true
       }
     });
 
@@ -135,5 +134,3 @@ export const sendEmail = ai.defineFlow(
     }
   }
 );
-
-    

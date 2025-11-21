@@ -3,32 +3,11 @@
 
 import type { ScadaDataPoint } from "@/lib/types/database";
 import sql from 'mssql';
-import nodemailer from 'nodemailer';
 import { reportCriteriaSchema } from "@/components/report-generator/step1-criteria";
 import { z } from "zod";
-import { dataMappingSchema, emailSettingsSchema } from "@/lib/types/database";
+import { dataMappingSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb } from "@/services/database-service";
-import { headers } from 'next/headers';
-import { initAdmin } from "@/lib/firebase/admin";
-
-
-// Helper to get the authenticated user's UID from the request headers
-async function getAuthenticatedUserUid(): Promise<string | null> {
-    const adminApp = await initAdmin();
-    const auth = adminApp.auth();
-    const authorization = headers().get('Authorization');
-    if (authorization?.startsWith('Bearer ')) {
-        const idToken = authorization.split('Bearer ')[1];
-        try {
-            const decodedToken = await auth.verifyIdToken(idToken);
-            return decodedToken.uid;
-        } catch (error) {
-            console.error("Error verifying Firebase ID token:", error);
-            return null;
-        }
-    }
-    return null;
-}
+import { getAuthenticatedUser } from "@genkit-ai/next/auth";
 
 
 // Types for credentials to be passed around
@@ -38,7 +17,7 @@ export type ScadaDbCredentials = {
     user?: string | null;
     password?: string | null;
 }
-export type SmtpCredentials = z.infer<typeof emailSettingsSchema>;
+
 export type ScadaDataMapping = z.infer<typeof dataMappingSchema>;
 
 // Helper to validate column mappings against the actual schema
@@ -78,10 +57,11 @@ async function validateMapping(pool: sql.ConnectionPool, mapping: ScadaDataMappi
 // Server Action to get SCADA data
 // This function is now fully self-contained and authenticated. It does not accept credentials as arguments.
 export async function getScadaData({ criteria }: { criteria: z.infer<typeof reportCriteriaSchema> }): Promise<ScadaDataPoint[]> {
-    const userId = await getAuthenticatedUserUid();
-    if (!userId) {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
         throw new Error("User is not authenticated.");
     }
+    const userId = auth.uid;
 
     console.log(`Fetching SCADA data for user ${userId} with criteria:`, criteria);
 
@@ -111,7 +91,7 @@ export async function getScadaData({ criteria }: { criteria: z.infer<typeof repo
             database: dbCreds.databaseName,
             options: {
                 encrypt: false, 
-                trustServerCertificate: true // Allow self-signed certificates
+                trustServerCertificate: true
             }
         };
 
@@ -198,10 +178,11 @@ export async function getScadaData({ criteria }: { criteria: z.infer<typeof repo
 // Server Action to get SCADA tags
 // This function is now fully self-contained and authenticated.
 export async function getScadaTags({ machineIds }: { machineIds: string[] }): Promise<string[]> {
-    const userId = await getAuthenticatedUserUid();
-    if (!userId) {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
         throw new Error("User is not authenticated.");
     }
+    const userId = auth.uid;
 
     console.log(`Fetching SCADA tags for user ${userId}, machines:`, machineIds);
     if (!machineIds || machineIds.length === 0) {
@@ -228,7 +209,7 @@ export async function getScadaTags({ machineIds }: { machineIds: string[] }): Pr
             database: dbCreds.databaseName,
             options: { 
                 encrypt: false, 
-                trustServerCertificate: true // Allow self-signed certificates
+                trustServerCertificate: true
             }
         };
 
@@ -274,157 +255,3 @@ export async function getScadaTags({ machineIds }: { machineIds: string[] }): Pr
         }
     }
 }
-
-// Server Action to get DB schema
-// This action is now fully self-contained and authenticated.
-export async function getDbSchema(): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
-    const userId = await getAuthenticatedUserUid();
-    if (!userId) {
-        throw new Error("User is not authenticated.");
-    }
-
-    console.log(`Fetching DB schema for user ${userId}...`);
-
-    const userSettings = await getUserSettingsFromDb(userId);
-    const dbCreds = userSettings?.database;
-    
-    if (!dbCreds?.server || !dbCreds?.databaseName) {
-         throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
-    }
-    
-    const dbConfig: sql.config = {
-        user: dbCreds.user || undefined,
-        password: dbCreds.password || undefined,
-        server: dbCreds.server,
-        database: dbCreds.databaseName,
-        options: { 
-            encrypt: false, 
-            trustServerCertificate: true, // Allow self-signed certificates
-            connectionTimeout: 10000 
-        }
-    };
-    
-    let pool: sql.ConnectionPool | undefined;
-    try {
-        pool = await sql.connect(dbConfig);
-
-        const tablesResult = await pool.request().query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
-        const tables: string[] = tablesResult.recordset.map(row => row.TABLE_NAME);
-
-        const columns: { [key: string]: string[] } = {};
-        for (const table of tables) {
-            const columnsResult = await pool.request().input('tableName', sql.NVarChar, table).query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION`);
-            columns[table] = columnsResult.recordset.map(row => row.COLUMN_NAME);
-        }
-        
-        console.log(`Found ${tables.length} tables.`);
-        return { tables, columns };
-
-    } catch (error: any) {
-        console.error("Failed to fetch DB schema from SQL Server:", error.message);
-        throw new Error(`Database schema query failed. Please check connection details.`);
-    } finally {
-        if (pool) {
-            await pool.close();
-        }
-    }
-}
-
-
-// Server Action to test SCADA connection
-// This action is now fully self-contained and authenticated.
-export async function testScadaConnection(): Promise<{ success: boolean, error?: string }> {
-    const userId = await getAuthenticatedUserUid();
-    if (!userId) {
-        return { success: false, error: "User is not authenticated." };
-    }
-
-    console.log(`Testing SCADA DB connection for user ${userId}...`);
-
-    const userSettings = await getUserSettingsFromDb(userId);
-    const dbCreds = userSettings?.database;
-    
-    if (!dbCreds?.server || !dbCreds?.databaseName) {
-        return { success: false, error: "Server and Database Name are required." };
-    }
-    
-    let pool: sql.ConnectionPool | undefined;
-    try {
-        const dbConfig: sql.config = {
-            user: dbCreds.user || undefined,
-            password: dbCreds.password || undefined,
-            server: dbCreds.server,
-            database: dbCreds.databaseName,
-            options: {
-                encrypt: false, 
-                trustServerCertificate: true, // Allow self-signed certificates
-                connectionTimeout: 5000 // 5 second timeout
-            }
-        };
-
-        pool = await sql.connect(dbConfig);
-        
-        console.log("SCADA DB connection test successful.");
-        return { success: true };
-
-    } catch (error: any) {
-        console.error("SCADA DB connection test failed:", error.message);
-        return { success: false, error: "Connection failed. Please check credentials and network." };
-    } finally {
-        if (pool) {
-            await pool.close();
-        }
-    }
-}
-
-
-// Server Action to test SMTP connection
-// This action is now fully self-contained and authenticated.
-export async function testSmtpConnection(): Promise<{ success: boolean, error?: string }> {
-    const userId = await getAuthenticatedUserUid();
-    if (!userId) {
-        return { success: false, error: "User is not authenticated." };
-    }
-
-    console.log(`Testing SMTP connection for user ${userId}...`);
-
-    const userSettings = await getUserSettingsFromDb(userId);
-    const emailCreds = userSettings?.email;
-    
-    if (!emailCreds?.smtpHost || !emailCreds?.smtpPort) {
-        return { success: false, error: "SMTP Host and Port are required." };
-    }
-
-    try {
-        const transporter = nodemailer.createTransport({
-            host: emailCreds.smtpHost,
-            port: emailCreds.smtpPort,
-            secure: emailCreds.smtpPort === 465,
-            auth: {
-                user: emailCreds.smtpUser,
-                pass: emailCreds.smtpPass,
-            },
-            connectionTimeout: 10000, // 10 second timeout
-             tls: {
-                rejectUnauthorized: true 
-            }
-        });
-
-        await transporter.verify();
-        
-        console.log("SMTP connection test successful.");
-        return { success: true };
-
-    } catch (error: any) {
-        console.error("SMTP connection test failed:", error.message);
-        return { success: false, error: "SMTP connection failed. Check credentials and firewall rules." };
-    }
-}
-      
-    
-
-    
-
-    
-
-    

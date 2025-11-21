@@ -219,5 +219,3 @@ const generateReportFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

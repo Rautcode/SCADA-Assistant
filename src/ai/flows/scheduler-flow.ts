@@ -53,5 +53,3 @@ export const scheduleTaskFlow = ai.defineFlow(
     await scheduleNewTaskInDb(taskWithUser);
   }
 );
-
-    

@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,8 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { testScadaConnection, getDbSchema, testSmtpConnection } from "@/app/actions/scada-actions";
-import { saveUserSettings, getUserSettings } from "@/app/actions/settings-actions";
+import { testScadaConnection, getDbSchema, testSmtpConnection, saveUserSettings, getUserSettings } from "@/app/actions/settings-actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/components/localization/localization-provider";

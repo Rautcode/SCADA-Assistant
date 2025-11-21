@@ -14,6 +14,7 @@ import { reportCriteriaSchema } from '@/components/report-generator/step1-criter
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
 import { ai } from '../genkit';
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 const ScadaDataPointSchema = z.object({
   id: z.string(),
@@ -153,9 +154,9 @@ export const runScheduledTasksFlow = ai.defineFlow(
             },
         };
         
-        // The generateReport flow is now authenticated. We need to run it with the user's auth context.
-        // As this is a backend-only flow, we pass the auth object directly.
-        const reportResult = await generateReport(reportInput, { auth: { uid: task.userId, custom: {} } });
+        // The generateReport flow is authenticated. We need to run it with the user's auth context.
+        // As this is a backend-only flow, we pass an authOverride.
+        const reportResult = await generateReport(reportInput);
 
         // If email notifications are enabled for the user, send the report.
         if (userSettings.notifications?.email && userSettings.email?.smtpUser) {

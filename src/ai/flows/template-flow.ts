@@ -7,6 +7,7 @@
 import { createNewTemplateInDb } from '@/services/database-service';
 import { ai } from '../genkit';
 import { z } from 'genkit';
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 const NewTemplateSchema = z.object({
     name: z.string().min(1, "Template name is required."),
@@ -33,8 +34,7 @@ const createNewTemplateFlow = ai.defineFlow(
         }
     },
     async (template) => {
+        // This call is now secure because the flow has the 'auth' property.
         await createNewTemplateInDb(template);
     }
 );
-
-    

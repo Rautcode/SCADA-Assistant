@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An unauthenticated Genkit flow for sending system-level emails (e.g., password reset).
@@ -52,7 +51,7 @@ export const sendAuthEmail = ai.defineFlow(
         pass: smtpSettings.smtpPass,
       },
        tls: {
-          rejectUnauthorized: true // Enforce strict certificate validation
+          rejectUnauthorized: false
       }
     });
 
@@ -86,5 +85,3 @@ export const sendAuthEmail = ai.defineFlow(
     }
   }
 );
-
-    

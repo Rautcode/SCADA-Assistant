@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -15,7 +14,6 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
 import type { AuthContextType, AuthProviderProps, LoginFunction, RegisterFunction, SendPasswordResetFunction } from '@/lib/types/auth';
-import { fetchWithAuth } from '@/lib/firebase/fetch-with-auth';
 
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,26 +23,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Store the original fetch function
-    const originalFetch = window.fetch;
-
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      
-      // If a user is logged in, wrap fetch. Otherwise, restore it.
-      if (user) {
-        window.fetch = fetchWithAuth(originalFetch);
-      } else {
-        window.fetch = originalFetch;
-      }
     });
 
-    return () => {
-        unsubscribe();
-        // Restore the original fetch function on cleanup
-        window.fetch = originalFetch;
-    }
+    return () => unsubscribe();
   }, []);
 
   const login: LoginFunction = async (email, password, rememberMe) => {

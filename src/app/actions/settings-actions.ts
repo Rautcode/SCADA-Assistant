@@ -4,47 +4,31 @@
 import { z } from "zod";
 import { settingsSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb, saveUserSettingsToDb } from "@/services/database-service";
-import { headers } from 'next/headers';
-import { initAdmin } from "@/lib/firebase/admin";
-
-
-// Helper to get the authenticated user's UID from the request headers
-async function getAuthenticatedUserUid(): Promise<string | null> {
-    const adminApp = await initAdmin();
-    const auth = adminApp.auth();
-    const authorization = headers().get('Authorization');
-    if (authorization?.startsWith('Bearer ')) {
-        const idToken = authorization.split('Bearer ')[1];
-        try {
-            const decodedToken = await auth.verifyIdToken(idToken);
-            return decodedToken.uid;
-        } catch (error) {
-            console.error("Error verifying Firebase ID token:", error);
-            return null;
-        }
-    }
-    return null;
-}
+import { getAuthenticatedUser } from "@genkit-ai/next/auth";
+import sql from 'mssql';
+import nodemailer from 'nodemailer';
 
 
 // This function is called by client components to get the current user's settings.
 // It is secure because it uses the server-side auth session to identify the user.
 export async function getUserSettings() {
-  const userId = await getAuthenticatedUserUid();
-  if (!userId) {
+  const auth = await getAuthenticatedUser();
+  if (!auth) {
     // Return null or throw an error if the user is not authenticated.
     // Returning null is often safer for client-side consumption.
     return null;
   }
+  const userId = auth.uid;
   const settings = await getUserSettingsFromDb(userId);
   return settings;
 }
 
 export async function saveUserSettings(settings: z.infer<typeof settingsSchema>): Promise<{ success: boolean; error?: string }> {
-  const userId = await getAuthenticatedUserUid();
-  if (!userId) {
+  const auth = await getAuthenticatedUser();
+  if (!auth) {
     return { success: false, error: "User is not authenticated." };
   }
+  const userId = auth.uid;
 
   try {
     await saveUserSettingsToDb(userId, settings);
@@ -53,4 +37,127 @@ export async function saveUserSettings(settings: z.infer<typeof settingsSchema>)
     console.error("Failed to save user settings:", error);
     return { success: false, error: "An unexpected error occurred while saving settings." };
   }
+}
+
+
+export async function getDbSchema(): Promise<{ tables: string[], columns: { [key: string]: string[] } }> {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
+        throw new Error("User is not authenticated.");
+    }
+    const userId = auth.uid;
+
+    console.log(`Fetching DB schema for user ${userId}...`);
+
+    const userSettings = await getUserSettingsFromDb(userId);
+    const dbCreds = userSettings?.database;
+    
+    if (!dbCreds?.server || !dbCreds?.databaseName) {
+         throw new Error("SCADA Database Server or Database Name is not configured in user settings.");
+    }
+    
+    const dbConfig: sql.config = {
+        user: dbCreds.user || undefined,
+        password: dbCreds.password || undefined,
+        server: dbCreds.server,
+        database: dbCreds.databaseName,
+        options: { 
+            encrypt: false, 
+            trustServerCertificate: true,
+            connectionTimeout: 10000 
+        }
+    };
+    
+    let pool: sql.ConnectionPool | undefined;
+    try {
+        pool = await sql.connect(dbConfig);
+
+        const tablesResult = await pool.request().query(`SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`);
+        const tables: string[] = tablesResult.recordset.map(row => row.TABLE_NAME);
+
+        const columns: { [key: string]: string[] } = {};
+        for (const table of tables) {
+            const columnsResult = await pool.request().input('tableName', sql.NVarChar, table).query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION`);
+            columns[table] = columnsResult.recordset.map(row => row.COLUMN_NAME);
+        }
+        
+        console.log(`Found ${tables.length} tables.`);
+        return { tables, columns };
+
+    } catch (error: any) {
+        console.error("Failed to fetch DB schema from SQL Server:", error.message);
+        throw new Error(`Database schema query failed. Please check connection details.`);
+    } finally {
+        if (pool) {
+            await pool.close();
+        }
+    }
+}
+
+
+export async function testScadaConnection(): Promise<{ success: boolean, error?: string }> {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
+        return { success: false, error: "User is not authenticated." };
+    }
+    const userId = auth.uid;
+    const userSettings = await getUserSettingsFromDb(userId);
+    const dbCreds = userSettings?.database;
+
+    if (!dbCreds?.server || !dbCreds?.databaseName) {
+        return { success: false, error: "Database Server or Name is not configured." };
+    }
+
+    try {
+        await sql.connect({
+            user: dbCreds.user || undefined,
+            password: dbCreds.password || undefined,
+            server: dbCreds.server,
+            database: dbCreds.databaseName,
+            options: {
+                encrypt: false,
+                trustServerCertificate: true
+            },
+            connectionTimeout: 5000 // 5 second timeout
+        });
+        await sql.close();
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function testSmtpConnection(): Promise<{ success: boolean; error?: string; }> {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
+        return { success: false, error: "User is not authenticated." };
+    }
+    const userId = auth.uid;
+
+    const userSettings = await getUserSettingsFromDb(userId);
+    const smtpSettings = userSettings?.email;
+
+    if (!smtpSettings?.smtpHost || !smtpSettings?.smtpPort || !smtpSettings.smtpUser) {
+      return { success: false, error: "SMTP settings are not fully configured." };
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpSettings.smtpHost,
+      port: smtpSettings.smtpPort,
+      secure: smtpSettings.smtpPort === 465,
+      auth: {
+        user: smtpSettings.smtpUser,
+        pass: smtpSettings.smtpPass,
+      },
+      tls: {
+          rejectUnauthorized: true
+      }
+    });
+
+    try {
+      await transporter.verify();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
 }
