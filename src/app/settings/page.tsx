@@ -87,13 +87,15 @@ export default function SettingsPage() {
         if (dbConnectionStatus !== 'untested') {
             setDbConnectionStatus('untested');
         }
-    }, [dbCredsWatched, dbConnectionStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dbCredsWatched]);
 
     React.useEffect(() => {
         if (smtpConnectionStatus !== 'untested') {
             setSmtpConnectionStatus('untested');
         }
-    }, [smtpCredsWatched, smtpConnectionStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [smtpCredsWatched]);
 
     React.useEffect(() => {
         if (!user) return;

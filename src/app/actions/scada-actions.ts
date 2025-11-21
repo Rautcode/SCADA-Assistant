@@ -8,24 +8,13 @@ import { reportCriteriaSchema } from "@/components/report-generator/step1-criter
 import { z } from "zod";
 import { dataMappingSchema, emailSettingsSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb } from "@/services/database-service";
-import { initAdmin } from "@/lib/firebase/admin";
-import { headers } from "next/headers";
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
+
 
 // Helper to get the authenticated user's UID from the request headers
 async function getAuthenticatedUserUid(): Promise<string | null> {
-    const authorization = headers().get("Authorization");
-    if (authorization?.startsWith("Bearer ")) {
-        const idToken = authorization.split("Bearer ")[1];
-        try {
-            const adminApp = await initAdmin();
-            const decodedToken = await adminApp.auth().verifyIdToken(idToken);
-            return decodedToken.uid;
-        } catch (error) {
-            console.error("Error verifying ID token:", error);
-            return null;
-        }
-    }
-    return null;
+    const user = await getAuthenticatedUser();
+    return user?.uid || null;
 }
 
 
@@ -403,8 +392,8 @@ export async function testSmtpConnection(): Promise<{ success: boolean, error?: 
                 pass: emailCreds.smtpPass,
             },
             connectionTimeout: 10000, // 10 second timeout
-            tls: {
-                rejectUnauthorized: true, // Enforce strict certificate validation
+             tls: {
+                rejectUnauthorized: true 
             }
         });
 
