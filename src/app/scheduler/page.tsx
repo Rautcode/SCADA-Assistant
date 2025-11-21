@@ -5,7 +5,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
-import { onScheduledTasks, isScadaDbConnected } from '@/services/client-database-service';
+import { onScheduledTasks } from '@/services/client-database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -15,9 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { categoryIcons } from '@/lib/icon-map';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAuth } from '@/components/auth/auth-provider';
+import { useAuth } from '../auth/auth-provider';
 import { Unsubscribe } from 'firebase/firestore';
 import { useData } from '../components/database/data-provider';
+import { isScadaDbConnected } from '@/services/client-database-service';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
