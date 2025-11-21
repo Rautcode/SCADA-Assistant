@@ -11,7 +11,8 @@ import * as nodemailer from 'nodemailer';
 import { addEmailLogToDb, getUserSettingsFromDb, getSystemSettingsFromDb } from '@/services/database-service';
 import { emailSettingsSchema } from '@/lib/types/database';
 import { SendEmailInput } from '@/lib/types/flows';
-import { defineFlow } from 'genkit';
+import { ai } from '../genkit';
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 
 // Define an options object for the flow to allow for auth override from backend flows.
@@ -22,16 +23,18 @@ const SendEmailFlowOptionsSchema = z.object({
 
 // This is the primary email sending flow for the entire application.
 // It is now an AUTHENTICATED flow, preventing anonymous access.
-export const sendEmail = defineFlow(
+export const sendEmail = ai.defineFlow(
   {
     name: 'sendEmailFlow',
     inputSchema: SendEmailInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
-    auth: {
-      required: true,
+    auth: (auth) => {
+        if (!auth) {
+            throw new Error("User must be authenticated.");
+        }
     }
   },
-  async (input, { auth, flowOptions }) => {
+  async (input, { flowOptions }) => {
     const { to, subject, text, html } = input;
     
     // Parse the flow options to check for an auth override.
@@ -47,6 +50,10 @@ export const sendEmail = defineFlow(
     } else {
       // If no override, this is a standard client-side request.
       // We securely get the authenticated user's ID from the context.
+      const auth = await getAuthenticatedUser();
+      if (!auth) {
+          throw new Error("User must be authenticated.");
+      }
       userId = auth.uid;
     }
 

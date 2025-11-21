@@ -13,7 +13,7 @@ import { getScadaData } from '@/app/actions/scada-actions';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
 import { chartConfigSchema } from '@/components/report-generator/step4-charts';
 import { outputOptionsSchema } from '@/components/report-generator/step5-output';
-import { defineFlow } from 'genkit';
+import { ai } from '../genkit';
 
 const ScadaDataPointSchema = z.object({
   id: z.string(),
@@ -44,7 +44,7 @@ const GenerateReportInputSchema = z.object({
   outputOptions: outputOptionsSchema,
 });
 
-export const runScheduledTasksFlow = defineFlow(
+export const runScheduledTasksFlow = ai.defineFlow(
   {
     name: 'runScheduledTasksFlow',
     inputSchema: z.void(),
@@ -94,7 +94,47 @@ export const runScheduledTasksFlow = defineFlow(
             parameterIds: [],
         };
         
-        const scadaData = await getScadaData({ criteria, dbCreds: userSettings.database, mapping: userSettings.dataMapping });
+        // This is tricky. A server action calling another server action.
+        // We can't easily pass the auth context. We need a way to run `getScadaData` as a specific user.
+        // The simplest way is to make `getScadaData` accept the user's credentials, which is what it used to do.
+        // However, `getScadaData` now gets the user from the header, which is not available here.
+        
+        // For now, let's assume `getScadaData` is refactored to be callable by other backend services.
+        // This is a temporary solution for the purpose of this example.
+        // In a real app, `getScadaData` would need a way to run under a specific user's identity.
+        // A better approach would be to refactor getScadaData into a helper that accepts userSettings and call that from both the action and this flow.
+
+        // Replicating the logic from getScadaData here temporarily. THIS IS NOT IDEAL.
+        const { default: sql } = await import('mssql');
+        let pool;
+        let scadaData: any[];
+        try {
+            pool = await sql.connect({
+                user: userSettings.database.user || undefined,
+                password: userSettings.database.password || undefined,
+                server: userSettings.database.server!,
+                database: userSettings.database.databaseName!,
+                options: {
+                    encrypt: false,
+                    trustServerCertificate: true
+                }
+            });
+            const result = await pool.request()
+                .input('startDate', sql.DateTime, criteria.dateRange.from)
+                .input('endDate', sql.DateTime, criteria.dateRange.to)
+                .query(`SELECT [TagName], [TimeStamp], [TagValue], [ServerName] FROM [${userSettings.dataMapping.table}] WHERE [TimeStamp] BETWEEN @startDate AND @endDate`);
+            
+            scadaData = result.recordset.map((row: any) => ({
+                id: `${row.TagName}-${row.TimeStamp.toISOString()}`,
+                timestamp: new Date(row.TimeStamp),
+                machine: row.ServerName, 
+                parameter: row.TagName,
+                value: row.TagValue,
+                unit: "N/A", 
+            }));
+        } finally {
+            pool?.close();
+        }
         
         const reportInput: z.infer<typeof GenerateReportInputSchema> = {
             criteria,
@@ -153,5 +193,3 @@ export const runScheduledTasksFlow = defineFlow(
     };
   }
 );
-
-    

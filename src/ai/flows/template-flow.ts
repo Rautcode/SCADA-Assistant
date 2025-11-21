@@ -5,7 +5,7 @@
  */
 
 import { createNewTemplateInDb } from '@/services/database-service';
-import { defineFlow } from 'genkit';
+import { ai } from '../genkit';
 import { z } from 'genkit';
 
 const NewTemplateSchema = z.object({
@@ -21,13 +21,15 @@ export async function createNewTemplate(template: NewTemplate) {
 }
 
 // This flow is now authenticated to prevent anonymous database writes.
-const createNewTemplateFlow = defineFlow(
+const createNewTemplateFlow = ai.defineFlow(
     {
         name: 'createNewTemplateFlow',
         inputSchema: NewTemplateSchema,
         outputSchema: z.void(),
-        auth: {
-            required: true,
+        auth: (auth) => {
+            if (!auth) {
+                throw new Error("User must be authenticated.");
+            }
         }
     },
     async (template) => {

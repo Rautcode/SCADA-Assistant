@@ -14,8 +14,8 @@ import { outputOptionsSchema } from '@/components/report-generator/step5-output'
 import { format } from 'date-fns';
 import { googleAI } from '@genkit-ai/google-genai';
 import { sendEmail } from './send-email-flow';
-import { defineFlow } from 'genkit';
 import { getUserSettingsFromDb } from '@/services/database-service';
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 
 // Helper schemas for complex types
@@ -116,18 +116,24 @@ const reportGenerationPrompt = ai.definePrompt({
 });
 
 // This is now an AUTHENTICATED flow
-const generateReportFlow = defineFlow(
+const generateReportFlow = ai.defineFlow(
   {
     name: 'generateReportFlow',
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
-    auth: {
-      required: true,
+    auth: (auth) => {
+        if (!auth) {
+            throw new Error("User must be authenticated.");
+        }
     }
   },
-  async (input, { auth }) => {
+  async (input) => {
     console.log('Backend flow started with input:', input);
     
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
+        throw new Error("User must be authenticated.");
+    }
     const userId = auth.uid;
 
     const { outputOptions, ...restOfInput } = input;

@@ -9,12 +9,12 @@ import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
 import { AuthEmailInput } from '@/lib/types/flows';
 import { addEmailLogToDb, getSystemSettingsFromDb } from '@/services/database-service';
-import { defineFlow } from 'genkit';
+import { ai } from '../genkit';
 
 // This is an UNAUTHENTICATED flow. It should only be used for system-level actions
 // like password resets where the user is not logged in.
 // It contains its own isolated email-sending logic and CANNOT be used as an open relay.
-export const sendAuthEmail = defineFlow(
+export const sendAuthEmail = ai.defineFlow(
   {
     name: 'sendAuthEmailFlow',
     inputSchema: AuthEmailInput,

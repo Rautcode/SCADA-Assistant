@@ -10,8 +10,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { defineFlow } from 'genkit';
 import { getUserSettingsFromDb } from '@/services/database-service';
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 
 const ChartStyleSuggestionSchema = z.object({
@@ -50,16 +50,22 @@ Return your suggestions in the specified output format.`,
 });
 
 // This is now an AUTHENTICATED flow.
-const suggestChartStyleFlow = defineFlow(
+const suggestChartStyleFlow = ai.defineFlow(
   {
     name: 'suggestChartStyleFlow',
     inputSchema: SuggestChartStyleInputSchema,
     outputSchema: ChartStyleSuggestionSchema,
-    auth: {
-      required: true,
+    auth: (auth) => {
+        if (!auth) {
+            throw new Error("User must be authenticated.");
+        }
     }
   },
-  async ({ promptText }, { auth }) => {
+  async ({ promptText }) => {
+    const auth = await getAuthenticatedUser();
+     if (!auth) {
+        throw new Error("User must be authenticated.");
+    }
     
     // Securely get user settings from the database on the server.
     const userSettings = await getUserSettingsFromDb(auth.uid);
