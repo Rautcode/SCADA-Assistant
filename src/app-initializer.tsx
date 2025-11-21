@@ -28,7 +28,6 @@ export function AppInitializer({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      // No longer needs to pass authToken, as server action will get it from context
       getUserSettings()
         .then(settings => {
           if (settings?.language) {

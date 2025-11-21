@@ -101,8 +101,7 @@ export default function SettingsPage() {
         setIsFetching(true);
         async function fetchSettings() {
             try {
-                const authToken = await user.getIdToken();
-                const settings = await getUserSettings({ authToken });
+                const settings = await getUserSettings();
                 if (settings) {
                     form.reset(settings);
                 }
@@ -128,8 +127,7 @@ export default function SettingsPage() {
 
         setIsLoading(true);
         try {
-            const authToken = await user.getIdToken();
-            const result = await saveUserSettings({ settings: values, authToken });
+            const result = await saveUserSettings({ settings: values });
 
             if (result.success) {
                 toast({
@@ -161,8 +159,7 @@ export default function SettingsPage() {
         await onSubmit(form.getValues());
 
         try {
-            const authToken = await user.getIdToken();
-            const result = await testScadaConnection({ authToken });
+            const result = await testScadaConnection();
             if (result.success) {
                 setDbConnectionStatus('success');
                 toast({
@@ -193,8 +190,7 @@ export default function SettingsPage() {
         if (!user) return;
         setIsFetchingSchema(true);
         try {
-            const authToken = await user.getIdToken();
-            const schema = await getDbSchema({ authToken });
+            const schema = await getDbSchema();
             setDbSchema(schema);
             toast({ title: "Schema Fetched", description: `Found ${schema.tables.length} tables.` });
         } catch (error: any) {
@@ -213,8 +209,7 @@ export default function SettingsPage() {
         // We must save the settings first for the server action to use them.
         await onSubmit(form.getValues());
         try {
-            const authToken = await user.getIdToken();
-            const result = await testSmtpConnection({ authToken });
+            const result = await testSmtpConnection();
             if (result.success) {
                 setSmtpConnectionStatus('success');
                 toast({

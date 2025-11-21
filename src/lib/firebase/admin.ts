@@ -9,6 +9,8 @@ function initializeAdminApp(): admin.app.App {
     return app;
   }
   
+  // This environment variable should be set in your deployment environment.
+  // It's a JSON string, not a file path.
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (!serviceAccountKey) {

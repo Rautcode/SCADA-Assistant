@@ -25,18 +25,16 @@ export function ApiKeyNotification() {
         }
         
         setLoading(true);
-        user.getIdToken().then(authToken => {
-            getUserSettings({ authToken })
-                .then(settings => {
-                    setApiKey(settings?.apiKey);
-                })
-                .catch(err => {
-                    console.error("Failed to get API key for notification:", err);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        });
+        getUserSettings()
+            .then(settings => {
+                setApiKey(settings?.apiKey);
+            })
+            .catch(err => {
+                console.error("Failed to get API key for notification:", err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
             
     }, [user, authLoading]);
 

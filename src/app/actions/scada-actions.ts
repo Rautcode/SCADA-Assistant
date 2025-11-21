@@ -7,61 +7,21 @@ import { reportCriteriaSchema } from "@/components/report-generator/step1-criter
 import { z } from "zod";
 import { dataMappingSchema } from "@/lib/types/database";
 import { getUserSettingsFromDb } from "@/services/database-service";
-import { getAdminApp } from "@/lib/firebase/admin";
+import { getAuthenticatedUser } from '@genkit-ai/next/auth';
 
 
-async function getVerifiedUid(authToken: string | undefined): Promise<string> {
-    if (!authToken) {
-        throw new Error("Auth token is missing.");
-    }
-    try {
-        const adminApp = getAdminApp();
-        const decodedToken = await adminApp.auth().verifyIdToken(authToken);
-        return decodedToken.uid;
-    } catch (error) {
-        console.error("Error verifying auth token:", error);
+async function getVerifiedUid(): Promise<string> {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
         throw new Error("User is not authenticated.");
     }
-}
-
-
-// Helper to validate column mappings against the actual schema
-async function validateMapping(pool: sql.ConnectionPool, mapping: z.infer<typeof dataMappingSchema>): Promise<void> {
-    if (!mapping.table || !mapping.timestampColumn || !mapping.machineColumn || !mapping.parameterColumn || !mapping.valueColumn) {
-        throw new Error("Data mapping is incomplete. Please configure all columns in Settings > Data Mapping.");
-    }
-    
-    // Validate table exists
-    const tableCheck = await pool.request()
-        .input('tableName', sql.NVarChar, mapping.table)
-        .query(`SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @tableName`);
-    if (tableCheck.recordset.length === 0) {
-        throw new Error(`The table "${mapping.table}" does not exist in the database.`);
-    }
-
-    // Validate all columns exist in the specified table
-    const allColumns = [mapping.timestampColumn, mapping.machineColumn, mapping.parameterColumn, mapping.valueColumn];
-    const columnCheckQuery = `
-        SELECT COLUMN_NAME 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_NAME = @tableName AND COLUMN_NAME IN (${allColumns.map((_, i) => `@col${i}`).join(',')})
-    `;
-    const request = pool.request().input('tableName', sql.NVarChar, mapping.table);
-    allColumns.forEach((col, i) => request.input(`col${i}`, sql.NVarChar, col));
-    
-    const result = await request.query(columnCheckQuery);
-    
-    if (result.recordset.length !== allColumns.length) {
-        const foundCols = result.recordset.map(r => r.COLUMN_NAME);
-        const missingCols = allColumns.filter(c => !foundCols.includes(c));
-        throw new Error(`The following columns could not be found in table "${mapping.table}": ${missingCols.join(', ')}. Please check your Data Mapping settings.`);
-    }
+    return auth.uid;
 }
 
 
 // Server Action to get SCADA data
-export async function getScadaData({ criteria, authToken }: { criteria: z.infer<typeof reportCriteriaSchema>, authToken: string }): Promise<ScadaDataPoint[]> {
-    const userId = await getVerifiedUid(authToken);
+export async function getScadaData({ criteria }: { criteria: z.infer<typeof reportCriteriaSchema> }): Promise<ScadaDataPoint[]> {
+    const userId = await getVerifiedUid();
     console.log(`Fetching SCADA data for user ${userId} with criteria:`, criteria);
 
     const userSettings = await getUserSettingsFromDb(userId);
@@ -175,8 +135,8 @@ export async function getScadaData({ criteria, authToken }: { criteria: z.infer<
 
 
 // Server Action to get SCADA tags
-export async function getScadaTags({ machineIds, authToken }: { machineIds: string[], authToken: string }): Promise<string[]> {
-    const userId = await getVerifiedUid(authToken);
+export async function getScadaTags({ machineIds }: { machineIds: string[] }): Promise<string[]> {
+    const userId = await getVerifiedUid();
 
     console.log(`Fetching SCADA tags for user ${userId}, machines:`, machineIds);
     if (!machineIds || machineIds.length === 0) {
@@ -247,5 +207,38 @@ export async function getScadaTags({ machineIds, authToken }: { machineIds: stri
         if (pool) {
             await pool.close();
         }
+    }
+}
+
+// Helper to validate column mappings against the actual schema
+async function validateMapping(pool: sql.ConnectionPool, mapping: z.infer<typeof dataMappingSchema>): Promise<void> {
+    if (!mapping.table || !mapping.timestampColumn || !mapping.machineColumn || !mapping.parameterColumn || !mapping.valueColumn) {
+        throw new Error("Data mapping is incomplete. Please configure all columns in Settings > Data Mapping.");
+    }
+    
+    // Validate table exists
+    const tableCheck = await pool.request()
+        .input('tableName', sql.NVarChar, mapping.table)
+        .query(`SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @tableName`);
+    if (tableCheck.recordset.length === 0) {
+        throw new Error(`The table "${mapping.table}" does not exist in the database.`);
+    }
+
+    // Validate all columns exist in the specified table
+    const allColumns = [mapping.timestampColumn, mapping.machineColumn, mapping.parameterColumn, mapping.valueColumn];
+    const columnCheckQuery = `
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME = @tableName AND COLUMN_NAME IN (${allColumns.map((_, i) => `@col${i}`).join(',')})
+    `;
+    const request = pool.request().input('tableName', sql.NVarChar, mapping.table);
+    allColumns.forEach((col, i) => request.input(`col${i}`, sql.NVarChar, col));
+    
+    const result = await request.query(columnCheckQuery);
+    
+    if (result.recordset.length !== allColumns.length) {
+        const foundCols = result.recordset.map(r => r.COLUMN_NAME);
+        const missingCols = allColumns.filter(c => !foundCols.includes(c));
+        throw new Error(`The following columns could not be found in table "${mapping.table}": ${missingCols.join(', ')}. Please check your Data Mapping settings.`);
     }
 }

@@ -1,5 +1,5 @@
 
-import { initAdmin } from '@/lib/firebase/admin';
+import { getAdminApp } from '@/lib/firebase/admin';
 import { ReportTemplate, ScheduledTask, UserSettings, settingsSchema } from '@/lib/types/database';
 import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc } from 'firebase/firestore';
 import imageData from '@/app/lib/placeholder-images.json';
@@ -41,7 +41,7 @@ const defaultTemplates: Omit<ReportTemplate, 'id' | 'lastModified'>[] = [
 ];
 
 async function getDb() {
-    const app = await initAdmin();
+    const app = getAdminApp();
     return app.firestore();
 }
 
@@ -172,5 +172,3 @@ export async function addEmailLogToDb(log: Omit<any, 'id' | 'timestamp'>) {
         timestamp: serverTimestamp(),
     });
 }
-
-    
