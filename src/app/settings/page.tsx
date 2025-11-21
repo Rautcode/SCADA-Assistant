@@ -12,8 +12,8 @@ import {
     getDbSchemaFlow,
     testScadaConnectionFlow,
     testSmtpConnectionFlow,
-    SettingsSchema
 } from '@/ai/flows/settings-flow';
+import { SettingsSchema } from '@/lib/types/flows';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';

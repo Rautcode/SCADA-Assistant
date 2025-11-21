@@ -19,18 +19,19 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/auth-provider';
 import { scheduleTask } from '@/ai/flows/scheduler-flow';
 import { ReportTemplate } from '@/lib/types/database';
-
-const NewTaskClientSchema = z.object({
-    name: z.string().min(1, "Task name is required."),
-    templateId: z.string().min(1, "A report template must be selected."),
-    scheduledTime: z.date(),
-});
+import { ScheduleTaskInputSchema } from '@/lib/types/flows';
 
 interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   templates: ReportTemplate[];
 }
+
+// Client-side schema uses `Date` object for the picker
+const NewTaskClientSchema = ScheduleTaskInputSchema.extend({
+    scheduledTime: z.date(),
+});
+
 
 export function NewTaskDialog({ open, onOpenChange, templates }: NewTaskDialogProps) {
     const { toast } = useToast();

@@ -6,14 +6,11 @@
 
 import { z } from 'zod';
 import { ai } from '../genkit';
-import { settingsSchema, UserSettings } from '@/lib/types/database';
+import { UserSettings, type SettingsFormValues } from '@/lib/types/database';
+import { UserSettingsFlowInput } from '@/lib/types/flows';
 import { getUserSettingsFromDb, saveUserSettingsToDb } from '@/services/database-service';
 import sql from 'mssql';
 import nodemailer from 'nodemailer';
-
-// Re-exporting schemas for client-side use
-export const UserSettingsFlowInput = settingsSchema;
-export const SettingsSchema = settingsSchema;
 
 // Helper function to get a user's verified settings securely from a flow
 async function getVerifiedUserSettings(uid: string) {
@@ -44,7 +41,7 @@ export const saveUserSettingsFlow = ai.defineFlow(
     inputSchema: UserSettingsFlowInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
   },
-  async (settings, { auth }) => {
+  async (settings: SettingsFormValues, { auth }) => {
     if (!auth) return { success: false, error: "Authentication failed." };
     try {
       await saveUserSettingsToDb(auth.uid, settings);

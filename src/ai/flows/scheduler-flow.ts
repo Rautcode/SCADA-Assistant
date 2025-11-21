@@ -7,14 +7,7 @@
 import { z } from 'zod';
 import { ai } from '../genkit';
 import { scheduleNewTaskInDb } from '@/services/database-service';
-
-// Schema for client-side input. It does not include userId.
-const ScheduleTaskInputSchema = z.object({
-  name: z.string().min(1, 'Task name is required.'),
-  templateId: z.string().min(1, 'A report template must be selected.'),
-  scheduledTime: z.string().describe('The scheduled time as an ISO string.'),
-});
-export type ScheduleTaskInput = z.infer<typeof ScheduleTaskInputSchema>;
+import { ScheduleTaskInputSchema, type ScheduleTaskInput } from '@/lib/types/flows';
 
 // Export a client-callable wrapper function
 export async function scheduleTask(input: ScheduleTaskInput): Promise<void> {
