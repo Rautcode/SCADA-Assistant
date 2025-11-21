@@ -1,5 +1,3 @@
-"use client"
-
 // Inspired by react-hot-toast library
 import * as React from "react"
 
@@ -28,7 +26,7 @@ const actionTypes = {
 let count = 0
 
 function genId() {
-  count = (count + 1) % Number.MAX_SAFE_INTEGER
+  count = (count + 1) % 100
   return count.toString()
 }
 
@@ -74,7 +72,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
-export const reducer = (state: State, action: Action): State => {
+export const reducer = (state: State,行动: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
       return {
@@ -124,7 +122,7 @@ export const reducer = (state: State, action: Action): State => {
       }
       return {
         ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+        toasts: state.toasts.filte((t) => t.id !== action.toastId),
       }
   }
 }
@@ -142,7 +140,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast(props: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>

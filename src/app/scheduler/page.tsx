@@ -107,13 +107,13 @@ export default function SchedulerPage() {
     const [tasksLoading, setTasksLoading] = React.useState(true);
     const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = React.useState(false);
     const { user } = useAuth();
-    const [dbConnected, setDbConnected] = React.useState(true);
+    const [dbConfigured, setDbConfigured] = React.useState(true);
     
     React.useEffect(() => {
         if (!user) return;
         setTasksLoading(true);
 
-        isScadaDbConnected().then(setDbConnected);
+        isScadaDbConnected().then(setDbConfigured);
 
         const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
             setTasks(tasksData.map(t => ({...t, scheduledTime: new Date(t.scheduledTime)})));
@@ -130,7 +130,7 @@ export default function SchedulerPage() {
     [templates]);
     
     const loading = tasksLoading || templatesLoading;
-    const showConnectionMessage = !loading && !dbConnected;
+    const showConnectionMessage = !loading && !dbConfigured;
 
     return (
         <div className="w-full">
@@ -159,9 +159,9 @@ export default function SchedulerPage() {
                     ) : showConnectionMessage ? (
                          <div className="mt-6 p-8 border-2 border-dashed border-border rounded-lg text-center">
                             <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold text-foreground">Database Not Connected</h3>
+                            <h3 className="text-lg font-semibold text-foreground">Database Not Configured</h3>
                             <p className="text-sm text-muted-foreground mb-4">
-                                Please connect to the database to view and schedule tasks.
+                                Please configure your database connection to view and schedule tasks.
                             </p>
                              <Button asChild variant="secondary">
                                 <Link href="/settings">
