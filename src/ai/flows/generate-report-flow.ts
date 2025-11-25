@@ -73,7 +73,7 @@ const reportGenerationPrompt = ai.definePrompt({
     - If the requested format is 'pdf', generate a comprehensive report in structured Markdown format. The report MUST include the following sections in this exact order:
 
     # {{outputOptions.fileName}}
-    *Report for the period: {{criteria.dateRange.from}} to {{criteria.dateRange.to}}*
+    *Report for the period: {{criteria.dateRange.from}} to {{criteria.date-range.to}}*
 
     ---
 
