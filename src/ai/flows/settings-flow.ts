@@ -21,6 +21,10 @@ async function getVerifiedUserSettings(uid: string) {
     return userSettings;
 }
 
+function isConnectionString(server: string): boolean {
+    return server.toLowerCase().includes('driver=') || server.toLowerCase().includes('server=');
+}
+
 // Flow to get current user's settings
 export const getUserSettingsFlow = ai.defineFlow(
   {
@@ -64,27 +68,35 @@ export const testScadaConnectionFlow = ai.defineFlow(
 
     const settings = await getVerifiedUserSettings(auth.uid);
     const dbConfig = settings.database;
-    if (!dbConfig?.server || !dbConfig.databaseName) {
-      return { success: false, error: "Server address or database name is missing." };
+    if (!dbConfig?.server) {
+      return { success: false, error: "Server address is missing." };
     }
+    if (!isConnectionString(dbConfig.server) && !dbConfig.databaseName) {
+        return { success: false, error: "Database name is missing." };
+    }
+
 
     let pool;
     try {
-      pool = await sql.connect({
-        user: dbConfig.user || undefined,
-        password: dbConfig.password || undefined,
-        server: dbConfig.server,
-        database: dbConfig.databaseName,
-        options: { encrypt: false, trustServerCertificate: true },
-        connectionTimeout: 5000,
-        requestTimeout: 5000,
-        pool: {
-            max: 10,
-            min: 0,
-            idleTimeoutMillis: 30000,
-            acquireTimeoutMillis: 30000,
-        },
-      });
+      const connectionConfig = isConnectionString(dbConfig.server)
+        ? { connectionString: dbConfig.server, options: { trustServerCertificate: true } }
+        : {
+            user: dbConfig.user || undefined,
+            password: dbConfig.password || undefined,
+            server: dbConfig.server,
+            database: dbConfig.databaseName!,
+            options: { encrypt: false, trustServerCertificate: true },
+            connectionTimeout: 5000,
+            requestTimeout: 5000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
+          };
+
+      pool = await sql.connect(connectionConfig);
       return { success: true };
     } catch (error: any) {
         console.error("SQL Connection Error:", error);
@@ -156,24 +168,34 @@ export const getDbSchemaFlow = ai.defineFlow(
 
     const settings = await getVerifiedUserSettings(auth.uid);
     const dbConfig = settings.database;
+    if (!dbConfig?.server) {
+        throw new Error("Server address is missing.");
+    }
+     if (!isConnectionString(dbConfig.server) && !dbConfig.databaseName) {
+        throw new Error("Database name is missing.");
+    }
 
     let pool;
     try {
-      pool = await sql.connect({
-        user: dbConfig.user || undefined,
-        password: dbConfig.password || undefined,
-        server: dbConfig.server!,
-        database: dbConfig.databaseName!,
-        options: { encrypt: false, trustServerCertificate: true },
-        connectionTimeout: 15000,
-        requestTimeout: 15000,
-        pool: {
-            max: 10,
-            min: 0,
-            idleTimeoutMillis: 30000,
-            acquireTimeoutMillis: 30000,
-        },
-      });
+      const connectionConfig = isConnectionString(dbConfig.server)
+        ? { connectionString: dbConfig.server, options: { trustServerCertificate: true } }
+        : {
+            user: dbConfig.user || undefined,
+            password: dbConfig.password || undefined,
+            server: dbConfig.server,
+            database: dbConfig.databaseName!,
+            options: { encrypt: false, trustServerCertificate: true },
+            connectionTimeout: 15000,
+            requestTimeout: 15000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
+          };
+          
+      pool = await sql.connect(connectionConfig);
       
       const tablesResult = await pool.request().query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'");
       const tables = tablesResult.recordset.map(row => row.TABLE_NAME);

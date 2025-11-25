@@ -27,6 +27,9 @@ const ScadaDataFlowOptionsSchema = z.object({
   authOverride: z.object({ uid: z.string() }).optional(),
 });
 
+function isConnectionString(server: string): boolean {
+    return server.toLowerCase().includes('driver=') || server.toLowerCase().includes('server=');
+}
 
 // Flow to get SCADA data points based on criteria
 export const getScadaDataFlow = ai.defineFlow(
@@ -54,24 +57,28 @@ export const getScadaDataFlow = ai.defineFlow(
 
     let pool;
     try {
-      pool = await sql.connect({
-        user: database.user || undefined,
-        password: database.password || undefined,
-        server: database.server!,
-        database: database.databaseName!,
-        options: {
-          encrypt: false,
-          trustServerCertificate: true,
-        },
-        connectionTimeout: 15000,
-        requestTimeout: 15000,
-        pool: {
-            max: 10,
-            min: 0,
-            idleTimeoutMillis: 30000,
-            acquireTimeoutMillis: 30000,
-        },
-      });
+      const connectionConfig = isConnectionString(database.server!)
+        ? { connectionString: database.server, options: { trustServerCertificate: true } }
+        : {
+            user: database.user || undefined,
+            password: database.password || undefined,
+            server: database.server!,
+            database: database.databaseName!,
+            options: {
+              encrypt: false,
+              trustServerCertificate: true,
+            },
+            connectionTimeout: 15000,
+            requestTimeout: 15000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
+          };
+          
+      pool = await sql.connect(connectionConfig);
 
       let query = `SELECT [${dataMapping.timestampColumn}], [${dataMapping.machineColumn}], [${dataMapping.parameterColumn}], [${dataMapping.valueColumn}] FROM [${dataMapping.table}] WHERE [${dataMapping.timestampColumn}] BETWEEN @startDate AND @endDate`;
       
@@ -125,24 +132,28 @@ export const getScadaTagsFlow = ai.defineFlow(
 
     let pool;
     try {
-      pool = await sql.connect({
-        user: database.user || undefined,
-        password: database.password || undefined,
-        server: database.server!,
-        database: database.databaseName!,
-        options: {
-          encrypt: false,
-          trustServerCertificate: true,
-        },
-        connectionTimeout: 15000,
-        requestTimeout: 15000,
-        pool: {
-            max: 10,
-            min: 0,
-            idleTimeoutMillis: 30000,
-            acquireTimeoutMillis: 30000,
-        },
-      });
+      const connectionConfig = isConnectionString(database.server!)
+        ? { connectionString: database.server, options: { trustServerCertificate: true } }
+        : {
+            user: database.user || undefined,
+            password: database.password || undefined,
+            server: database.server!,
+            database: database.databaseName!,
+            options: {
+              encrypt: false,
+              trustServerCertificate: true,
+            },
+            connectionTimeout: 15000,
+            requestTimeout: 15000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
+          };
+      
+      pool = await sql.connect(connectionConfig);
 
       let query = `SELECT DISTINCT [${dataMapping.parameterColumn}] FROM [${dataMapping.table}]`;
       if (machineIds.length > 0) {
