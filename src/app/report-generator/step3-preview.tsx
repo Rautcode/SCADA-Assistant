@@ -40,11 +40,20 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
   const hasFetched = React.useRef(false);
+  const prevCriteria = React.useRef(criteria);
 
 
   React.useEffect(() => {
     onValidated({ scadaData: data });
   }, [data, onValidated]);
+
+  // If the criteria from step 1 changes, reset the fetch flag to force a re-fetch.
+  React.useEffect(() => {
+    if (JSON.stringify(criteria) !== JSON.stringify(prevCriteria.current)) {
+        hasFetched.current = false;
+        prevCriteria.current = criteria;
+    }
+  }, [criteria]);
 
   React.useEffect(() => {
     if (hasFetched.current) return;
