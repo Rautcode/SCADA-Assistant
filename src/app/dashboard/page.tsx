@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -8,7 +7,7 @@ import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2,
 import Link from 'next/link';
 import Image from 'next/image';
 import imageData from '@/app/lib/placeholder-images.json';
-import { onDashboardStats, onRecentActivities, onSystemComponentStatuses, isScadaDbConnected } from '@/services/client-database-service';
+import { onDashboardStats, onRecentActivities, onSystemComponentStatuses } from '@/services/client-database-service';
 import type { DashboardStats, RecentActivity, SystemComponentStatus } from '@/lib/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,6 +17,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { ApiKeyNotification } from '@/components/layout/api-key-notification';
 import { useAuth } from '@/components/auth/auth-provider';
+import { getScadaDataFlow } from '@/ai/flows/scada-flow';
 
 interface StatCardProps {
   title: string;
@@ -192,10 +192,20 @@ const DatabaseConnectionNotification = () => {
         }
 
         setIsLoading(true);
-        isScadaDbConnected().then(result => {
-            setIsConnected(result);
-            setIsLoading(false);
-        })
+        // We'll try to fetch a tiny amount of data to verify the connection.
+        // A simple criteria that should be fast.
+        const testCriteria = {
+            dateRange: { from: new Date(0), to: new Date(1) }, // A very small, specific range
+            machineIds: [],
+            reportType: 'any',
+            parameterIds: []
+        };
+
+        getScadaDataFlow({ criteria: testCriteria })
+            .then(() => setIsConnected(true))
+            .catch(() => setIsConnected(false))
+            .finally(() => setIsLoading(false));
+
     }, [user, authLoading]);
 
     if (isConnected || isLoading) return null;

@@ -17,7 +17,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useAuth } from '../auth/auth-provider';
 import { Unsubscribe } from 'firebase/firestore';
 import { useData } from '../database/data-provider';
-import { isScadaDbConnected } from '@/services/client-database-service';
 
 const NewTaskDialog = dynamic(() =>
   import('@/components/scheduler/new-task-dialog').then((mod) => mod.NewTaskDialog),
@@ -106,13 +105,10 @@ export default function SchedulerPage() {
     const [tasksLoading, setTasksLoading] = React.useState(true);
     const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = React.useState(false);
     const { user } = useAuth();
-    const [dbConfigured, setDbConfigured] = React.useState(true);
     
     React.useEffect(() => {
         if (!user) return;
         setTasksLoading(true);
-
-        isScadaDbConnected().then(setDbConfigured);
 
         const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
             setTasks(tasksData.map(t => ({...t, scheduledTime: new Date(t.scheduledTime)})));
@@ -129,7 +125,7 @@ export default function SchedulerPage() {
     [templates]);
     
     const loading = tasksLoading || templatesLoading;
-    const showConnectionMessage = !loading && !dbConfigured;
+    const showConnectionMessage = !loading && templates.length === 0 && tasks.length === 0;
 
     return (
         <div className="w-full">
