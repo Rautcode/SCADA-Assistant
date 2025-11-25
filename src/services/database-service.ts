@@ -2,94 +2,12 @@
 import { getAdminApp } from '@/lib/firebase/admin';
 import { ReportTemplate, ScheduledTask, UserSettings, settingsSchema } from '@/lib/types/database';
 import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc } from 'firebase/firestore';
-import imageData from '@/app/lib/placeholder-images.json';
 import { z } from 'zod';
-
-
-// --- Seeding Function for Default Templates ---
-const defaultTemplates: Omit<ReportTemplate, 'id' | 'lastModified'>[] = [
-    {
-        name: 'Daily Production Summary',
-        description: 'Tracks key production metrics like output, uptime, and efficiency over a 24-hour period.',
-        category: 'Production',
-        thumbnailUrl: imageData.templates.default.production.src,
-    },
-    {
-        name: 'Weekly Downtime Analysis',
-        description: 'Analyzes all machine downtime events over the past week to identify recurring issues.',
-        category: 'Maintenance',
-        thumbnailUrl: imageData.templates.default.downtime.src,
-    },
-    {
-        name: 'Monthly Quality Control Report',
-        description: 'A comprehensive review of quality metrics, including defect rates and specification adherence for the month.',
-        category: 'Quality',
-        thumbnailUrl: imageData.templates.default.quality.src,
-    },
-    {
-        name: 'Energy Consumption Overview',
-        description: 'Monitors and reports on the energy usage of selected machines to optimize consumption.',
-        category: 'Energy',
-        thumbnailUrl: imageData.templates.default.energy.src,
-    },
-    {
-        name: 'Operator Shift Handover',
-        description: 'A summary of key events, alarms, and production notes for a smooth shift transition.',
-        category: 'Operations',
-        thumbnailUrl: imageData.templates.default.operations.src,
-    }
-];
-
-const defaultMachines = [
-    { name: 'Machine-01', location: 'Factory A' },
-    { name: 'Machine-02', location: 'Factory A' },
-    { name: 'Packaging-Line-01', location: 'Factory B' },
-];
-
 
 async function getDb() {
     const app = getAdminApp();
     return app.firestore();
 }
-
-async function seedDefaultData() {
-    const db = await getDb();
-    const batch = writeBatch(db);
-    let writes = 0;
-
-    // Seed Templates
-    const templatesRef = collection(db, 'reportTemplates');
-    const templatesSnapshot = await getDocs(query(templatesRef, limit(1)));
-    if (templatesSnapshot.empty) {
-        console.log("No report templates found. Seeding default templates...");
-        defaultTemplates.forEach(template => {
-            const docRef = doc(templatesRef);
-            batch.set(docRef, { ...template, lastModified: serverTimestamp() });
-            writes++;
-        });
-    }
-
-    // Seed Machines
-    const machinesRef = collection(db, 'machines');
-    const machinesSnapshot = await getDocs(query(machinesRef, limit(1)));
-    if (machinesSnapshot.empty) {
-        console.log("No machines found. Seeding default machines...");
-        defaultMachines.forEach(machine => {
-            const docRef = doc(machinesRef);
-            batch.set(docRef, machine);
-            writes++;
-        });
-    }
-
-    if (writes > 0) {
-        await batch.commit();
-        console.log("Default data seeded successfully.");
-    }
-}
-
-// Call seeding function on startup
-seedDefaultData();
-
 
 // ===== Server-Side Only Functions =====
 // These functions use the Admin SDK and should only be called from Server Actions or Genkit flows.
