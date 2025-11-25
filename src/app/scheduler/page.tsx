@@ -111,6 +111,7 @@ export default function SchedulerPage() {
         setTasksLoading(true);
 
         const unsubTasks: Unsubscribe = onScheduledTasks(tasksData => {
+            // Firestore timestamps need to be converted to Date objects
             setTasks(tasksData.map(t => ({...t, scheduledTime: new Date(t.scheduledTime)})));
             setTasksLoading(false);
         });

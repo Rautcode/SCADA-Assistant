@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -22,7 +21,6 @@ import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
 import { useAuth } from "../auth/auth-provider";
-import { isScadaDbConnected } from "@/services/client-database-service";
 
 type SortKey = keyof Omit<ScadaDataPoint, 'included' | 'id'>;
 
@@ -56,13 +54,6 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
             setLoading(false);
             return;
         };
-        
-        const connected = await isScadaDbConnected();
-        if (!connected) {
-            setError("Database is not configured or reachable. Please check your settings.");
-            setLoading(false);
-            return;
-        }
 
         setLoading(true);
         setError(null);

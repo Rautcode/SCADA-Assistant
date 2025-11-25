@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -25,7 +24,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { categoryIcons } from "@/lib/icon-map";
 import { useAuth } from "../auth/auth-provider";
-import { isScadaDbConnected } from "@/services/client-database-service";
 import { useData } from "@/components/database/data-provider";
 
 
@@ -55,14 +53,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   const [loadingParameters, setLoadingParameters] = React.useState(false);
   const [parameterError, setParameterError] = React.useState<string | null>(null);
   
-  const [connectionStatus, setConnectionStatus] = React.useState<'loading' | 'connected' | 'unconfigured'>('loading');
   const { user } = useAuth();
-  
-  React.useEffect(() => {
-    isScadaDbConnected().then(connected => {
-      setConnectionStatus(connected ? 'connected' : 'unconfigured');
-    });
-  }, []);
 
 
   const form = useForm<ReportCriteriaFormValues>({
@@ -96,7 +87,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
   
   React.useEffect(() => {
     async function fetchTags() {
-      if (!user || !selectedMachineIds || selectedMachineIds.length === 0 || connectionStatus !== 'connected') {
+      if (!user || !selectedMachineIds || selectedMachineIds.length === 0) {
         setAvailableParameters([]);
         return;
       }
@@ -124,7 +115,7 @@ export function ReportStep1Criteria({ onValidated, initialData }: ReportStep1Cri
     }, 300);
 
     return () => clearTimeout(debounce);
-  }, [selectedMachineIds, user, connectionStatus]);
+  }, [selectedMachineIds, user]);
 
 
   const filteredMachines = machines.filter(machine => 

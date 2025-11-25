@@ -43,7 +43,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
-        // Pass the user's UID to the listeners
         unsubscribers.push(onMachines(machinesData => {
             setMachines(machinesData);
             machineDataLoaded = true;
@@ -58,14 +57,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
         const timer = setTimeout(() => {
             if (loading) setLoading(false);
-        }, 5000);
+        }, 5000); // Failsafe to prevent infinite loading state
 
         return () => {
             unsubscribers.forEach(unsub => unsub());
             clearTimeout(timer);
         };
     // Re-run this effect when the user or auth loading state changes
-    }, [user, authLoading, loading]);
+    }, [user, authLoading]);
 
     const value = {
         machines,
