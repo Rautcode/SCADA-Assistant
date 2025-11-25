@@ -45,6 +45,8 @@ export const getScadaDataFlow = ai.defineFlow(
       if (!auth) throw new Error("User must be authenticated.");
       userId = auth.uid;
     }
+    
+    console.log(`[getScadaDataFlow] Initiating data fetch for user: ${userId}`);
 
     const userSettings = await getVerifiedUserSettings(userId);
     const { database, dataMapping } = userSettings;
@@ -80,10 +82,14 @@ export const getScadaDataFlow = ai.defineFlow(
         query += ` AND [${dataMapping.parameterColumn}] IN ('${parameterIds.join("','")}')`;
       }
 
+      console.log(`[getScadaDataFlow] Executing query: ${query}`);
+
       const result = await pool.request()
         .input('startDate', sql.DateTime, dateRange.from)
         .input('endDate', sql.DateTime, dateRange.to)
         .query(query);
+      
+      console.log(`[getScadaDataFlow] Fetched ${result.recordset.length} records from the database.`);
 
       return result.recordset.map((row: any) => ({
         id: `${row[dataMapping.parameterColumn!]}-${new Date(row[dataMapping.timestampColumn!]).toISOString()}`,
