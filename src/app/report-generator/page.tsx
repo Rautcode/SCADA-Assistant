@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -140,7 +139,7 @@ export default function ReportGeneratorPage() {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(currentStep + 1);
     }
   };
 
@@ -174,7 +173,7 @@ export default function ReportGeneratorPage() {
         };
         const result = await generateReport(reportInput);
         setGeneratedReport(result);
-    } catch (error) => {
+    } catch (error: any) {
         console.error("Report generation failed:", error);
         toast({
             title: "Generation Failed",
