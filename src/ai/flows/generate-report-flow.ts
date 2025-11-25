@@ -131,6 +131,7 @@ const generateReportFlow = ai.defineFlow(
     const { outputOptions, ...restOfInput } = input;
     
     // **PRE-PROCESSING STEP:** Convert all date objects to simple strings for the prompt
+    // The data is now passed directly in, no need to re-fetch it.
     const promptInput = {
       ...restOfInput,
       outputOptions,

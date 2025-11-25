@@ -85,14 +85,15 @@ export const runScheduledTasksFlow = ai.defineFlow(
           throw new Error(`Template with ID ${task.templateId} not found.`);
         }
 
+        // Define criteria for the scheduled report. This could be made more flexible in the future.
         const criteria = {
             dateRange: { from: new Date(Date.now() - 24 * 60 * 60 * 1000), to: new Date() },
-            machineIds: ['Machine-01', 'Machine-02'], // Example machine IDs
+            machineIds: ['Machine-01', 'Machine-02'], // Example machine IDs, could be stored on the task in the future
             reportType: template.category,
             parameterIds: [],
         };
         
-        // Use the centralized `getScadaDataFlow` with an auth override.
+        // Use the centralized `getScadaDataFlow` with an auth override. This is the single data fetch.
         const scadaData = await getScadaDataFlow(
             { criteria },
             { authOverride: { uid: task.userId } }
@@ -101,7 +102,7 @@ export const runScheduledTasksFlow = ai.defineFlow(
         const reportInput: z.infer<typeof GenerateReportInputSchema> = {
             criteria,
             template,
-            scadaData,
+            scadaData, // Pass the fetched data directly
             chartOptions: { // Default chart options for scheduled reports
                 includeCharts: true,
                 chartType: 'bar',
@@ -115,7 +116,7 @@ export const runScheduledTasksFlow = ai.defineFlow(
             },
         };
         
-        // Pass auth override to the generateReport flow
+        // Call the generateReport flow with the already-fetched data.
         const reportResult = await generateReport(
             reportInput
         );
