@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2, Settings, WifiOff, Server, Database, BrainCircuit } from 'lucide-react';
+import { BarChart3, FilePlus, CalendarClock, Users, AlertTriangle, CheckCircle2, Settings, Server, Database, BrainCircuit } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import imageData from '@/app/lib/placeholder-images.json';
@@ -14,11 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { Unsubscribe } from 'firebase/firestore';
 import { iconMap } from '@/lib/icon-map';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { ApiKeyNotification } from '@/components/layout/api-key-notification';
-import { useAuth } from '@/components/auth/auth-provider';
-import { getScadaDataFlow } from '@/ai/flows/scada-flow';
+import { SettingsNotification } from '@/components/layout/settings-notification';
 
 interface StatCardProps {
   title: string;
@@ -179,55 +176,6 @@ const SystemStatusItem: React.FC<{ item?: SystemComponentStatus; loading?: boole
 });
 
 
-const DatabaseConnectionNotification = () => {
-    const { user, loading: authLoading } = useAuth();
-    const [isConnected, setIsConnected] = React.useState(true);
-    const [isLoading, setIsLoading] = React.useState(true);
-
-    React.useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            setIsLoading(false);
-            setIsConnected(true); // Don't show for logged out users
-            return;
-        }
-
-        setIsLoading(true);
-        // We'll try to fetch a tiny amount of data to verify the connection.
-        // A simple criteria that should be fast.
-        const testCriteria = {
-            dateRange: { from: new Date(0), to: new Date(1) }, // A very small, specific range
-            machineIds: [],
-            reportType: 'any',
-            parameterIds: []
-        };
-
-        getScadaDataFlow({ criteria: testCriteria })
-            .then(() => setIsConnected(true))
-            .catch(() => setIsConnected(false))
-            .finally(() => setIsLoading(false));
-
-    }, [user, authLoading]);
-
-    if (isConnected || isLoading) return null;
-
-    return (
-        <Alert variant="destructive" className="mb-6 shadow-lg">
-            <WifiOff className="h-4 w-4" />
-            <AlertTitle>Database Not Configured or Unreachable</AlertTitle>
-            <AlertDescription>
-                Live dashboard data is unavailable. Please configure your SCADA database connection to see live data.
-                <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 font-semibold text-destructive/80 hover:text-destructive dark:text-destructive-foreground/80 dark:hover:text-destructive-foreground">
-                    <Link href="/settings">
-                        <Settings className="mr-2 h-4 w-4" /> Go to Settings
-                    </Link>
-                </Button>
-            </AlertDescription>
-        </Alert>
-    )
-}
-
-
 export default function DashboardPage() {
   const [currentDate, setCurrentDate] = React.useState("Loading...");
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
@@ -304,8 +252,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        <ApiKeyNotification />
-        <DatabaseConnectionNotification />
+        <SettingsNotification />
 
         <section>
           <h2 className="text-xl font-semibold mb-4 text-foreground">Quick Actions</h2>
@@ -377,3 +324,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
