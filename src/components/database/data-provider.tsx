@@ -1,10 +1,10 @@
-
-"use client";
+'use client';
 
 import * as React from 'react';
 import { onMachines, onReportTemplates } from '@/services/client-database-service';
 import type { Machine, ReportTemplate } from '@/lib/types/database';
 import { Unsubscribe } from 'firebase/firestore';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface DataContextType {
     machines: Machine[];
@@ -15,13 +15,24 @@ interface DataContextType {
 const DataContext = React.createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
+    const { user, loading: authLoading } = useAuth();
     const [machines, setMachines] = React.useState<Machine[]>([]);
     const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        setLoading(true);
+        // Only proceed if authentication is resolved and we have a user
+        if (authLoading || !user) {
+            setLoading(!authLoading); // Stop loading if auth is done but there's no user
+            // Clear data on logout
+            if (!user) {
+                setMachines([]);
+                setTemplates([]);
+            }
+            return;
+        }
 
+        setLoading(true);
         const unsubscribers: Unsubscribe[] = [];
         let machineDataLoaded = false;
         let templateDataLoaded = false;
@@ -32,6 +43,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
+        // Pass the user's UID to the listeners
         unsubscribers.push(onMachines(machinesData => {
             setMachines(machinesData);
             machineDataLoaded = true;
@@ -44,19 +56,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             checkLoadingDone();
         }));
 
-        // Fallback to stop loading indicator
         const timer = setTimeout(() => {
-            if (loading) {
-                setLoading(false);
-            }
+            if (loading) setLoading(false);
         }, 5000);
 
         return () => {
             unsubscribers.forEach(unsub => unsub());
             clearTimeout(timer);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Re-run this effect when the user or auth loading state changes
+    }, [user, authLoading, loading]);
 
     const value = {
         machines,
