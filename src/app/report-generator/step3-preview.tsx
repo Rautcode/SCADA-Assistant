@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -39,25 +40,12 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   const [currentPage, setCurrentPage] = React.useState(1);
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
-  const hasFetched = React.useRef(false);
-  const prevCriteria = React.useRef(criteria);
-
-
+  
   React.useEffect(() => {
     onValidated({ scadaData: data });
   }, [data, onValidated]);
 
-  // If the criteria from step 1 changes, reset the fetch flag to force a re-fetch.
   React.useEffect(() => {
-    if (JSON.stringify(criteria) !== JSON.stringify(prevCriteria.current)) {
-        hasFetched.current = false;
-        prevCriteria.current = criteria;
-    }
-  }, [criteria]);
-
-  React.useEffect(() => {
-    if (hasFetched.current) return;
-
     async function fetchSettingsAndData() {
         if (!user || !criteria) {
             setLoading(false);
@@ -80,7 +68,6 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
             if (scadaData.length === 0) {
                 setError("No data was returned from the database. Check your criteria and connection settings.");
             }
-            hasFetched.current = true;
 
         } catch (e: any) {
             console.error("Failed to fetch SCADA data:", e);
@@ -90,6 +77,7 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
         }
     }
     fetchSettingsAndData();
+    // This effect should re-run whenever the criteria changes.
   }, [criteria, user, initialData]);
 
   const handleIncludeToggle = (id: string) => {
