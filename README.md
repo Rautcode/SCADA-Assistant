@@ -53,7 +53,7 @@ Automate the entire report generation process to run at specific intervals.
 
 ## 2. Tech Stack & Architecture
 
-The application is built with a modern, robust, and scalable tech stack. The architecture is designed to be efficient and maintainable, with a clear separation between client-side and server-side logic.
+The application is built with a modern, robust, and scalable tech stack. The architecture is designed to be secure, efficient, and maintainable, with a clear separation between client-side and server-side logic.
 
 - **Framework:** **Next.js 14** (App Router)
 - **UI:** **React**, **ShadCN UI**, **Tailwind CSS**
@@ -65,10 +65,13 @@ The application is built with a modern, robust, and scalable tech stack. The arc
 ### 2.1. Architectural Principles
 
 - **Unidirectional & Real-Time Data Flow:** The application employs a clean and efficient data access strategy. A central `DataProvider` (`/src/components/database/data-provider.tsx`) establishes a single, real-time connection to shared Firestore collections (`machines`, `reportTemplates`). This data is then distributed throughout the application via a React Context (`useData`). This eliminates redundant database listeners, ensures UI consistency, and improves performance.
+- **Secure Backend Operations:** All sensitive operations and interactions with the AI models are handled through **Authenticated Genkit Flows** and **Next.js Server Actions**. The client never directly holds API keys or performs database mutations.
+    -   **Server-Side Security:** All Genkit flows that write data or access paid services are now authenticated, ensuring only logged-in users can perform actions.
+    -   **Secure Key Management:** The user's Gemini API key is stored securely in the database and only accessed by backend flows on the server. It is never exposed to the client.
+- **Robust Database Connectivity:** The application features intelligent logic to connect to MS SQL Server. It automatically detects whether a full ODBC connection string or separate server/database details are provided, and can inject user credentials into connection strings if needed, ensuring flexible and reliable connections to any SQL Server environment.
 - **Clear Client/Server Separation:**
-    - **`client-database-service.ts`:** This file is the **sole entry point for all client-side data reading**. It handles both real-time listeners (for the dashboard, logs) and one-time data fetches, using the Firebase client SDK.
+    - **`client-database-service.ts`:** This file is the **sole entry point for all client-side data reading**. It handles all real-time Firestore listeners for the dashboard and logs.
     - **`database-service.ts`:** This is a **purely server-side service** using the `firebase-admin` SDK. It is responsible for all secure database mutations (writing data), such as creating new tasks or saving user settings.
-- **Secure Backend Operations:** All sensitive operations and interactions with the AI models are handled through **Genkit Flows** and **Next.js Server Actions**. Client components never directly access sensitive credentials or perform mutations. This ensures a secure and robust backend.
 - **Component-Based & Reusable UI:** The UI is built with ShadCN, promoting consistency, reusability, and accessibility.
 
 ---
@@ -81,7 +84,7 @@ To get the application running, follow these essential setup steps through the u
 
 2.  **Connect to Your SCADA Database**:
     - Navigate to **Settings > Database**.
-    - Enter your SQL Server credentials (server address, database name, user, and password).
+    - Enter your SQL Server credentials. You can either provide a full ODBC connection string in the "Server Address" field or fill out the separate fields for server, database name, user, and password.
     - Use the **Test Connection** button to verify the details are correct, then **Save All** settings.
 
 3.  **Map Your Data Columns**:
