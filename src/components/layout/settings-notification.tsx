@@ -48,8 +48,14 @@ export function SettingsNotification() {
 
     const isApiKeyMissing = !settings?.apiKey;
     
+    // Check for new multi-profile config
     const activeProfile = settings?.databaseProfiles?.find(p => p.id === settings.activeProfileId);
-    const isDbConfigMissing = !activeProfile || !activeProfile.server || !activeProfile.databaseName || !activeProfile.mapping?.table;
+    let isDbConfigMissing = !activeProfile || !activeProfile.server || !activeProfile.databaseName || !activeProfile.mapping?.table;
+
+    // **FIX**: If new config is missing, also check for a valid OLD config to support migrating users.
+    if (isDbConfigMissing && settings?.database) {
+        isDbConfigMissing = !settings.database.server || !settings.database.databaseName || !settings.dataMapping?.table;
+    }
 
 
     if (!isApiKeyMissing && !isDbConfigMissing) {
