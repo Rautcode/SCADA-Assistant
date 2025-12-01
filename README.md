@@ -33,9 +33,10 @@ Create and manage a library of custom report templates to standardize reporting 
 - **Categorization:** Organize templates by category (e.g., `Production`, `Maintenance`, `Quality`) to streamline selection in the report generator.
 - **Custom Creation:** Easily create new templates by defining a name, category, and a descriptive purpose that instructs the AI on the desired analytical focus.
 
-### 1.4. Task Scheduler
+### 1.4. Task Scheduler with Recurrence
 Automate the entire report generation process to run at specific intervals.
 - **Schedule New Tasks:** Define a task name, select a report template, and set a future date and time for execution.
+- **Recurring Schedules:** Configure tasks to run automatically on a **daily, weekly, or monthly** basis, creating a true "set-and-forget" automation workflow.
 - **Real-Time Status:** View a live list of all scheduled tasks with clear status indicators: `Scheduled`, `Processing`, `Completed`, `Failed`, or `Overdue`.
 - **Automated Delivery:** Scheduled reports are automatically generated and emailed to the user who created the task (if email notifications are enabled).
 
@@ -83,13 +84,14 @@ To get the application running, follow these essential setup steps through the u
 1.  **Create an Account**: Register a new user to get started.
 
 2.  **Connect to Your SCADA Database**:
-    - Navigate to **Settings > Database**.
+    - Navigate to **Settings > Database Profiles**.
+    - The system creates a "Default Profile" for you. Click on it to expand the settings.
     - Enter your SQL Server credentials. You can either provide a full ODBC connection string in the "Server Address" field or fill out the separate fields for server, database name, user, and password.
-    - Use the **Test Connection** button to verify the details are correct, then **Save All** settings.
+    - Use the **Test Connection** button to verify the details are correct.
+    - You can create multiple profiles (e.g., for Staging and Production) using the "New Profile" button.
 
 3.  **Map Your Data Columns**:
-    - Navigate to **Settings > Data Mapping**.
-    - Click **Fetch Schema** to load your database tables and columns. This will only work if the database connection in the previous step was successful.
+    - While editing a database profile, after a successful connection test, click **Fetch Schema** to load your database tables and columns.
     - Select the table containing your SCADA data.
     - Map the corresponding columns for `Timestamp`, `Machine Name`, `Parameter/Tag`, and `Value`. This is crucial for the application to read your data correctly.
     - **Save All** settings.
