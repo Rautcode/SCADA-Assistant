@@ -4,8 +4,8 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail, Map, Workflow } from 'lucide-react';
-import type { SettingsFormValues } from "@/lib/types/database";
+import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail, PlusCircle, Trash2 } from 'lucide-react';
+import type { SettingsFormValues, DatabaseProfile } from "@/lib/types/database";
 import {
     getUserSettingsFlow,
     saveUserSettingsFlow,
@@ -14,6 +14,7 @@ import {
     testSmtpConnectionFlow,
 } from '@/ai/flows/settings-flow';
 import { SettingsSchema } from '@/lib/types/flows';
+import { randomUUID } from 'crypto';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -55,45 +56,25 @@ export default function SettingsPage() {
         defaultValues: {
             theme: "system",
             language: "en",
-            notifications: {
-                inApp: true,
-                email: false,
-                systemAlerts: true,
-                reportCompletion: true,
-            },
+            notifications: { inApp: true, email: false, systemAlerts: true, reportCompletion: true },
             apiKey: "",
-            database: {
-                server: "",
-                databaseName: "",
-                user: "",
-                password: "",
-            },
-            dataMapping: {
-                table: "",
-                timestampColumn: "",
-                machineColumn: "",
-                parameterColumn: "",
-                valueColumn: "",
-            },
-            email: {
-                smtpHost: "",
-                smtpPort: 587,
-                smtpUser: "",
-                smtpPass: "",
-            }
+            databaseProfiles: [],
+            activeProfileId: undefined,
+            email: { smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "" }
         },
     });
 
-    const selectedTable = form.watch("dataMapping.table");
-    const dbCredsWatched = form.watch("database");
+    const activeProfileId = form.watch("activeProfileId");
+    const databaseProfiles = form.watch("databaseProfiles") || [];
+    const activeProfile = databaseProfiles.find(p => p.id === activeProfileId);
+    
     const smtpCredsWatched = form.watch("email");
-
+    
     React.useEffect(() => {
-        if (dbConnectionStatus !== 'untested') {
-            setDbConnectionStatus('untested');
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dbCredsWatched]);
+        setDbConnectionStatus('untested');
+        setDbSchema(null);
+    }, [activeProfileId]);
+
 
     React.useEffect(() => {
         if (smtpConnectionStatus !== 'untested') {
@@ -149,13 +130,39 @@ export default function SettingsPage() {
             setIsLoading(false);
         }
     }
+
+     const handleSaveAndSetActive = async (profileId: string) => {
+        form.setValue('activeProfileId', profileId);
+        await form.handleSubmit(onSubmit)();
+    };
+
+    const handleCreateNewProfile = () => {
+        const newProfile: DatabaseProfile = {
+            id: `profile_${Date.now()}`, // Simple unique ID
+            name: `New Profile ${databaseProfiles.length + 1}`,
+        };
+        const newProfiles = [...databaseProfiles, newProfile];
+        form.setValue('databaseProfiles', newProfiles);
+        handleSaveAndSetActive(newProfile.id);
+    };
+
+    const handleDeleteProfile = (profileId: string) => {
+        const newProfiles = databaseProfiles.filter(p => p.id !== profileId);
+        form.setValue('databaseProfiles', newProfiles);
+        // If the deleted profile was the active one, set a new active one
+        if (activeProfileId === profileId) {
+            const newActiveId = newProfiles.length > 0 ? newProfiles[0].id : undefined;
+            form.setValue('activeProfileId', newActiveId);
+        }
+        form.handleSubmit(onSubmit)(); // Save changes immediately
+    };
     
     async function handleTestDbConnection() {
         setIsTestingDbConnection(true);
         setDbConnectionStatus('testing');
 
         // We must save the settings first for the server action to use them.
-        await onSubmit(form.getValues());
+        await form.handleSubmit(onSubmit)();
 
         try {
             const result = await testScadaConnectionFlow();
@@ -203,8 +210,7 @@ export default function SettingsPage() {
         setIsTestingSmtpConnection(true);
         setSmtpConnectionStatus('testing');
 
-        // We must save the settings first for the server action to use them.
-        await onSubmit(form.getValues());
+        await form.handleSubmit(onSubmit)();
         try {
             const result = await testSmtpConnectionFlow();
             if (result.success) {
@@ -255,162 +261,46 @@ export default function SettingsPage() {
                         <Skeleton className="h-6 w-1/4" />
                         <Skeleton className="h-10 w-full" />
                     </div>
-                     <div className="space-y-4">
-                        <Skeleton className="h-6 w-1/4" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                     <div className="space-y-4">
-                        <Skeleton className="h-6 w-1/4" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
                 </div>
             )
         }
+        
+        const activeProfileIndex = databaseProfiles.findIndex(p => p.id === activeProfileId);
+
         return (
             <Tabs defaultValue="appearance" className="flex flex-col md:flex-row gap-8" orientation="vertical">
                 <TabsList className="md:w-56 h-auto flex-col items-start p-2 shrink-0 w-full">
                     <TabsTrigger value="appearance" className="w-full justify-start text-base py-2"><Palette className="mr-2 h-5 w-5" />{t('appearance')}</TabsTrigger>
                     <TabsTrigger value="notifications" className="w-full justify-start text-base py-2"><Bell className="mr-2 h-5 w-5" />{t('notifications')}</TabsTrigger>
-                    <TabsTrigger value="integrations" className="w-full justify-start text-base py-2"><Workflow className="mr-2 h-5 w-5" />{t('integrations')}</TabsTrigger>
-                    <TabsTrigger value="database" className="w-full justify-start text-base py-2"><Server className="mr-2 h-5 w-5" />{t('database')}</TabsTrigger>
-                    <TabsTrigger value="mapping" className="w-full justify-start text-base py-2"><Map className="mr-2 h-5 w-5" />Data Mapping</TabsTrigger>
+                    <TabsTrigger value="integrations" className="w-full justify-start text-base py-2"><Server className="mr-2 h-5 w-5" />{t('integrations')}</TabsTrigger>
+                    <TabsTrigger value="database" className="w-full justify-start text-base py-2"><Database className="mr-2 h-5 w-5" />Database Profiles</TabsTrigger>
                     <TabsTrigger value="email" className="w-full justify-start text-base py-2"><Mail className="mr-2 h-5 w-5" />{t('email')}</TabsTrigger>
                 </TabsList>
                 
                 <div className="flex-1">
                     <TabsContent value="appearance">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>{t('appearance')}</CardTitle>
-                                <CardDescription>{t('theme_description')}</CardDescription>
-                            </CardHeader>
+                            <CardHeader><CardTitle>{t('appearance')}</CardTitle><CardDescription>{t('theme_description')}</CardDescription></CardHeader>
                             <CardContent className="space-y-8">
-                                <FormField
-                                    control={form.control}
-                                    name="theme"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('theme')}</FormLabel>
-                                            <Select 
-                                                onValueChange={(value) => {
-                                                    field.onChange(value);
-                                                    applyTheme(value);
-                                                }}
-                                                value={field.value}
-                                            >
-                                                <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={t('select_theme')} />
-                                                </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="light">{t('light')}</SelectItem>
-                                                    <SelectItem value="dark">{t('dark')}</SelectItem>
-                                                    <SelectItem value="system">{t('system_default')}</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="language"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel>
-                                            <Select 
-                                                onValueChange={(value) => {
-                                                    field.onChange(value);
-                                                    setLanguage(value);
-                                                }}
-                                                value={field.value}
-                                            >
-                                                <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={t('select_language')} />
-                                                </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="en">English (US)</SelectItem>
-                                                    <SelectItem value="hi">Hindi (हिन्दी)</SelectItem>
-                                                    <SelectItem value="de">Deutsch</SelectItem>
-                                                    <SelectItem value="es">Español</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormDescription>{t('language_description')}</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <FormField control={form.control} name="theme" render={({ field }) => (<FormItem><FormLabel>{t('theme')}</FormLabel><Select onValueChange={(value) => { field.onChange(value); applyTheme(value); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder={t('select_theme')} /></SelectTrigger></FormControl><SelectContent><SelectItem value="light">{t('light')}</SelectItem><SelectItem value="dark">{t('dark')}</SelectItem><SelectItem value="system">{t('system_default')}</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel className="flex items-center"><Languages className="mr-2 h-4 w-4" /> {t('language')}</FormLabel><Select onValueChange={(value) => { field.onChange(value); setLanguage(value); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder={t('select_language')} /></SelectTrigger></FormControl><SelectContent><SelectItem value="en">English (US)</SelectItem><SelectItem value="hi">Hindi (हिन्दी)</SelectItem><SelectItem value="de">Deutsch</SelectItem><SelectItem value="es">Español</SelectItem></SelectContent></Select><FormDescription>{t('language_description')}</FormDescription><FormMessage /></FormItem>)} />
                             </CardContent>
                         </Card>
                     </TabsContent>
                     
                     <TabsContent value="notifications">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>{t('notifications')}</CardTitle>
-                                <CardDescription>Manage how you receive alerts.</CardDescription>
-                            </CardHeader>
+                            <CardHeader><CardTitle>{t('notifications')}</CardTitle><CardDescription>Manage how you receive alerts.</CardDescription></CardHeader>
                             <CardContent className="space-y-8">
                                 <div className="space-y-4 rounded-lg border p-4">
                                     <h3 className="text-lg font-medium">{t('notification_channels')}</h3>
-                                    <FormField
-                                        control={form.control}
-                                        name="notifications.inApp"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">{t('in_app_notifications')}</FormLabel>
-                                                    <FormDescription>Receive notifications within the application.</FormDescription>
-                                                </div>
-                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="notifications.email"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">{t('email_notifications')}</FormLabel>
-                                                    <FormDescription>Receive notifications via email.</FormDescription>
-                                                </div>
-                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <FormField control={form.control} name="notifications.inApp" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel className="text-base">{t('in_app_notifications')}</FormLabel><FormDescription>Receive notifications within the application.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                                    <FormField control={form.control} name="notifications.email" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel className="text-base">{t('email_notifications')}</FormLabel><FormDescription>Receive notifications via email.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                                 </div>
                                 <div className="space-y-4 rounded-lg border p-4">
                                     <h3 className="text-lg font-medium">{t('event_based_notifications')}</h3>
-                                    <FormField
-                                        control={form.control}
-                                        name="notifications.systemAlerts"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">{t('critical_system_alerts')}</FormLabel>
-                                                    <FormDescription>Get notified about critical system-level events.</FormDescription>
-                                                </div>
-                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="notifications.reportCompletion"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">{t('report_generation_complete')}</FormLabel>
-                                                    <FormDescription>Get notified when a scheduled report is ready.</FormDescription>
-                                                </div>
-                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <FormField control={form.control} name="notifications.systemAlerts" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel className="text-base">{t('critical_system_alerts')}</FormLabel><FormDescription>Get notified about critical system-level events.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                                    <FormField control={form.control} name="notifications.reportCompletion" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel className="text-base">{t('report_generation_complete')}</FormLabel><FormDescription>Get notified when a scheduled report is ready.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -418,265 +308,95 @@ export default function SettingsPage() {
 
                     <TabsContent value="integrations">
                          <Card>
-                            <CardHeader>
-                                <CardTitle>{t('integrations')}</CardTitle>
-                                <CardDescription>Manage third-party service integrations.</CardDescription>
-                            </CardHeader>
+                            <CardHeader><CardTitle>{t('integrations')}</CardTitle><CardDescription>Manage third-party service integrations.</CardDescription></CardHeader>
                             <CardContent className="space-y-8">
-                                <FormField
-                                    control={form.control}
-                                    name="apiKey"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Gemini API Key</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder={t('api_key_placeholder')} {...field} value={field.value || ''} />
-                                            </FormControl>
-                                            <FormDescription>
-                                                {t('api_key_description')} This is required for all AI features.
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <FormField control={form.control} name="apiKey" render={({ field }) => (<FormItem><FormLabel>Gemini API Key</FormLabel><FormControl><Input type="password" placeholder={t('api_key_placeholder')} {...field} value={field.value || ''} /></FormControl><FormDescription>{t('api_key_description')} This is required for all AI features.</FormDescription><FormMessage /></FormItem>)} />
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    <TabsContent value="database">
+
+                     <TabsContent value="database">
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle>{t('scada_db_connection')}</CardTitle>
-                                        <CardDescription>{t('scada_db_description')}</CardDescription>
-                                    </div>
-                                    <ConnectionStatusBadge status={dbConnectionStatus} />
+                                    <CardTitle>Database Profiles</CardTitle>
+                                    <Button type="button" size="sm" variant="outline" onClick={handleCreateNewProfile}><PlusCircle className="mr-2 h-4 w-4" />New Profile</Button>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="database.server"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('server_address')}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g., 192.168.1.100 or Driver={...};Server=..." {...field} value={field.value || ''} />
-                                            </FormControl>
-                                            <FormDescription>Provide a server name or a full ODBC/SQL connection string.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="database.databaseName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('database_name')}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g., WinCC_Tag_Logging" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                            <FormDescription>Required if not using a full connection string.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="database.user"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('database_user')}</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g., report_user (optional)" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                             <FormDescription>Optional. Can be used with a connection string if it doesn't contain user credentials.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="database.password"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('password')}</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder="(optional)" {...field} value={field.value || ''}/>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </CardContent>
-                            <CardFooter>
-                                <Button type="button" variant="outline" onClick={handleTestDbConnection} disabled={isTestingDbConnection}>
-                                    {isTestingDbConnection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wifi className="mr-2 h-4 w-4" />}
-                                    {t('test_connection')}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="mapping">
-                        <Card>
-                            <CardHeader>
-                                <div>
-                                    <CardTitle>Data Column Mapping</CardTitle>
-                                    <CardDescription>Map your database columns to the fields required by the application.</CardDescription>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <Alert>
-                                    <Database className="h-4 w-4" />
-                                    <AlertTitle>Instructions</AlertTitle>
-                                    <AlertDescription>
-                                        This is a critical step. First, ensure your database credentials are saved and the connection test is successful. Then, click &quot;Fetch Schema&quot; to load your tables and columns. Finally, map the required columns.
-                                    </AlertDescription>
-                                </Alert>
-                                <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema || dbConnectionStatus !== 'success'}>
-                                    {isFetchingSchema ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4"/>}
-                                    Fetch Schema
-                                </Button>
-
-                                {isFetchingSchema && <Skeleton className="h-48 w-full" />}
+                                <CardDescription>Manage connection profiles for different databases (e.g., Staging, Production).</CardDescription>
                                 
-                                {dbSchema && (
-                                    <>
-                                        <FormField
-                                            control={form.control}
-                                            name="dataMapping.table"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Table</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a table" /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {dbSchema.tables.map(table => <SelectItem key={table} value={table}>{table}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormDescription>Select the table containing your tag data.</FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                                            <FormField
-                                                control={form.control} name="dataMapping.timestampColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Timestamp Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control} name="dataMapping.machineColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Machine/Server Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control} name="dataMapping.parameterColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Parameter/Tag Name Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control} name="dataMapping.valueColumn"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Value Column</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedTable}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl>
-                                                            <SelectContent>{dbSchema.columns[selectedTable]?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
+                                {databaseProfiles.length > 0 && (
+                                    <FormField
+                                        control={form.control}
+                                        name="activeProfileId"
+                                        render={({ field }) => (
+                                        <FormItem className="pt-4">
+                                            <FormLabel>Active Profile</FormLabel>
+                                            <Select onValueChange={(id) => handleSaveAndSetActive(id)} value={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Select a profile" /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    {databaseProfiles.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                        )}
+                                    />
+                                )}
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {activeProfileIndex !== -1 ? (
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                             <h3 className="text-lg font-semibold">Editing: {activeProfile?.name}</h3>
+                                             <ConnectionStatusBadge status={dbConnectionStatus} />
                                         </div>
-                                    </>
+                                       
+                                        <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.name`} render={({ field }) => ( <FormItem><FormLabel>Profile Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                        <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.server`} render={({ field }) => (<FormItem><FormLabel>Server Address</FormLabel><FormControl><Input placeholder="e.g., 192.168.1.100 or Driver={...}" {...field} value={field.value || ''} /></FormControl><FormDescription>Provide a server name or a full ODBC/SQL connection string.</FormDescription></FormItem>)} />
+                                        <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.databaseName`} render={({ field }) => ( <FormItem><FormLabel>Database Name</FormLabel><FormControl><Input placeholder="e.g., WinCC_Tag_Logging" {...field} value={field.value || ''}/></FormControl><FormDescription>Required if not using a full connection string.</FormDescription></FormItem>)} />
+                                        <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.user`} render={({ field }) => (<FormItem><FormLabel>Database User</FormLabel><FormControl><Input placeholder="e.g., report_user (optional)" {...field} value={field.value || ''}/></FormControl><FormDescription>Optional. Can be used with a connection string if it does not contain credentials.</FormDescription></FormItem>)} />
+                                        <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.password`} render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="(optional)" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                                        <CardFooter className="px-0 pb-0 pt-4 flex-col items-start gap-4">
+                                            <div className="flex gap-2">
+                                                <Button type="button" variant="outline" onClick={handleTestDbConnection} disabled={isTestingDbConnection}><Wifi className="mr-2 h-4 w-4" />Test Connection</Button>
+                                                <Button type="button" variant="destructive" size="icon" onClick={() => handleDeleteProfile(activeProfileId!)} disabled={databaseProfiles.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                             <Alert>
+                                                <Database className="h-4 w-4" />
+                                                <AlertTitle>Data Mapping</AlertTitle>
+                                                <AlertDescription>Map your database columns to the fields required by the application. First, ensure the connection test is successful, then fetch the schema.</AlertDescription>
+                                            </Alert>
+                                            <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema || dbConnectionStatus !== 'success'}><Database className="mr-2 h-4 w-4"/>Fetch Schema</Button>
+                                            {isFetchingSchema && <Skeleton className="h-48 w-full" />}
+                                            {dbSchema && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t w-full">
+                                                    <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.mapping.table`} render={({ field }) => (<FormItem><FormLabel>Table</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a table" /></SelectTrigger></FormControl><SelectContent>{dbSchema.tables.map(table => <SelectItem key={table} value={table}>{table}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                                                    <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.mapping.timestampColumn`} render={({ field }) => (<FormItem><FormLabel>Timestamp Column</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!activeProfile?.mapping?.table}><FormControl><SelectTrigger><SelectValue placeholder="Map timestamp" /></SelectTrigger></FormControl><SelectContent>{dbSchema.columns[activeProfile?.mapping?.table || '']?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                                                    <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.mapping.machineColumn`} render={({ field }) => (<FormItem><FormLabel>Machine/Server Column</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!activeProfile?.mapping?.table}><FormControl><SelectTrigger><SelectValue placeholder="Map machine name" /></SelectTrigger></FormControl><SelectContent>{dbSchema.columns[activeProfile?.mapping?.table || '']?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                                                    <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.mapping.parameterColumn`} render={({ field }) => (<FormItem><FormLabel>Parameter/Tag Name Column</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!activeProfile?.mapping?.table}><FormControl><SelectTrigger><SelectValue placeholder="Map tag name" /></SelectTrigger></FormControl><SelectContent>{dbSchema.columns[activeProfile?.mapping?.table || '']?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                                                    <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.mapping.valueColumn`} render={({ field }) => (<FormItem><FormLabel>Value Column</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!activeProfile?.mapping?.table}><FormControl><SelectTrigger><SelectValue placeholder="Map tag value" /></SelectTrigger></FormControl><SelectContent>{dbSchema.columns[activeProfile?.mapping?.table || '']?.map(col => <SelectItem key={col} value={col}>{col}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                                                </div>
+                                            )}
+                                        </CardFooter>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                        <p className="text-muted-foreground">No profiles created. Click "New Profile" to begin.</p>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
                     </TabsContent>
+
                     <TabsContent value="email">
                         <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle>{t('smtp_settings')}</CardTitle>
-                                        <CardDescription>{t('smtp_description')}</CardDescription>
-                                    </div>
-                                    <ConnectionStatusBadge status={smtpConnectionStatus} />
-                                </div>
-                            </CardHeader>
+                            <CardHeader><div className="flex items-center justify-between"><div><CardTitle>{t('smtp_settings')}</CardTitle><CardDescription>{t('smtp_description')}</CardDescription></div><ConnectionStatusBadge status={smtpConnectionStatus} /></div></CardHeader>
                             <CardContent className="space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="email.smtpHost"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>SMTP Host</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g., smtp.gmail.com" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="email.smtpPort"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>SMTP Port</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="e.g., 587" {...field} value={field.value || ''} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="email.smtpUser"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>SMTP Username</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g., your-email@example.com" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="email.smtpPass"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>SMTP Password</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" {...field} value={field.value || ''}/>
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
+                                <FormField control={form.control} name="email.smtpHost" render={({ field }) => (<FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input placeholder="e.g., smtp.gmail.com" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="email.smtpPort" render={({ field }) => (<FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input type="number" placeholder="e.g., 587" {...field} value={field.value || ''} onChange={e => field.onChange(parseInt(e.target.value, 10))}/></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="email.smtpUser" render={({ field }) => (<FormItem><FormLabel>SMTP Username</FormLabel><FormControl><Input placeholder="e.g., your-email@example.com" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="email.smtpPass" render={({ field }) => (<FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input type="password" {...field} value={field.value || ''}/></FormControl></FormItem>)} />
                             </CardContent>
-                            <CardFooter>
-                                <Button type="button" variant="outline" onClick={handleTestSmtpConnection} disabled={isTestingSmtpConnection}>
-                                    {isTestingSmtpConnection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                                    {t('test_connection')}
-                                </Button>
-                            </CardFooter>
+                            <CardFooter><Button type="button" variant="outline" onClick={handleTestSmtpConnection} disabled={isTestingSmtpConnection}>{isTestingSmtpConnection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}{t('test_connection')}</Button></CardFooter>
                         </Card>
                     </TabsContent>
                 </div>

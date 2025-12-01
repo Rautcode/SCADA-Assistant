@@ -6,11 +6,12 @@
 
 import { z } from 'zod';
 import { ai } from '../genkit';
-import { UserSettings, type SettingsFormValues } from '@/lib/types/database';
+import { UserSettings, type SettingsFormValues, DatabaseProfile } from '@/lib/types/database';
 import { UserSettingsFlowInput } from '@/lib/types/flows';
 import { getUserSettingsFromDb, saveUserSettingsToDb } from '@/services/database-service';
 import sql from 'mssql';
 import nodemailer from 'nodemailer';
+import { randomUUID } from 'crypto';
 
 // Helper function to get a user's verified settings securely from a flow
 async function getVerifiedUserSettings(uid: string) {
@@ -18,23 +19,23 @@ async function getVerifiedUserSettings(uid: string) {
     if (!userSettings) {
         throw new Error("User settings not found.");
     }
-    return userSettings;
+    const activeProfile = userSettings.databaseProfiles?.find(p => p.id === userSettings.activeProfileId);
+    if (!activeProfile) {
+        throw new Error("No active database profile found.");
+    }
+    return { userSettings, activeProfile };
 }
 
 function isConnectionString(server: string): boolean {
-    // A more robust check for connection strings.
-    // It looks for key-value pairs separated by semicolons.
     return /.+?=.+?;/i.test(server);
 }
 
 // Function to construct the final connection string, injecting credentials if necessary.
 function buildConnectionString(server: string, user?: string, password?: string): string {
     let connString = server;
-    // Inject username if it exists and is not already in the string
     if (user && !/user id=|uid=/i.test(connString)) {
         connString += `;User ID=${user}`;
     }
-    // Inject password if it exists and is not already in the string
     if (password && !/password=|pwd=/i.test(connString)) {
         connString += `;Password=${password}`;
     }
@@ -42,7 +43,7 @@ function buildConnectionString(server: string, user?: string, password?: string)
 }
 
 
-// Flow to get current user's settings
+// Flow to get current user's settings. Includes logic to migrate old settings format.
 export const getUserSettingsFlow = ai.defineFlow(
   {
     name: 'getUserSettingsFlow',
@@ -51,9 +52,38 @@ export const getUserSettingsFlow = ai.defineFlow(
   },
   async (_, { auth }) => {
     if (!auth) return null;
-    return await getUserSettingsFromDb(auth.uid);
+
+    let settings = await getUserSettingsFromDb(auth.uid);
+
+    // One-time migration for users with old settings structure
+    if (settings && settings.database && !settings.databaseProfiles) {
+      console.log(`Migrating old database settings for user ${auth.uid}`);
+      const newProfile: DatabaseProfile = {
+        id: randomUUID(),
+        name: 'Default Profile',
+        server: settings.database.server,
+        databaseName: settings.database.databaseName,
+        user: settings.database.user,
+        password: settings.database.password,
+        mapping: settings.dataMapping,
+      };
+
+      const migratedSettings: UserSettings = {
+        ...settings,
+        databaseProfiles: [newProfile],
+        activeProfileId: newProfile.id,
+        database: undefined, // Clear old fields
+        dataMapping: undefined, // Clear old fields
+      };
+      
+      await saveUserSettingsToDb(auth.uid, migratedSettings);
+      return migratedSettings;
+    }
+
+    return settings;
   }
 );
+
 
 // Flow to save user settings
 export const saveUserSettingsFlow = ai.defineFlow(
@@ -62,7 +92,7 @@ export const saveUserSettingsFlow = ai.defineFlow(
     inputSchema: UserSettingsFlowInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
   },
-  async (settings: SettingsFormValues, { auth }) => {
+  async (settings: Partial<SettingsFormValues>, { auth }) => {
     if (!auth) return { success: false, error: "Authentication failed." };
     try {
       await saveUserSettingsToDb(auth.uid, settings);
@@ -72,6 +102,7 @@ export const saveUserSettingsFlow = ai.defineFlow(
     }
   }
 );
+
 
 // Flow to test SCADA database connection
 export const testScadaConnectionFlow = ai.defineFlow(
@@ -83,28 +114,26 @@ export const testScadaConnectionFlow = ai.defineFlow(
   async (_, { auth }) => {
     if (!auth) throw new Error("Authentication failed.");
 
-    const settings = await getVerifiedUserSettings(auth.uid);
-    const dbConfig = settings.database;
-    if (!dbConfig?.server) {
-      return { success: false, error: "Server address is missing." };
+    const { activeProfile } = await getVerifiedUserSettings(auth.uid);
+    if (!activeProfile.server) {
+      return { success: false, error: "Server address is missing in the active profile." };
     }
-    if (!isConnectionString(dbConfig.server) && !dbConfig.databaseName) {
-        return { success: false, error: "Database name is missing." };
+    if (!isConnectionString(activeProfile.server) && !activeProfile.databaseName) {
+        return { success: false, error: "Database name is missing in the active profile." };
     }
-
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(dbConfig.server)
+      const connectionConfig = isConnectionString(activeProfile.server)
         ? { 
-            connectionString: buildConnectionString(dbConfig.server, dbConfig.user, dbConfig.password), 
+            connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true } 
           }
         : {
-            user: dbConfig.user || undefined,
-            password: dbConfig.password || undefined,
-            server: dbConfig.server,
-            database: dbConfig.databaseName!,
+            user: activeProfile.user || undefined,
+            password: activeProfile.password || undefined,
+            server: activeProfile.server,
+            database: activeProfile.databaseName!,
             options: { encrypt: false, trustServerCertificate: true },
             connectionTimeout: 5000,
             requestTimeout: 5000,
@@ -124,9 +153,9 @@ export const testScadaConnectionFlow = ai.defineFlow(
         if (error.code === 'ELOGIN') {
             detailedError = "Login failed. Please check the username and password.";
         } else if (error.code === 'ETIMEOUT') {
-            detailedError = `Connection timed out. The server at '${dbConfig.server}' could not be reached. Please check the server address and ensure it is accessible.`;
+            detailedError = `Connection timed out. The server at '${activeProfile.server}' could not be reached.`;
         } else if (error.code === 'ENOCONN') {
-             detailedError = `Could not connect to the server at '${dbConfig.server}'. Please verify the server address and ensure the SQL Server is running.`;
+             detailedError = `Could not connect to the server at '${activeProfile.server}'.`;
         } else if (error.message) {
             detailedError = error.message;
         }
@@ -147,8 +176,8 @@ export const testSmtpConnectionFlow = ai.defineFlow(
   async (_, { auth }) => {
     if (!auth) throw new Error("Authentication failed.");
 
-    const settings = await getVerifiedUserSettings(auth.uid);
-    const smtpConfig = settings.email;
+    const { userSettings } = await getVerifiedUserSettings(auth.uid);
+    const smtpConfig = userSettings.email;
     if (!smtpConfig?.smtpHost || !smtpConfig.smtpPort || !smtpConfig.smtpUser) {
       return { success: false, error: "SMTP host, port, or user is missing." };
     }
@@ -173,7 +202,7 @@ export const testSmtpConnectionFlow = ai.defineFlow(
   }
 );
 
-// Flow to get database schema
+// Flow to get database schema for the active profile
 export const getDbSchemaFlow = ai.defineFlow(
   {
     name: 'getDbSchemaFlow',
@@ -186,27 +215,26 @@ export const getDbSchemaFlow = ai.defineFlow(
   async (_, { auth }) => {
     if (!auth) throw new Error("Authentication failed.");
 
-    const settings = await getVerifiedUserSettings(auth.uid);
-    const dbConfig = settings.database;
-    if (!dbConfig?.server) {
-        throw new Error("Server address is missing.");
+    const { activeProfile } = await getVerifiedUserSettings(auth.uid);
+    if (!activeProfile.server) {
+        throw new Error("Server address is missing in the active profile.");
     }
-     if (!isConnectionString(dbConfig.server) && !dbConfig.databaseName) {
-        throw new Error("Database name is missing.");
+     if (!isConnectionString(activeProfile.server) && !activeProfile.databaseName) {
+        throw new Error("Database name is missing in the active profile.");
     }
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(dbConfig.server)
+      const connectionConfig = isConnectionString(activeProfile.server)
         ? { 
-            connectionString: buildConnectionString(dbConfig.server, dbConfig.user, dbConfig.password), 
+            connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true } 
           }
         : {
-            user: dbConfig.user || undefined,
-            password: dbConfig.password || undefined,
-            server: dbConfig.server,
-            database: dbConfig.databaseName!,
+            user: activeProfile.user || undefined,
+            password: activeProfile.password || undefined,
+            server: activeProfile.server,
+            database: activeProfile.databaseName!,
             options: { encrypt: false, trustServerCertificate: true },
             connectionTimeout: 15000,
             requestTimeout: 15000,

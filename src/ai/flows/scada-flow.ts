@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { ai } from '../genkit';
 import { getUserSettingsFromDb } from '@/services/database-service';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
-import type { ScadaDataPoint } from '@/lib/types/database';
+import type { ScadaDataPoint, UserSettings } from '@/lib/types/database';
 import sql from 'mssql';
 
 // Re-exporting the schema for client-side use
@@ -17,10 +17,16 @@ export const ScadaDataCriteriaSchema = reportCriteriaSchema;
 // Helper function to get a user's verified settings securely
 async function getVerifiedUserSettings(uid: string) {
     const userSettings = await getUserSettingsFromDb(uid);
-    if (!userSettings?.database?.server || !userSettings?.database?.databaseName || !userSettings.dataMapping?.table) {
-        throw new Error("Database settings or data mapping are incomplete. Please configure them in Settings.");
+    if (!userSettings) {
+        throw new Error("User settings could not be retrieved.");
     }
-    return userSettings;
+    const activeProfileId = userSettings.activeProfileId;
+    const activeProfile = userSettings.databaseProfiles?.find(p => p.id === activeProfileId);
+    
+    if (!activeProfile || !activeProfile.server || !activeProfile.databaseName || !activeProfile.mapping?.table) {
+        throw new Error("The active database profile is incomplete. Please configure it in Settings.");
+    }
+    return { userSettings, activeProfile };
 }
 
 const ScadaDataFlowOptionsSchema = z.object({
@@ -67,22 +73,22 @@ export const getScadaDataFlow = ai.defineFlow(
     
     console.log(`[getScadaDataFlow] Initiating data fetch for user: ${userId}`);
 
-    const userSettings = await getVerifiedUserSettings(userId);
-    const { database, dataMapping } = userSettings;
+    const { activeProfile } = await getVerifiedUserSettings(userId);
+    const { mapping } = activeProfile;
     const { dateRange, machineIds, parameterIds } = criteria;
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(database.server!)
+      const connectionConfig = isConnectionString(activeProfile.server!)
         ? { 
-            connectionString: buildConnectionString(database.server!, database.user, database.password), 
+            connectionString: buildConnectionString(activeProfile.server!, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true } 
           }
         : {
-            user: database.user || undefined,
-            password: database.password || undefined,
-            server: database.server!,
-            database: database.databaseName!,
+            user: activeProfile.user || undefined,
+            password: activeProfile.password || undefined,
+            server: activeProfile.server!,
+            database: activeProfile.databaseName!,
             options: {
               encrypt: false,
               trustServerCertificate: true,
@@ -99,13 +105,13 @@ export const getScadaDataFlow = ai.defineFlow(
           
       pool = await sql.connect(connectionConfig);
 
-      let query = `SELECT [${dataMapping.timestampColumn}], [${dataMapping.machineColumn}], [${dataMapping.parameterColumn}], [${dataMapping.valueColumn}] FROM [${dataMapping.table}] WHERE [${dataMapping.timestampColumn}] BETWEEN @startDate AND @endDate`;
+      let query = `SELECT [${mapping!.timestampColumn}], [${mapping!.machineColumn}], [${mapping!.parameterColumn}], [${mapping!.valueColumn}] FROM [${mapping!.table}] WHERE [${mapping!.timestampColumn}] BETWEEN @startDate AND @endDate`;
       
       if (machineIds.length > 0) {
-        query += ` AND [${dataMapping.machineColumn}] IN ('${machineIds.join("','")}')`;
+        query += ` AND [${mapping!.machineColumn}] IN ('${machineIds.join("','")}')`;
       }
       if (parameterIds && parameterIds.length > 0) {
-        query += ` AND [${dataMapping.parameterColumn}] IN ('${parameterIds.join("','")}')`;
+        query += ` AND [${mapping!.parameterColumn}] IN ('${parameterIds.join("','")}')`;
       }
 
       console.log(`[getScadaDataFlow] Executing query: ${query}`);
@@ -118,11 +124,11 @@ export const getScadaDataFlow = ai.defineFlow(
       console.log(`[getScadaDataFlow] Fetched ${result.recordset.length} records from the database.`);
 
       return result.recordset.map((row: any) => ({
-        id: `${row[dataMapping.parameterColumn!]}-${new Date(row[dataMapping.timestampColumn!]).toISOString()}`,
-        timestamp: new Date(row[dataMapping.timestampColumn!]),
-        machine: row[dataMapping.machineColumn!],
-        parameter: row[dataMapping.parameterColumn!],
-        value: row[dataMapping.valueColumn!],
+        id: `${row[mapping!.parameterColumn!]}-${new Date(row[mapping!.timestampColumn!]).toISOString()}`,
+        timestamp: new Date(row[mapping!.timestampColumn!]),
+        machine: row[mapping!.machineColumn!],
+        parameter: row[mapping!.parameterColumn!],
+        value: row[mapping!.valueColumn!],
         unit: "N/A", // Unit is not mapped in this version
       }));
 
@@ -146,21 +152,21 @@ export const getScadaTagsFlow = ai.defineFlow(
   async ({ machineIds }, { auth }) => {
     if (!auth) throw new Error("User must be authenticated.");
 
-    const userSettings = await getVerifiedUserSettings(auth.uid);
-    const { database, dataMapping } = userSettings;
+    const { activeProfile } = await getVerifiedUserSettings(auth.uid);
+    const { mapping } = activeProfile;
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(database.server!)
+      const connectionConfig = isConnectionString(activeProfile.server!)
         ? { 
-            connectionString: buildConnectionString(database.server!, database.user, database.password), 
+            connectionString: buildConnectionString(activeProfile.server!, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true } 
           }
         : {
-            user: database.user || undefined,
-            password: database.password || undefined,
-            server: database.server!,
-            database: database.databaseName!,
+            user: activeProfile.user || undefined,
+            password: activeProfile.password || undefined,
+            server: activeProfile.server!,
+            database: activeProfile.databaseName!,
             options: {
               encrypt: false,
               trustServerCertificate: true,
@@ -177,13 +183,13 @@ export const getScadaTagsFlow = ai.defineFlow(
       
       pool = await sql.connect(connectionConfig);
 
-      let query = `SELECT DISTINCT [${dataMapping.parameterColumn}] FROM [${dataMapping.table}]`;
+      let query = `SELECT DISTINCT [${mapping!.parameterColumn}] FROM [${mapping!.table}]`;
       if (machineIds.length > 0) {
-        query += ` WHERE [${dataMapping.machineColumn}] IN ('${machineIds.join("','")}')`;
+        query += ` WHERE [${mapping!.machineColumn}] IN ('${machineIds.join("','")}')`;
       }
 
       const result = await pool.request().query(query);
-      return result.recordset.map(row => row[dataMapping.parameterColumn!]);
+      return result.recordset.map(row => row[mapping!.parameterColumn!]);
 
     } catch (error: any) {
         console.error("SQL Error in getScadaTagsFlow: ", error);

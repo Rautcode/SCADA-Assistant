@@ -19,7 +19,7 @@ export const AuthEmailInput = z.object({
 });
 export type AuthEmailInput = z.infer<typeof AuthEmailInput>;
 
-// Schema for client-side input for scheduling a task.
+// Client-side schema for scheduling a task.
 export const ScheduleTaskInputSchema = z.object({
   name: z.string().min(1, 'Task name is required.'),
   templateId: z.string().min(1, 'A report template must be selected.'),
@@ -28,6 +28,7 @@ export const ScheduleTaskInputSchema = z.object({
 });
 export type ScheduleTaskInput = z.infer<typeof ScheduleTaskInputSchema>;
 
-// Schemas for settings flows
-export const UserSettingsFlowInput = settingsSchema;
+// Settings flow input schema now uses a partial of the full settings schema,
+// as the client might only send updated profile data.
+export const UserSettingsFlowInput = settingsSchema.partial();
 export const SettingsSchema = settingsSchema;

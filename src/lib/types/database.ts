@@ -16,6 +16,17 @@ export const dataMappingSchema = z.object({
     valueColumn: z.string().optional(),
 });
 
+export const databaseProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  server: z.string().optional(),
+  databaseName: z.string().optional(),
+  user: z.string().optional(),
+  password: z.string().optional(),
+  mapping: dataMappingSchema.optional(),
+});
+export type DatabaseProfile = z.infer<typeof databaseProfileSchema>;
+
 export const settingsSchema = z.object({
   // Appearance
   theme: z.enum(["light", "dark", "system"]),
@@ -32,19 +43,21 @@ export const settingsSchema = z.object({
   // Data & Integration
   apiKey: z.string().optional(),
 
-  // Database Credentials
+  // NEW: Profiles for database connections
+  databaseProfiles: z.array(databaseProfileSchema).optional(),
+  activeProfileId: z.string().optional(),
+
+  // Email Settings
+  email: emailSettingsSchema.optional(),
+
+  // DEPRECATED: Old single database and mapping config
   database: z.object({
     server: z.string().optional(),
     databaseName: z.string().optional(),
     user: z.string().optional(),
     password: z.string().optional(),
   }).optional(),
-  
-  // Data Mapping
   dataMapping: dataMappingSchema.optional(),
-
-  // Email Settings
-  email: emailSettingsSchema.optional(),
 });
 export type SettingsFormValues = z.infer<typeof settingsSchema>;
 

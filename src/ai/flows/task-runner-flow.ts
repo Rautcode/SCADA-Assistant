@@ -76,8 +76,13 @@ export const runScheduledTasksFlow = ai.defineFlow(
           throw new Error(`Settings not found for user ${task.userId}. Cannot run task.`);
         }
         
-        if (!userSettings.apiKey || !userSettings.database || !userSettings.dataMapping) {
-            throw new Error(`User ${task.userId} has incomplete settings for API key, database, or data mapping.`);
+        if (!userSettings.apiKey) {
+            throw new Error(`User ${task.userId} has not configured their API key.`);
+        }
+
+        const activeProfile = userSettings.databaseProfiles?.find(p => p.id === userSettings.activeProfileId);
+        if (!activeProfile || !activeProfile.server || !activeProfile.databaseName || !activeProfile.mapping) {
+            throw new Error(`User ${task.userId} has an incomplete or missing active database profile.`);
         }
         
         const template = await getTemplateById(task.templateId);

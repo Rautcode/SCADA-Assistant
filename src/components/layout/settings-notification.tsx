@@ -47,7 +47,10 @@ export function SettingsNotification() {
     }
 
     const isApiKeyMissing = !settings?.apiKey;
-    const isDbConfigMissing = !settings?.database?.server || !settings?.database?.databaseName || !settings.dataMapping?.table;
+    
+    const activeProfile = settings?.databaseProfiles?.find(p => p.id === settings.activeProfileId);
+    const isDbConfigMissing = !activeProfile || !activeProfile.server || !activeProfile.databaseName || !activeProfile.mapping?.table;
+
 
     if (!isApiKeyMissing && !isDbConfigMissing) {
         return null;
@@ -74,7 +77,7 @@ export function SettingsNotification() {
                     <WifiOff className="h-4 w-4" />
                     <AlertTitle>Database Not Configured</AlertTitle>
                     <AlertDescription>
-                        Live dashboard data is unavailable because the database connection or data mapping is incomplete.
+                        The active database profile is incomplete. Live data is unavailable.
                          <Button asChild variant="link" size="sm" className="p-0 h-auto mt-1 ml-1 font-semibold text-destructive/80 hover:text-destructive dark:text-destructive-foreground/80 dark:hover:text-destructive-foreground">
                             <Link href="/settings">
                                 <Settings className="mr-2 h-4 w-4" /> Go to Settings
@@ -86,5 +89,3 @@ export function SettingsNotification() {
         </div>
     );
 }
-
-    
