@@ -9,3 +9,4 @@ import './flows/task-runner-flow';
 import './flows/scheduler-flow';
 import './flows/settings-flow';
 import './flows/scada-flow';
+import './flows/health-check-flow';

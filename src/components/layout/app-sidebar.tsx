@@ -35,10 +35,11 @@ const mainNavItems = [
   { href: '/scheduler', label: 'Scheduler', icon: CalendarClock },
 ];
 
-const secondaryNavItems = [
-  { href: '/wincc-activity-logger', label: 'WinCC Activity', icon: Activity },
-  { href: '/logs-errors', label: 'Logs/Errors', icon: FileWarning },
-  { href: '/email-sender', label: 'Email Sender', icon: Mail },
+const monitoringNavItems = [
+  { href: '/health-check', label: 'Health Check', icon: Activity },
+  { href: '/wincc-activity-logger', label: 'Activity Log', icon: Activity },
+  { href: '/logs-errors', label: 'System Logs', icon: FileWarning },
+  { href: '/email-sender', label: 'Email Logs', icon: Mail },
 ];
 
 const helpAndSettingsItems = [
@@ -132,9 +133,9 @@ export function AppSidebar() {
         </SidebarGroup>
         
         <SidebarGroup>
-          {state === 'expanded' && <SidebarGroupLabel>System</SidebarGroupLabel>}
+          {state === 'expanded' && <SidebarGroupLabel>Monitoring & Health</SidebarGroupLabel>}
           <SidebarMenu>
-            {secondaryNavItems.map((item) => <NavLink key={item.href} item={item} />)}
+            {monitoringNavItems.map((item) => <NavLink key={item.href} item={item} />)}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -176,5 +177,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    

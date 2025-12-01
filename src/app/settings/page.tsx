@@ -4,17 +4,15 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail, PlusCircle, Trash2 } from 'lucide-react';
+import Link from "next/link";
+import { Settings, Bell, Palette, Database, Save, Languages, Server, Wifi, WifiOff, Loader2, Mail, PlusCircle, Trash2, Activity } from 'lucide-react';
 import type { SettingsFormValues, DatabaseProfile } from "@/lib/types/database";
 import {
     getUserSettingsFlow,
     saveUserSettingsFlow,
     getDbSchemaFlow,
-    testScadaConnectionFlow,
-    testSmtpConnectionFlow,
 } from '@/ai/flows/settings-flow';
 import { SettingsSchema } from '@/lib/types/flows';
-import { randomUUID } from 'crypto';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -25,15 +23,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/components/localization/localization-provider";
 import { applyTheme } from "@/app/app-initializer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/components/auth/auth-provider";
 
-
-type ConnectionStatus = 'untested' | 'testing' | 'success' | 'error';
 
 export default function SettingsPage() {
     const { user } = useAuth();
@@ -42,12 +37,6 @@ export default function SettingsPage() {
     const [isFetching, setIsFetching] = React.useState(true);
     const { t, setLanguage } = useLocalization();
     
-    const [dbConnectionStatus, setDbConnectionStatus] = React.useState<ConnectionStatus>('untested');
-    const [isTestingDbConnection, setIsTestingDbConnection] = React.useState(false);
-
-    const [smtpConnectionStatus, setSmtpConnectionStatus] = React.useState<ConnectionStatus>('untested');
-    const [isTestingSmtpConnection, setIsTestingSmtpConnection] = React.useState(false);
-
     const [dbSchema, setDbSchema] = React.useState<{ tables: string[], columns: { [key: string]: string[] } } | null>(null);
     const [isFetchingSchema, setIsFetchingSchema] = React.useState(false);
     
@@ -68,20 +57,10 @@ export default function SettingsPage() {
     const databaseProfiles = form.watch("databaseProfiles") || [];
     const activeProfile = databaseProfiles.find(p => p.id === activeProfileId);
     
-    const smtpCredsWatched = form.watch("email");
-    
     React.useEffect(() => {
-        setDbConnectionStatus('untested');
         setDbSchema(null);
     }, [activeProfileId]);
 
-
-    React.useEffect(() => {
-        if (smtpConnectionStatus !== 'untested') {
-            setSmtpConnectionStatus('untested');
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [smtpCredsWatched]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -157,43 +136,12 @@ export default function SettingsPage() {
         form.handleSubmit(onSubmit)(); // Save changes immediately
     };
     
-    async function handleTestDbConnection() {
-        setIsTestingDbConnection(true);
-        setDbConnectionStatus('testing');
-
-        // We must save the settings first for the server action to use them.
-        await form.handleSubmit(onSubmit)();
-
-        try {
-            const result = await testScadaConnectionFlow();
-            if (result.success) {
-                setDbConnectionStatus('success');
-                toast({
-                    title: "Connection Successful",
-                    description: "Successfully connected to the SCADA database.",
-                });
-            } else {
-                setDbConnectionStatus('error');
-                toast({
-                    title: "Connection Failed",
-                    description: result.error || "An unknown error occurred.",
-                    variant: "destructive",
-                });
-            }
-        } catch (error: any) {
-            setDbConnectionStatus('error');
-            toast({
-                title: "Connection Failed",
-                description: error.message || "An unexpected error occurred.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsTestingDbConnection(false);
-        }
-    }
     
     async function handleFetchSchema() {
         setIsFetchingSchema(true);
+        // Save settings before fetching schema to ensure backend has the latest config
+        await form.handleSubmit(onSubmit)();
+
         try {
             const schema = await getDbSchemaFlow();
             setDbSchema(schema);
@@ -205,53 +153,6 @@ export default function SettingsPage() {
             setIsFetchingSchema(false);
         }
     }
-
-    async function handleTestSmtpConnection() {
-        setIsTestingSmtpConnection(true);
-        setSmtpConnectionStatus('testing');
-
-        await form.handleSubmit(onSubmit)();
-        try {
-            const result = await testSmtpConnectionFlow();
-            if (result.success) {
-                setSmtpConnectionStatus('success');
-                toast({
-                    title: "SMTP Connection Successful",
-                    description: "Successfully connected to the SMTP server.",
-                });
-            } else {
-                setSmtpConnectionStatus('error');
-                toast({
-                    title: "SMTP Connection Failed",
-                    description: result.error || "An unknown error occurred.",
-                    variant: "destructive",
-                });
-            }
-        } catch (error: any) {
-            setSmtpConnectionStatus('error');
-            toast({
-                title: "SMTP Connection Failed",
-                description: error.message || "An unexpected error occurred.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsTestingSmtpConnection(false);
-        }
-    }
-
-
-    const ConnectionStatusBadge = React.memo(function ConnectionStatusBadge({ status }: { status: ConnectionStatus}) {
-        switch(status) {
-            case 'success':
-                return <Badge variant="default" className="bg-green-500 hover:bg-green-500/90 text-white"><Wifi className="mr-1 h-4 w-4" />{t('connected')}</Badge>;
-            case 'error':
-                return <Badge variant="destructive"><WifiOff className="mr-1 h-4 w-4" />{t('connection_failed')}</Badge>;
-            case 'testing':
-                return <Badge variant="secondary"><Loader2 className="mr-1 h-4 w-4 animate-spin" />{t('testing')}</Badge>;
-            default:
-                return <Badge variant="outline">{t('untested')}</Badge>;
-        }
-    });
 
     const renderFormContent = () => {
         if (isFetching) {
@@ -311,6 +212,13 @@ export default function SettingsPage() {
                             <CardHeader><CardTitle>{t('integrations')}</CardTitle><CardDescription>Manage third-party service integrations.</CardDescription></CardHeader>
                             <CardContent className="space-y-8">
                                 <FormField control={form.control} name="apiKey" render={({ field }) => (<FormItem><FormLabel>Gemini API Key</FormLabel><FormControl><Input type="password" placeholder={t('api_key_placeholder')} {...field} value={field.value || ''} /></FormControl><FormDescription>{t('api_key_description')} This is required for all AI features.</FormDescription><FormMessage /></FormItem>)} />
+                                <Alert>
+                                    <Activity className="h-4 w-4" />
+                                    <AlertTitle>Check API Key Status</AlertTitle>
+                                    <AlertDescription>
+                                        You can verify if your API key is working correctly on the <Link href="/health-check" className="font-semibold text-primary hover:underline">Health Check page</Link>.
+                                    </AlertDescription>
+                                </Alert>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -347,7 +255,6 @@ export default function SettingsPage() {
                                     <div className="space-y-6">
                                         <div className="flex items-center justify-between">
                                              <h3 className="text-lg font-semibold">Editing: {activeProfile?.name}</h3>
-                                             <ConnectionStatusBadge status={dbConnectionStatus} />
                                         </div>
                                        
                                         <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.name`} render={({ field }) => ( <FormItem><FormLabel>Profile Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
@@ -357,15 +264,17 @@ export default function SettingsPage() {
                                         <FormField control={form.control} name={`databaseProfiles.${activeProfileIndex}.password`} render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="(optional)" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                                         <CardFooter className="px-0 pb-0 pt-4 flex-col items-start gap-4">
                                             <div className="flex gap-2">
-                                                <Button type="button" variant="outline" onClick={handleTestDbConnection} disabled={isTestingDbConnection}><Wifi className="mr-2 h-4 w-4" />Test Connection</Button>
+                                                 <Button asChild type="button" variant="outline">
+                                                    <Link href="/health-check"><Activity className="mr-2 h-4 w-4" />Test Connection</Link>
+                                                 </Button>
                                                 <Button type="button" variant="destructive" size="icon" onClick={() => handleDeleteProfile(activeProfileId!)} disabled={databaseProfiles.length <= 1}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                              <Alert>
                                                 <Database className="h-4 w-4" />
                                                 <AlertTitle>Data Mapping</AlertTitle>
-                                                <AlertDescription>Map your database columns to the fields required by the application. First, ensure the connection test is successful, then fetch the schema.</AlertDescription>
+                                                <AlertDescription>Map your database columns to the fields required by the application. First, save your settings, ensure the connection is operational via the Health Check page, then fetch the schema.</AlertDescription>
                                             </Alert>
-                                            <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema || dbConnectionStatus !== 'success'}><Database className="mr-2 h-4 w-4"/>Fetch Schema</Button>
+                                            <Button type="button" className="w-full" onClick={handleFetchSchema} disabled={isFetchingSchema}><Database className="mr-2 h-4 w-4"/>Fetch Schema</Button>
                                             {isFetchingSchema && <Skeleton className="h-48 w-full" />}
                                             {dbSchema && (
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t w-full">
@@ -389,14 +298,20 @@ export default function SettingsPage() {
 
                     <TabsContent value="email">
                         <Card>
-                            <CardHeader><div className="flex items-center justify-between"><div><CardTitle>{t('smtp_settings')}</CardTitle><CardDescription>{t('smtp_description')}</CardDescription></div><ConnectionStatusBadge status={smtpConnectionStatus} /></div></CardHeader>
+                             <CardHeader><CardTitle>{t('smtp_settings')}</CardTitle><CardDescription>{t('smtp_description')}</CardDescription></CardHeader>
                             <CardContent className="space-y-6">
                                 <FormField control={form.control} name="email.smtpHost" render={({ field }) => (<FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input placeholder="e.g., smtp.gmail.com" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="email.smtpPort" render={({ field }) => (<FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input type="number" placeholder="e.g., 587" {...field} value={field.value || ''} onChange={e => field.onChange(parseInt(e.target.value, 10))}/></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="email.smtpUser" render={({ field }) => (<FormItem><FormLabel>SMTP Username</FormLabel><FormControl><Input placeholder="e.g., your-email@example.com" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="email.smtpPass" render={({ field }) => (<FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input type="password" {...field} value={field.value || ''}/></FormControl></FormItem>)} />
+                                 <Alert>
+                                    <Activity className="h-4 w-4" />
+                                    <AlertTitle>Check SMTP Status</AlertTitle>
+                                    <AlertDescription>
+                                        You can verify your SMTP connection on the <Link href="/health-check" className="font-semibold text-primary hover:underline">Health Check page</Link>.
+                                    </AlertDescription>
+                                </Alert>
                             </CardContent>
-                            <CardFooter><Button type="button" variant="outline" onClick={handleTestSmtpConnection} disabled={isTestingSmtpConnection}>{isTestingSmtpConnection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}{t('test_connection')}</Button></CardFooter>
                         </Card>
                     </TabsContent>
                 </div>
