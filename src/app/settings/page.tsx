@@ -461,8 +461,9 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>{t('server_address')}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="e.g., 192.168.1.100 or scada.myserver.com" {...field} value={field.value || ''} />
+                                                <Input placeholder="e.g., 192.168.1.100 or Driver={...};Server=..." {...field} value={field.value || ''} />
                                             </FormControl>
+                                            <FormDescription>Provide a server name or a full ODBC/SQL connection string.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -476,6 +477,7 @@ export default function SettingsPage() {
                                             <FormControl>
                                                 <Input placeholder="e.g., WinCC_Tag_Logging" {...field} value={field.value || ''} />
                                             </FormControl>
+                                            <FormDescription>Required if not using a full connection string.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -489,6 +491,7 @@ export default function SettingsPage() {
                                             <FormControl>
                                                 <Input placeholder="e.g., report_user (optional)" {...field} value={field.value || ''} />
                                             </FormControl>
+                                             <FormDescription>Optional. Can be used with a connection string if it doesn't contain user credentials.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}

@@ -22,8 +22,25 @@ async function getVerifiedUserSettings(uid: string) {
 }
 
 function isConnectionString(server: string): boolean {
-    return server.toLowerCase().includes('driver=') || server.toLowerCase().includes('server=');
+    // A more robust check for connection strings.
+    // It looks for key-value pairs separated by semicolons.
+    return /.+?=.+?;/i.test(server);
 }
+
+// Function to construct the final connection string, injecting credentials if necessary.
+function buildConnectionString(server: string, user?: string, password?: string): string {
+    let connString = server;
+    // Inject username if it exists and is not already in the string
+    if (user && !/user id=|uid=/i.test(connString)) {
+        connString += `;User ID=${user}`;
+    }
+    // Inject password if it exists and is not already in the string
+    if (password && !/password=|pwd=/i.test(connString)) {
+        connString += `;Password=${password}`;
+    }
+    return connString;
+}
+
 
 // Flow to get current user's settings
 export const getUserSettingsFlow = ai.defineFlow(
@@ -79,7 +96,10 @@ export const testScadaConnectionFlow = ai.defineFlow(
     let pool;
     try {
       const connectionConfig = isConnectionString(dbConfig.server)
-        ? { connectionString: dbConfig.server, options: { trustServerCertificate: true } }
+        ? { 
+            connectionString: buildConnectionString(dbConfig.server, dbConfig.user, dbConfig.password), 
+            options: { trustServerCertificate: true } 
+          }
         : {
             user: dbConfig.user || undefined,
             password: dbConfig.password || undefined,
@@ -178,7 +198,10 @@ export const getDbSchemaFlow = ai.defineFlow(
     let pool;
     try {
       const connectionConfig = isConnectionString(dbConfig.server)
-        ? { connectionString: dbConfig.server, options: { trustServerCertificate: true } }
+        ? { 
+            connectionString: buildConnectionString(dbConfig.server, dbConfig.user, dbConfig.password), 
+            options: { trustServerCertificate: true } 
+          }
         : {
             user: dbConfig.user || undefined,
             password: dbConfig.password || undefined,

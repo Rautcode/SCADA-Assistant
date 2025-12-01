@@ -28,7 +28,23 @@ const ScadaDataFlowOptionsSchema = z.object({
 });
 
 function isConnectionString(server: string): boolean {
-    return server.toLowerCase().includes('driver=') || server.toLowerCase().includes('server=');
+    // A more robust check for connection strings.
+    // It looks for key-value pairs separated by semicolons.
+    return /.+?=.+?;/i.test(server);
+}
+
+// Function to construct the final connection string, injecting credentials if necessary.
+function buildConnectionString(server: string, user?: string, password?: string): string {
+    let connString = server;
+    // Inject username if it exists and is not already in the string
+    if (user && !/user id=|uid=/i.test(connString)) {
+        connString += `;User ID=${user}`;
+    }
+    // Inject password if it exists and is not already in the string
+    if (password && !/password=|pwd=/i.test(connString)) {
+        connString += `;Password=${password}`;
+    }
+    return connString;
 }
 
 // Flow to get SCADA data points based on criteria
@@ -58,7 +74,10 @@ export const getScadaDataFlow = ai.defineFlow(
     let pool;
     try {
       const connectionConfig = isConnectionString(database.server!)
-        ? { connectionString: database.server, options: { trustServerCertificate: true } }
+        ? { 
+            connectionString: buildConnectionString(database.server!, database.user, database.password), 
+            options: { trustServerCertificate: true } 
+          }
         : {
             user: database.user || undefined,
             password: database.password || undefined,
@@ -133,7 +152,10 @@ export const getScadaTagsFlow = ai.defineFlow(
     let pool;
     try {
       const connectionConfig = isConnectionString(database.server!)
-        ? { connectionString: database.server, options: { trustServerCertificate: true } }
+        ? { 
+            connectionString: buildConnectionString(database.server!, database.user, database.password), 
+            options: { trustServerCertificate: true } 
+          }
         : {
             user: database.user || undefined,
             password: database.password || undefined,
