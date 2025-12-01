@@ -95,13 +95,16 @@ export interface ReportTemplate {
     lastModified: Date;
 }
 
+export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+
 export interface ScheduledTask {
     id: string;
     name: string;
     templateId: string;
-    userId: string; // Added userId
+    userId: string;
     scheduledTime: Date;
     status: 'scheduled' | 'processing' | 'completed' | 'failed' | 'overdue';
+    recurring: Recurrence;
     error?: string;
 }
 

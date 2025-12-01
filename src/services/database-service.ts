@@ -1,8 +1,9 @@
 
 import { getAdminApp } from '@/lib/firebase/admin';
-import { ReportTemplate, ScheduledTask, UserSettings, settingsSchema } from '@/lib/types/database';
+import { ReportTemplate, ScheduledTask, UserSettings, settingsSchema, Recurrence } from '@/lib/types/database';
 import { collection, doc, getDoc, setDoc, getDocs, limit, orderBy, query, Timestamp, addDoc, serverTimestamp, writeBatch, where, updateDoc } from 'firebase/firestore';
 import { z } from 'zod';
+import { add, addDays, addWeeks, addMonths } from 'date-fns';
 
 async function getDb() {
     const app = getAdminApp();
@@ -82,6 +83,37 @@ export async function updateTaskStatus(taskId: string, status: ScheduledTask['st
     }
     await updateDoc(taskRef, updateData);
 }
+
+export async function rescheduleTask(taskId: string, oldScheduledTime: Date, recurrence: Recurrence) {
+    if (recurrence === 'none') {
+        await updateTaskStatus(taskId, 'completed');
+        return;
+    }
+
+    let nextScheduledTime: Date;
+    switch(recurrence) {
+        case 'daily':
+            nextScheduledTime = addDays(oldScheduledTime, 1);
+            break;
+        case 'weekly':
+            nextScheduledTime = addWeeks(oldScheduledTime, 1);
+            break;
+        case 'monthly':
+            nextScheduledTime = addMonths(oldScheduledTime, 1);
+            break;
+        default:
+            await updateTaskStatus(taskId, 'failed', 'Invalid recurrence pattern.');
+            return;
+    }
+    
+    const db = await getDb();
+    const taskRef = doc(db, 'scheduledTasks', taskId);
+    await updateDoc(taskRef, {
+        scheduledTime: nextScheduledTime,
+        status: 'scheduled', // Reset status to scheduled for the next run
+    });
+}
+
 
 // ===== Template Service (SERVER-SIDE) =====
 export async function createNewTemplateInDb(template: Omit<ReportTemplate, 'id' | 'lastModified'>) {

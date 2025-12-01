@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb } from '@/services/database-service';
+import { getDueTasks, getTemplateById, updateTaskStatus, getUserSettingsFromDb, rescheduleTask } from '@/services/database-service';
 import { generateReport } from './generate-report-flow';
 import { sendEmail } from './send-email-flow';
 import { reportCriteriaSchema } from '@/components/report-generator/step1-criteria';
@@ -140,7 +140,8 @@ export const runScheduledTasksFlow = ai.defineFlow(
             }
         }
         
-        await updateTaskStatus(task.id, 'completed');
+        // Instead of setting to 'completed', we now reschedule it
+        await rescheduleTask(task.id, task.scheduledTime, task.recurring);
         processedCount++;
 
       } catch (error: any) {

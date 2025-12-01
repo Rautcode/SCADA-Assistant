@@ -1,9 +1,10 @@
+
 "use client";
 
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2 } from 'lucide-react';
+import { CalendarClock, PlusCircle, AlertTriangle, FileText, CheckCircle2, XCircle, Timer, Settings, Loader2, Repeat } from 'lucide-react';
 import { onScheduledTasks } from '@/services/client-database-service';
 import type { ScheduledTask, ReportTemplate } from '@/lib/types/database';
 import { format } from 'date-fns';
@@ -67,10 +68,29 @@ const TaskItem = React.memo(function TaskItem({ task, template, loading }: { tas
     return (
         <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader className="pb-4">
-                <CardTitle className="text-lg">{task.name}</CardTitle>
-                <CardDescription>
-                    Scheduled for: {format(new Date(task.scheduledTime), 'PPpp')}
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg">{task.name}</CardTitle>
+                        <CardDescription>
+                            Scheduled for: {format(new Date(task.scheduledTime), 'PPpp')}
+                        </CardDescription>
+                    </div>
+                     {task.recurring !== 'none' && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="outline" className="capitalize">
+                                        <Repeat className="mr-1.5 h-3.5 w-3.5" />
+                                        {task.recurring}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>This task repeats {task.recurring}.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                </div>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">

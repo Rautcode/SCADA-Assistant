@@ -14,11 +14,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/auth-provider';
 import { scheduleTask } from '@/ai/flows/scheduler-flow';
-import { ReportTemplate } from '@/lib/types/database';
+import { ReportTemplate, Recurrence } from '@/lib/types/database';
 import { ScheduleTaskInputSchema } from '@/lib/types/flows';
 
 interface NewTaskDialogProps {
@@ -26,6 +26,13 @@ interface NewTaskDialogProps {
   onOpenChange: (open: boolean) => void;
   templates: ReportTemplate[];
 }
+
+const recurrenceOptions: {value: Recurrence, label: string}[] = [
+    { value: 'none', label: 'Does not repeat' },
+    { value: 'daily', label: 'Daily' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
+]
 
 // Client-side schema uses `Date` object for the picker
 const NewTaskClientSchema = ScheduleTaskInputSchema.extend({
@@ -49,6 +56,7 @@ export function NewTaskDialog({ open, onOpenChange, templates }: NewTaskDialogPr
             name: "",
             templateId: "",
             scheduledTime: new Date(),
+            recurring: 'none',
         },
     });
 
@@ -175,6 +183,31 @@ export function NewTaskDialog({ open, onOpenChange, templates }: NewTaskDialogPr
                                 </FormItem>
                             )}
                             />
+                        <FormField
+                            control={form.control}
+                            name="recurring"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Recurrence</FormLabel>
+                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <Repeat className="mr-2 h-4 w-4" />
+                                                <SelectValue placeholder="Select recurrence" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {recurrenceOptions.map(option => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                     </Select>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                             <Button type="submit" disabled={isLoading}>

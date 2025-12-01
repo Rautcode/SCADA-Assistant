@@ -24,6 +24,7 @@ export const ScheduleTaskInputSchema = z.object({
   name: z.string().min(1, 'Task name is required.'),
   templateId: z.string().min(1, 'A report template must be selected.'),
   scheduledTime: z.string().describe('The scheduled time as an ISO string.'),
+  recurring: z.enum(['none', 'daily', 'weekly', 'monthly']),
 });
 export type ScheduleTaskInput = z.infer<typeof ScheduleTaskInputSchema>;
 
