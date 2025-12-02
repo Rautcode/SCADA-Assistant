@@ -19,7 +19,7 @@ import { z } from 'zod';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/auth/auth-provider';
 import { downloadFile } from '@/lib/utils';
-import { Download } from 'lucide-react';
+import { Download, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 
 // Dynamically import step components
 const ReportStep1Criteria = dynamic(() => import('@/components/report-generator/step1-criteria').then(mod => mod.ReportStep1Criteria), {
@@ -178,7 +178,7 @@ export default function ReportGeneratorPage() {
         console.error("Report generation failed:", error);
         toast({
             title: "Generation Failed",
-            description: "The backend failed to generate the report. Please try again.",
+            description: error.message || "The backend failed to generate the report. Please try again.",
             variant: "destructive",
         });
     } finally {
@@ -242,15 +242,18 @@ export default function ReportGeneratorPage() {
         </CardContent>
         <CardFooter className="flex justify-between border-t pt-6">
           <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGenerating}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           {currentStep < steps.length - 1 ? (
             <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={!canGoNext}>
               Next
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
             <Button onClick={handleGenerate} className="bg-secondary hover:bg-secondary/90 text-secondary-foreground" disabled={isGenerating || !canGoNext}>
               {isGenerating ? 'Generating...' : 'Generate Report'}
+              <Sparkles className="ml-2 h-4 w-4" />
             </Button>
           )}
         </CardFooter>

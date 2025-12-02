@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowUpDown, Search, AlertCircle, Settings } from "lucide-react";
+import { ArrowUpDown, Search, AlertCircle, Settings, RefreshCw } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScadaDataPoint } from "@/lib/types/database";
 import { getScadaDataFlow } from "@/ai/flows/scada-flow";
@@ -22,6 +22,7 @@ import { Skeleton } from "../ui/skeleton";
 import type { reportCriteriaSchema } from "./step1-criteria";
 import type { z } from "zod";
 import { useAuth } from "../auth/auth-provider";
+import { dequal } from 'dequal';
 
 type SortKey = keyof Omit<ScadaDataPoint, 'included' | 'id'>;
 
@@ -41,44 +42,55 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
   
+  // Store the last criteria used for a fetch
+  const lastFetchedCriteria = React.useRef<z.infer<typeof reportCriteriaSchema> | null>(null);
+
+  const fetchData = React.useCallback(async () => {
+    if (!user || !criteria) {
+        setLoading(false);
+        return;
+    };
+    
+    // Prevent re-fetching if criteria haven't changed
+    if (dequal(criteria, lastFetchedCriteria.current)) {
+        return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setData([]);
+
+    try {
+        const scadaData = await getScadaDataFlow({ criteria });
+        
+        const enrichedData = scadaData.map(d => ({
+            ...d,
+            included: true,
+        }));
+
+        setData(enrichedData);
+        if (scadaData.length === 0) {
+            setError("No data was returned from the database. Check your criteria and connection settings.");
+        }
+        lastFetchedCriteria.current = criteria; // Update the ref after a successful fetch
+
+    } catch (e: any) {
+        console.error("Failed to fetch SCADA data:", e);
+        setError(e.message || "An unknown error occurred while fetching data.");
+        lastFetchedCriteria.current = null; // Reset on error
+    } finally {
+        setLoading(false);
+    }
+  }, [criteria, user]);
+  
   React.useEffect(() => {
     onValidated({ scadaData: data });
   }, [data, onValidated]);
 
   React.useEffect(() => {
-    async function fetchSettingsAndData() {
-        if (!user || !criteria) {
-            setLoading(false);
-            return;
-        };
+    fetchData();
+  }, [fetchData]);
 
-        setLoading(true);
-        setError(null);
-        setData([]);
-
-        try {
-            const scadaData = await getScadaDataFlow({ criteria });
-            
-            const enrichedData = scadaData.map(d => {
-                const existingRow = initialData?.scadaData.find(initial => initial.id === d.id);
-                return { ...d, included: existingRow ? existingRow.included : true };
-            });
-
-            setData(enrichedData);
-            if (scadaData.length === 0) {
-                setError("No data was returned from the database. Check your criteria and connection settings.");
-            }
-
-        } catch (e: any) {
-            console.error("Failed to fetch SCADA data:", e);
-            setError(e.message || "An unknown error occurred while fetching data.");
-        } finally {
-            setLoading(false);
-        }
-    }
-    fetchSettingsAndData();
-    // This effect should re-run whenever the criteria changes.
-  }, [criteria, user, initialData]);
 
   const handleIncludeToggle = (id: string) => {
     setData(prevData =>
@@ -257,6 +269,10 @@ export function ReportStep3Preview({ onValidated, initialData, criteria }: Repor
             className="pl-10"
             />
         </div>
+        <Button variant="outline" size="sm" onClick={() => fetchData()} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Data
+        </Button>
       </div>
       
       {renderContent()}
