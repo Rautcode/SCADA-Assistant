@@ -49,11 +49,14 @@ export function ForgotPasswordForm() {
       const actionLink = await generatePasswordResetLink(auth, values.email, actionCodeSettings);
 
       // 2. Call the secure backend flow to send the email via the system's SMTP server.
+      // The backend flow now handles the HTML template.
       await sendAuthEmail({
         to: values.email,
         subject: "Reset your SCADA Assistant Password",
-        text: `Hello,\n\nPlease reset your password by clicking the following link: ${actionLink}\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe SCADA Assistant Team`,
-        html: `<p>Hello,</p><p>Please reset your password by clicking the link below:</p><p><a href="${actionLink}">Reset Password</a></p><p>If you did not request this, please ignore this email.</p><p>Thanks,<br/>The SCADA Assistant Team</p>`,
+        // The `text` and `html` fields are now generated on the backend.
+        // We only need to provide the dynamic data.
+        text: actionLink, // Pass the link as the text fallback
+        html: actionLink, // Pass the link to be injected into the HTML template
       });
 
       toast({

@@ -10,6 +10,7 @@ import * as nodemailer from 'nodemailer';
 import { AuthEmailInput } from '@/lib/types/flows';
 import { addEmailLogToDb, getSystemSettingsFromDb } from '@/services/database-service';
 import { ai } from '../genkit';
+import { getPasswordResetEmailHtml, getPasswordResetEmailText } from '@/components/emails/password-reset-template';
 
 // This is an UNAUTHENTICATED flow. It should only be used for system-level actions
 // like password resets where the user is not logged in.
@@ -21,7 +22,8 @@ export const sendAuthEmail = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
   },
   async (input) => {
-    const { to, subject, text, html } = input;
+    // The `html` and `text` from the client now contain the password reset link.
+    const { to, subject, html: resetLink } = input;
     const userId = 'system'; // This flow always operates as the system.
 
     const systemSettings = await getSystemSettingsFromDb();
@@ -64,14 +66,18 @@ export const sendAuthEmail = ai.defineFlow(
       await addEmailLogToDb({ to, subject, status: 'failed', error: errorMsg });
       return { success: false, error: 'System SMTP server verification failed.' };
     }
+    
+    // Generate the email content using the templates
+    const emailHtml = getPasswordResetEmailHtml(resetLink);
+    const emailText = getPasswordResetEmailText(resetLink);
 
     try {
       const info = await transporter.sendMail({
         from: fromAddress,
         to: to,
         subject: subject,
-        text: text,
-        html: html,
+        text: emailText,
+        html: emailHtml,
       });
 
       console.log('Auth email sent successfully:', info.messageId);
