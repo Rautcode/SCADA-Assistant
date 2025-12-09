@@ -119,6 +119,12 @@ const generateReportFlow = ai.defineFlow(
     name: 'generateReportFlow',
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
+    auth: {
+      // This enforces that the user must be authenticated.
+      // The `auth` object will be available in the handler.
+      // This was previously missing.
+      firebase: true,
+    }
   },
   async (input, { auth }) => {
     console.log('Backend flow started with input:', input);

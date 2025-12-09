@@ -28,7 +28,8 @@ export function AppInitializer({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      // No longer need to pass authToken
+      // The auth token is no longer needed as the backend flow handler
+      // automatically uses it to populate the auth context.
       getUserSettingsFlow()
         .then(settings => {
           if (settings?.language) {

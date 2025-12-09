@@ -53,6 +53,12 @@ const suggestChartStyleFlow = ai.defineFlow(
     name: 'suggestChartStyleFlow',
     inputSchema: SuggestChartStyleInputSchema,
     outputSchema: ChartStyleSuggestionSchema,
+    auth: {
+      // This enforces that the user must be authenticated.
+      // The `auth` object will be available in the handler.
+      // This was previously missing.
+      firebase: true,
+    }
   },
   async ({ promptText }, { auth }) => {
      if (!auth) {
@@ -65,7 +71,10 @@ const suggestChartStyleFlow = ai.defineFlow(
         throw new Error("User API key is not configured.");
     }
     
-    // Dynamically create a client with the user's API key.
+    // We no longer need to create a dynamic client.
+    // The `ai` object is configured by the NextJS handler to use the user's key.
+    // But for this specific case, as the global `ai` object in genkit.ts
+    // doesn't have a key by default, we DO need a dynamic client here.
     const dynamicClient = googleAI({ apiKey: userSettings.apiKey });
     
     const { output } = await ai.generate({
@@ -84,3 +93,4 @@ const suggestChartStyleFlow = ai.defineFlow(
     return output;
   }
 );
+
