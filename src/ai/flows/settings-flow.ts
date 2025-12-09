@@ -49,6 +49,7 @@ export const getUserSettingsFlow = ai.defineFlow(
     name: 'getUserSettingsFlow',
     inputSchema: z.void(),
     outputSchema: z.custom<UserSettings | null>(),
+    auth: { firebase: true },
   },
   async (_, { auth }) => {
     if (!auth) return null;
@@ -91,6 +92,7 @@ export const saveUserSettingsFlow = ai.defineFlow(
     name: 'saveUserSettingsFlow',
     inputSchema: UserSettingsFlowInput,
     outputSchema: z.object({ success: z.boolean(), error: z.string().optional() }),
+    auth: { firebase: true },
   },
   async (settings: Partial<SettingsFormValues>, { auth }) => {
     if (!auth) return { success: false, error: "Authentication failed." };
@@ -113,6 +115,7 @@ export const getDbSchemaFlow = ai.defineFlow(
         tables: z.array(z.string()),
         columns: z.record(z.array(z.string())),
     }),
+    auth: { firebase: true },
   },
   async (_, { auth }) => {
     if (!auth) throw new Error("Authentication failed.");
@@ -130,7 +133,15 @@ export const getDbSchemaFlow = ai.defineFlow(
       const connectionConfig = isConnectionString(activeProfile.server)
         ? { 
             connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), 
-            options: { trustServerCertificate: true } 
+            options: { trustServerCertificate: true, encrypt: false },
+            connectionTimeout: 15000,
+            requestTimeout: 15000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
           }
         : {
             user: activeProfile.user || undefined,

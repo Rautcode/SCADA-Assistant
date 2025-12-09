@@ -48,6 +48,7 @@ export const getHealthCheckStatusFlow = ai.defineFlow(
     name: 'getHealthCheckStatusFlow',
     inputSchema: z.void(),
     outputSchema: HealthCheckStatusSchema,
+    auth: { firebase: true },
   },
   async (_, { auth }) => {
     if (!auth) {
@@ -68,7 +69,7 @@ export const getHealthCheckStatusFlow = ai.defineFlow(
         let pool;
         try {
             const connectionConfig = isConnectionString(activeProfile.server)
-                ? { connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), options: { trustServerCertificate: true } }
+                ? { connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), options: { trustServerCertificate: true, encrypt: false }, connectionTimeout: 5000, requestTimeout: 5000 }
                 : { user: activeProfile.user, password: activeProfile.password, server: activeProfile.server, database: activeProfile.databaseName, options: { encrypt: false, trustServerCertificate: true }, connectionTimeout: 5000, requestTimeout: 5000 };
             
             const startTime = Date.now();
@@ -98,9 +99,8 @@ export const getHealthCheckStatusFlow = ai.defineFlow(
     } else {
         try {
             // Use a simple, low-cost model for a health check
-            const dynamicClient = googleAI({ apiKey });
             await ai.generate({
-                model: dynamicClient.model('gemini-pro'),
+                model: 'gemini-pro',
                 prompt: "Health check",
                 output: { format: 'text' },
                 config: { maxOutputTokens: 5 }

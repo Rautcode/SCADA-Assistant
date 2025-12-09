@@ -59,6 +59,7 @@ export const getScadaDataFlow = ai.defineFlow(
     name: 'getScadaDataFlow',
     inputSchema: z.object({ criteria: ScadaDataCriteriaSchema }),
     outputSchema: z.custom<ScadaDataPoint[]>(),
+    auth: { firebase: true },
   },
   async ({ criteria }, { auth, flowOptions }) => {
     const options = ScadaDataFlowOptionsSchema.parse(flowOptions || {});
@@ -82,7 +83,15 @@ export const getScadaDataFlow = ai.defineFlow(
       const connectionConfig = isConnectionString(activeProfile.server!)
         ? { 
             connectionString: buildConnectionString(activeProfile.server!, activeProfile.user, activeProfile.password), 
-            options: { trustServerCertificate: true } 
+            options: { trustServerCertificate: true, encrypt: false },
+            connectionTimeout: 15000,
+            requestTimeout: 15000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
           }
         : {
             user: activeProfile.user || undefined,
@@ -107,19 +116,26 @@ export const getScadaDataFlow = ai.defineFlow(
 
       let query = `SELECT [${mapping!.timestampColumn}], [${mapping!.machineColumn}], [${mapping!.parameterColumn}], [${mapping!.valueColumn}] FROM [${mapping!.table}] WHERE [${mapping!.timestampColumn}] BETWEEN @startDate AND @endDate`;
       
+      const request = pool.request();
+      request.input('startDate', sql.DateTime, dateRange.from)
+      request.input('endDate', sql.DateTime, dateRange.to)
+
       if (machineIds.length > 0) {
-        query += ` AND [${mapping!.machineColumn}] IN ('${machineIds.join("','")}')`;
+        query += ` AND [${mapping!.machineColumn}] IN (${machineIds.map((_, i) => `@machineId${i}`).join(',')})`;
+        machineIds.forEach((id, i) => {
+            request.input(`machineId${i}`, sql.VarChar, id);
+        })
       }
       if (parameterIds && parameterIds.length > 0) {
-        query += ` AND [${mapping!.parameterColumn}] IN ('${parameterIds.join("','")}')`;
+        query += ` AND [${mapping!.parameterColumn}] IN (${parameterIds.map((_, i) => `@paramId${i}`).join(',')})`;
+        parameterIds.forEach((id, i) => {
+            request.input(`paramId${i}`, sql.VarChar, id);
+        })
       }
 
       console.log(`[getScadaDataFlow] Executing query: ${query}`);
 
-      const result = await pool.request()
-        .input('startDate', sql.DateTime, dateRange.from)
-        .input('endDate', sql.DateTime, dateRange.to)
-        .query(query);
+      const result = await request.query(query);
       
       console.log(`[getScadaDataFlow] Fetched ${result.recordset.length} records from the database.`);
 
@@ -148,6 +164,7 @@ export const getScadaTagsFlow = ai.defineFlow(
     name: 'getScadaTagsFlow',
     inputSchema: z.object({ machineIds: z.array(z.string()) }),
     outputSchema: z.array(z.string()),
+    auth: { firebase: true },
   },
   async ({ machineIds }, { auth }) => {
     if (!auth) throw new Error("User must be authenticated.");
@@ -160,7 +177,15 @@ export const getScadaTagsFlow = ai.defineFlow(
       const connectionConfig = isConnectionString(activeProfile.server!)
         ? { 
             connectionString: buildConnectionString(activeProfile.server!, activeProfile.user, activeProfile.password), 
-            options: { trustServerCertificate: true } 
+            options: { trustServerCertificate: true, encrypt: false },
+            connectionTimeout: 15000,
+            requestTimeout: 15000,
+            pool: {
+                max: 10,
+                min: 0,
+                idleTimeoutMillis: 30000,
+                acquireTimeoutMillis: 30000,
+            },
           }
         : {
             user: activeProfile.user || undefined,
@@ -184,11 +209,16 @@ export const getScadaTagsFlow = ai.defineFlow(
       pool = await sql.connect(connectionConfig);
 
       let query = `SELECT DISTINCT [${mapping!.parameterColumn}] FROM [${mapping!.table}]`;
+      const request = pool.request();
+      
       if (machineIds.length > 0) {
-        query += ` WHERE [${mapping!.machineColumn}] IN ('${machineIds.join("','")}')`;
+        query += ` WHERE [${mapping!.machineColumn}] IN (${machineIds.map((_, i) => `@machineId${i}`).join(',')})`;
+        machineIds.forEach((id, i) => {
+            request.input(`machineId${i}`, sql.VarChar, id);
+        });
       }
 
-      const result = await pool.request().query(query);
+      const result = await request.query(query);
       return result.recordset.map(row => row[mapping!.parameterColumn!]);
 
     } catch (error: any) {
