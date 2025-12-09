@@ -10,7 +10,6 @@ import { UserSettings, type SettingsFormValues, DatabaseProfile } from '@/lib/ty
 import { UserSettingsFlowInput } from '@/lib/types/flows';
 import { getUserSettingsFromDb, saveUserSettingsToDb } from '@/services/database-service';
 import sql from 'mssql';
-import nodemailer from 'nodemailer';
 import { randomUUID } from 'crypto';
 
 // Helper function to get a user's verified settings securely from a flow
@@ -73,9 +72,11 @@ export const getUserSettingsFlow = ai.defineFlow(
         ...settings,
         databaseProfiles: [newProfile],
         activeProfileId: newProfile.id,
-        database: undefined, // Clear old fields
-        dataMapping: undefined, // Clear old fields
       };
+      
+      // Clean up deprecated fields before saving
+      delete (migratedSettings as any).database;
+      delete (migratedSettings as any).dataMapping;
       
       await saveUserSettingsToDb(auth.uid, migratedSettings);
       return migratedSettings;
@@ -130,18 +131,13 @@ export const getDbSchemaFlow = ai.defineFlow(
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(activeProfile.server)
+      const connectionConfig: sql.config = isConnectionString(activeProfile.server)
         ? { 
             connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true, encrypt: false },
             connectionTimeout: 15000,
             requestTimeout: 15000,
-            pool: {
-                max: 10,
-                min: 0,
-                idleTimeoutMillis: 30000,
-                acquireTimeoutMillis: 30000,
-            },
+            pool: { max: 10, min: 0, idleTimeoutMillis: 30000, acquireTimeoutMillis: 30000 },
           }
         : {
             user: activeProfile.user || undefined,
@@ -151,12 +147,7 @@ export const getDbSchemaFlow = ai.defineFlow(
             options: { encrypt: false, trustServerCertificate: true },
             connectionTimeout: 15000,
             requestTimeout: 15000,
-            pool: {
-                max: 10,
-                min: 0,
-                idleTimeoutMillis: 30000,
-                acquireTimeoutMillis: 30000,
-            },
+            pool: { max: 10, min: 0, idleTimeoutMillis: 30000, acquireTimeoutMillis: 30000 },
           };
           
       pool = await sql.connect(connectionConfig);

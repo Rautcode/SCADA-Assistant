@@ -9,7 +9,6 @@ import { ai } from '../genkit';
 import { getUserSettingsFromDb } from '@/services/database-service';
 import sql from 'mssql';
 import nodemailer from 'nodemailer';
-import { googleAI } from '@genkit-ai/googleai';
 
 // Common types for health checks
 type Status = 'operational' | 'error' | 'untested' | 'testing';
@@ -69,8 +68,21 @@ export const getHealthCheckStatusFlow = ai.defineFlow(
         let pool;
         try {
             const connectionConfig = isConnectionString(activeProfile.server)
-                ? { connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), options: { trustServerCertificate: true, encrypt: false }, connectionTimeout: 5000, requestTimeout: 5000 }
-                : { user: activeProfile.user, password: activeProfile.password, server: activeProfile.server, database: activeProfile.databaseName, options: { encrypt: false, trustServerCertificate: true }, connectionTimeout: 5000, requestTimeout: 5000 };
+                ? { 
+                    connectionString: buildConnectionString(activeProfile.server, activeProfile.user, activeProfile.password), 
+                    options: { trustServerCertificate: true, encrypt: false },
+                    connectionTimeout: 5000,
+                    requestTimeout: 5000
+                  }
+                : { 
+                    user: activeProfile.user, 
+                    password: activeProfile.password, 
+                    server: activeProfile.server, 
+                    database: activeProfile.databaseName, 
+                    options: { encrypt: false, trustServerCertificate: true }, 
+                    connectionTimeout: 5000, 
+                    requestTimeout: 5000
+                  };
             
             const startTime = Date.now();
             pool = await sql.connect(connectionConfig);
@@ -99,6 +111,7 @@ export const getHealthCheckStatusFlow = ai.defineFlow(
     } else {
         try {
             // Use a simple, low-cost model for a health check
+            // THIS NOW USES THE GLOBAL `ai` instance, which is correctly authenticated.
             await ai.generate({
                 model: 'gemini-pro',
                 prompt: "Health check",

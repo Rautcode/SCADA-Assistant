@@ -80,36 +80,23 @@ export const getScadaDataFlow = ai.defineFlow(
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(activeProfile.server!)
+      const connectionConfig: sql.config = isConnectionString(activeProfile.server!)
         ? { 
             connectionString: buildConnectionString(activeProfile.server!, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true, encrypt: false },
             connectionTimeout: 15000,
             requestTimeout: 15000,
-            pool: {
-                max: 10,
-                min: 0,
-                idleTimeoutMillis: 30000,
-                acquireTimeoutMillis: 30000,
-            },
+            pool: { max: 10, min: 0, idleTimeoutMillis: 30000, acquireTimeoutMillis: 30000 },
           }
         : {
             user: activeProfile.user || undefined,
             password: activeProfile.password || undefined,
             server: activeProfile.server!,
             database: activeProfile.databaseName!,
-            options: {
-              encrypt: false,
-              trustServerCertificate: true,
-            },
+            options: { encrypt: false, trustServerCertificate: true },
             connectionTimeout: 15000,
             requestTimeout: 15000,
-            pool: {
-                max: 10,
-                min: 0,
-                idleTimeoutMillis: 30000,
-                acquireTimeoutMillis: 30000,
-            },
+            pool: { max: 10, min: 0, idleTimeoutMillis: 30000, acquireTimeoutMillis: 30000 },
           };
           
       pool = await sql.connect(connectionConfig);
@@ -174,36 +161,23 @@ export const getScadaTagsFlow = ai.defineFlow(
 
     let pool;
     try {
-      const connectionConfig = isConnectionString(activeProfile.server!)
+      const connectionConfig: sql.config = isConnectionString(activeProfile.server!)
         ? { 
             connectionString: buildConnectionString(activeProfile.server!, activeProfile.user, activeProfile.password), 
             options: { trustServerCertificate: true, encrypt: false },
             connectionTimeout: 15000,
             requestTimeout: 15000,
-            pool: {
-                max: 10,
-                min: 0,
-                idleTimeoutMillis: 30000,
-                acquireTimeoutMillis: 30000,
-            },
+            pool: { max: 10, min: 0, idleTimeoutMillis: 30000, acquireTimeoutMillis: 30000 },
           }
         : {
             user: activeProfile.user || undefined,
             password: activeProfile.password || undefined,
             server: activeProfile.server!,
             database: activeProfile.databaseName!,
-            options: {
-              encrypt: false,
-              trustServerCertificate: true,
-            },
+            options: { encrypt: false, trustServerCertificate: true },
             connectionTimeout: 15000,
             requestTimeout: 15000,
-            pool: {
-                max: 10,
-                min: 0,
-                idleTimeoutMillis: 30000,
-                acquireTimeoutMillis: 30000,
-            },
+            pool: { max: 10, min: 0, idleTimeoutMillis: 30000, acquireTimeoutMillis: 30000 },
           };
       
       pool = await sql.connect(connectionConfig);
